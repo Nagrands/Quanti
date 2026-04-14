@@ -1,0 +1,16 @@
+node_modules/
+.turbo/
+dist/
+coverage/
+.env
+.env.local
+package-lock.json
+
+# Tauri
+src-tauri/target/
+
+# Prisma
+packages/db/generated/
+
+# OS
+.DS_Store

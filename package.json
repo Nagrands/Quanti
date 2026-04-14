@@ -1,0 +1,21 @@
+{
+  "name": "quanti",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "typecheck": "turbo run typecheck",
+    "test": "node --test tests/workspace.test.mjs",
+    "check": "node scripts/validate-workspace.mjs && node --test tests/workspace.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.3"
+  }
+}
