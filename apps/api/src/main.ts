@@ -1,7 +1,7 @@
-export function createApiApp(): string {
-  return "quanti-api";
-}
+import "reflect-metadata";
+
+import { bootstrapApiServer } from "./bootstrap";
 
 if (process.env.NODE_ENV !== "test") {
-  console.log(createApiApp());
+  void bootstrapApiServer();
 }

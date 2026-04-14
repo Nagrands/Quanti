@@ -27,13 +27,14 @@ Status legend:
    - Define document, payment, warehouse, and reporting contract boundaries.
    - Add tests for contract imports and type-level consistency.
 
-4. `[ ]` Backend application skeleton
+4. `[x]` Backend application skeleton
    - Initialize NestJS application structure in `apps/api`.
    - Create baseline modules: `products`, `documents`, `stock`, `payments`, `reports`.
    - Add common error handling and validation boundaries.
    - Add bootstrap and module wiring tests.
+   - Note: stage completed with bootstrap health surface and baseline module registration; domain logic starts in stage 5.
 
-5. `[ ]` Products and master data module
+5. `[~]` Products and master data module
    - Implement products, warehouses, counterparties, and accounts CRUD foundations.
    - Keep business rules in services and API contracts in shared types.
    - Add service and controller tests.
