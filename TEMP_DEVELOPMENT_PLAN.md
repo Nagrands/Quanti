@@ -22,7 +22,7 @@ Status legend:
    - Add first migration flow and Prisma client generation.
    - Add tests/checks for schema validity and DB bootstrap.
 
-3. `[ ]` Shared contracts foundation
+3. `[x]` Shared contracts foundation
    - Add shared enums, identifiers, DTOs, and status models in `packages/shared`.
    - Define document, payment, warehouse, and reporting contract boundaries.
    - Add tests for contract imports and type-level consistency.
