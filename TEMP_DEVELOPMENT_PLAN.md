@@ -16,7 +16,7 @@ Status legend:
    - Add PostgreSQL local environment bootstrap files.
    - Verify foundation with workspace validation, smoke tests, and typecheck.
 
-2. `[ ]` Database foundation
+2. `[x]` Database foundation
    - Install and configure Prisma in `packages/db`.
    - Define initial PostgreSQL schema for core ERP entities and ledger tables.
    - Add first migration flow and Prisma client generation.

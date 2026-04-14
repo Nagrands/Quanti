@@ -1,1 +1,15 @@
-export const prismaPackageName = "@quanti/db";
+export { PrismaClient } from "@prisma/client";
+export type {
+  Account,
+  AuditLog,
+  Counterparty,
+  Document,
+  DocumentItem,
+  MoneyMovement,
+  Payment,
+  PaymentAllocation,
+  Product,
+  StockBalance,
+  StockMovement,
+  Warehouse
+} from "@prisma/client";

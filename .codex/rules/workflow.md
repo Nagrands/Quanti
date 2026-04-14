@@ -15,6 +15,7 @@ Organize
 - Limit the change scope before implementation.
 - Define the planned validation steps up front.
 - Identify transaction, locking, reporting, and cross-layer risks early.
+- Use agents when the task benefits from parallel exploration or clearly separated implementation ownership.
 - Prefer reversible, modular changes over broad rewrites.
 
 Check

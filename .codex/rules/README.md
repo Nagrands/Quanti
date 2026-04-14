@@ -22,5 +22,6 @@ Defaults
 - Keep changes minimal and scoped to the requested outcome.
 - Do not scaffold or restructure the project from prompts alone without checking these rules first.
 - Do not mix UI, API, database, and desktop responsibilities in the same module.
+- Use agents when delegation materially improves speed, parallelism, or separation of responsibilities.
 - Update tests when behavior or business rules change.
 - Update project documentation when architecture or workflow rules change.
