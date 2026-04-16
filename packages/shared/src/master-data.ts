@@ -24,6 +24,14 @@ export interface CreateProductDto {
   unit: string;
 }
 
+export interface UpdateProductDto {
+  sku?: string;
+  name?: string;
+  description?: string | null;
+  unit?: string;
+  isActive?: boolean;
+}
+
 export interface WarehouseDto extends AuditFields {
   id: WarehouseId;
   code: string;
@@ -34,6 +42,12 @@ export interface WarehouseDto extends AuditFields {
 export interface CreateWarehouseDto {
   code: string;
   name: string;
+}
+
+export interface UpdateWarehouseDto {
+  code?: string;
+  name?: string;
+  isActive?: boolean;
 }
 
 export interface CounterpartyDto extends AuditFields {
@@ -52,6 +66,14 @@ export interface CreateCounterpartyDto {
   taxId?: string | null;
 }
 
+export interface UpdateCounterpartyDto {
+  code?: string;
+  name?: string;
+  type?: CounterpartyType;
+  taxId?: string | null;
+  isActive?: boolean;
+}
+
 export interface AccountDto extends AuditFields {
   id: AccountId;
   code: string;
@@ -66,6 +88,14 @@ export interface CreateAccountDto {
   name: string;
   type: AccountType;
   currencyCode?: string;
+}
+
+export interface UpdateAccountDto {
+  code?: string;
+  name?: string;
+  type?: AccountType;
+  currencyCode?: string;
+  isActive?: boolean;
 }
 
 export interface StockBalanceDto {

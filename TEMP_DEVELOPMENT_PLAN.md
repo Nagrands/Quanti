@@ -34,7 +34,7 @@ Status legend:
    - Add bootstrap and module wiring tests.
    - Note: stage completed with bootstrap health surface and baseline module registration; domain logic starts in stage 5.
 
-5. `[~]` Products and master data module
+5. `[x]` Products and master data module
    - Implement products, warehouses, counterparties, and accounts CRUD foundations.
    - Keep business rules in services and API contracts in shared types.
    - Add service and controller tests.
