@@ -39,7 +39,7 @@ Status legend:
    - Keep business rules in services and API contracts in shared types.
    - Add service and controller tests.
 
-6. `[ ]` Stock engine
+6. `[x]` Stock engine
    - Implement `StockService` based only on `stock_movements`.
    - Add balance calculation and reservation validation rules.
    - Add integration tests for balance correctness and race-sensitive flows.

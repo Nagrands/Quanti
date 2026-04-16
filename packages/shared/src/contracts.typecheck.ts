@@ -9,6 +9,7 @@ import type {
   PaymentDto,
   ProductDto,
   ReportContracts,
+  ReserveStockRequestDto,
   StockBalanceReportFilterDto
 } from "./index";
 import {
@@ -72,6 +73,12 @@ const reportFilter: StockBalanceReportFilterDto = {
   warehouseId: "warehouse-1"
 };
 
+const reserveStockRequest: ReserveStockRequestDto = {
+  productId: "product-1",
+  warehouseId: "warehouse-1",
+  requiredQuantity: "5.000"
+};
+
 const reportContracts: ReportContracts = {
   stockBalanceFilter: reportFilter
 };
@@ -130,6 +137,7 @@ void account;
 void draftDocument;
 void payment;
 void reportContracts;
+void reserveStockRequest;
 void documentView;
 void paymentView;
 void productView;

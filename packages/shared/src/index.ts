@@ -6,6 +6,7 @@ export * from "./master-data";
 export * from "./documents";
 export * from "./payments";
 export * from "./reports";
+export * from "./stock";
 
 export interface ReportContracts {
   stockBalanceFilter: import("./reports").StockBalanceReportFilterDto;
