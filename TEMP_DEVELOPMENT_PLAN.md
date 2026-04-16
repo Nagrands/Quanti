@@ -50,7 +50,7 @@ Status legend:
    - Enforce double-post prevention and negative stock rules.
    - Add integration tests for lifecycle and rollback behavior.
 
-8. `[ ]` Finance engine
+8. `[x]` Finance engine
    - Implement payments, money ledger, and payment allocations.
    - Add derived debt calculation per counterparty.
    - Add integration tests for partial payments and allocation correctness.

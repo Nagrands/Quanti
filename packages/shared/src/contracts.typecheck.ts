@@ -9,10 +9,12 @@ import type {
   PaymentDto,
   ProductDto,
   RepostDocumentCommand,
+  RepostPaymentCommand,
   ReportContracts,
   ReserveStockRequestDto,
   StockBalanceReportFilterDto,
-  UpdateDraftDocumentPatchDto
+  UpdateDraftDocumentPatchDto,
+  UpdateDraftPaymentPatchDto
 } from "./index";
 import {
   accountTypes,
@@ -68,6 +70,11 @@ const payment: CreatePaymentDto = {
   amount: "150.00",
   accountId: "account-1",
   allocations: [{ documentId: "document-1", amount: "150.00" }]
+};
+
+const updatePayment: UpdateDraftPaymentPatchDto = {
+  notes: "Updated payment",
+  allocations: [{ documentId: "document-1", amount: "100.00" }]
 };
 
 const reportFilter: StockBalanceReportFilterDto = {
@@ -131,6 +138,10 @@ const paymentView: PaymentDto = {
   allocations: []
 };
 
+const repostPayment: RepostPaymentCommand = {
+  id: "payment-1"
+};
+
 const productView: ProductDto = {
   id: "product-1",
   sku: "SKU-001",
@@ -155,10 +166,12 @@ void counterparty;
 void account;
 void draftDocument;
 void payment;
+void updatePayment;
 void reportContracts;
 void reserveStockRequest;
 void repostDocument;
 void updateDraftDocument;
 void documentView;
 void paymentView;
+void repostPayment;
 void productView;

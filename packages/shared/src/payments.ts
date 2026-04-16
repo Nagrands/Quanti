@@ -41,7 +41,22 @@ export interface CreatePaymentDto {
   allocations?: PaymentAllocationDto[];
 }
 
+export interface UpdateDraftPaymentPatchDto {
+  number?: string;
+  direction?: PaymentDirection;
+  paymentDate?: IsoDateString;
+  amount?: DecimalString;
+  accountId?: AccountId;
+  counterpartyId?: CounterpartyId | null;
+  notes?: string | null;
+  allocations?: PaymentAllocationDto[];
+}
+
 export interface PostPaymentCommand {
+  id: PaymentId;
+}
+
+export interface RepostPaymentCommand {
   id: PaymentId;
 }
 
