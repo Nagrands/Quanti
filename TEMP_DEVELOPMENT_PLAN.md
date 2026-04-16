@@ -55,12 +55,12 @@ Status legend:
    - Add derived debt calculation per counterparty.
    - Add integration tests for partial payments and allocation correctness.
 
-9. `[ ]` Reporting engine
+9. `[x]` Reporting engine
    - Implement stock, turnover, date-bounded balance, sales, top products, cashflow, and debt reports.
    - Base reports on ledger tables first.
    - Add correctness tests for report aggregates.
 
-10. `[ ]` Desktop shell foundation
+10. `[x]` Desktop shell foundation
     - Initialize Tauri project inside `apps/desktop`.
     - Add safe native command boundaries for file and dialog operations.
     - Add shell/bootstrap checks.

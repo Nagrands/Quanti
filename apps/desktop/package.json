@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "node --watch src/main.tsx",
+    "tauri:check": "cargo check --manifest-path src-tauri/Cargo.toml",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test"
+    "test": "node --test test/**/*.test.mjs"
   }
 }

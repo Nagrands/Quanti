@@ -27,6 +27,21 @@ export interface CashflowReportFilterDto extends DateRangeDto {
   counterpartyId?: CounterpartyId;
 }
 
+export interface SalesReportFilterDto extends DateRangeDto {
+  counterpartyId?: CounterpartyId;
+  productId?: ProductId;
+}
+
+export interface TopProductsReportFilterDto extends DateRangeDto {
+  warehouseId?: WarehouseId;
+  limit?: number;
+}
+
+export interface CounterpartyDebtReportFilterDto {
+  at?: IsoDateString;
+  counterpartyId?: CounterpartyId;
+}
+
 export interface StockBalanceReportRowDto {
   productId: ProductId;
   warehouseId: WarehouseId;
@@ -46,4 +61,26 @@ export interface CashflowReportRowDto {
   counterpartyId: CounterpartyId | null;
   incoming: DecimalString;
   outgoing: DecimalString;
+}
+
+export interface SalesReportRowDto {
+  documentId: string;
+  documentDate: IsoDateString;
+  counterpartyId: CounterpartyId | null;
+  productId: ProductId;
+  quantity: DecimalString;
+  amount: DecimalString;
+}
+
+export interface TopProductsReportRowDto {
+  productId: ProductId;
+  quantity: DecimalString;
+  amount: DecimalString;
+}
+
+export interface CounterpartyDebtReportRowDto {
+  counterpartyId: CounterpartyId;
+  documentTotal: DecimalString;
+  paidTotal: DecimalString;
+  debtTotal: DecimalString;
 }

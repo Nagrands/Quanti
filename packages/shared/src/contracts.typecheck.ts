@@ -5,14 +5,19 @@ import type {
   CreatePaymentDto,
   CreateProductDto,
   CreateWarehouseDto,
+  CounterpartyDebtReportFilterDto,
   DocumentDto,
   PaymentDto,
   ProductDto,
   RepostDocumentCommand,
   RepostPaymentCommand,
   ReportContracts,
+  SalesReportFilterDto,
   ReserveStockRequestDto,
+  TopProductsReportFilterDto,
   StockBalanceReportFilterDto,
+  StockTurnoverReportFilterDto,
+  CashflowReportFilterDto,
   UpdateDraftDocumentPatchDto,
   UpdateDraftPaymentPatchDto
 } from "./index";
@@ -82,6 +87,33 @@ const reportFilter: StockBalanceReportFilterDto = {
   warehouseId: "warehouse-1"
 };
 
+const stockTurnoverFilter: StockTurnoverReportFilterDto = {
+  from: "2026-04-01T00:00:00.000Z",
+  to: "2026-04-30T23:59:59.000Z"
+};
+
+const cashflowFilter: CashflowReportFilterDto = {
+  from: "2026-04-01T00:00:00.000Z",
+  to: "2026-04-30T23:59:59.000Z",
+  accountId: "account-1"
+};
+
+const salesFilter: SalesReportFilterDto = {
+  from: "2026-04-01T00:00:00.000Z",
+  to: "2026-04-30T23:59:59.000Z",
+  counterpartyId: "counterparty-1"
+};
+
+const topProductsFilter: TopProductsReportFilterDto = {
+  from: "2026-04-01T00:00:00.000Z",
+  to: "2026-04-30T23:59:59.000Z",
+  limit: 10
+};
+
+const debtReportFilter: CounterpartyDebtReportFilterDto = {
+  at: "2026-04-30T23:59:59.000Z"
+};
+
 const reserveStockRequest: ReserveStockRequestDto = {
   productId: "product-1",
   warehouseId: "warehouse-1",
@@ -89,7 +121,9 @@ const reserveStockRequest: ReserveStockRequestDto = {
 };
 
 const reportContracts: ReportContracts = {
-  stockBalanceFilter: reportFilter
+  stockBalanceFilter: reportFilter,
+  stockTurnoverFilter,
+  cashflowFilter
 };
 
 const documentView: DocumentDto = {
@@ -168,6 +202,9 @@ void draftDocument;
 void payment;
 void updatePayment;
 void reportContracts;
+void salesFilter;
+void topProductsFilter;
+void debtReportFilter;
 void reserveStockRequest;
 void repostDocument;
 void updateDraftDocument;

@@ -1,5 +1,5 @@
-export function createDesktopApp(): string {
-  return "quanti-desktop";
-}
+import { createDesktopApp, getSupportedDesktopShellCommands } from "./tauri-shell";
 
-console.log(createDesktopApp());
+export { createDesktopApp, getSupportedDesktopShellCommands } from "./tauri-shell";
+
+console.log(createDesktopApp(), getSupportedDesktopShellCommands().join(","));
