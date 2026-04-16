@@ -7,10 +7,10 @@ import type {
   TopProductsReportFilterDto
 } from "@quanti/shared";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, IsString, Min } from "class-validator";
+import { IsDateString, IsInt, IsOptional, IsString, Min } from "class-validator";
 
 export class StockBalanceReportRequest implements StockBalanceReportFilterDto {
-  @IsString()
+  @IsDateString()
   at!: string;
 
   @IsOptional()
@@ -23,10 +23,10 @@ export class StockBalanceReportRequest implements StockBalanceReportFilterDto {
 }
 
 export class StockTurnoverReportRequest implements StockTurnoverReportFilterDto {
-  @IsString()
+  @IsDateString()
   from!: string;
 
-  @IsString()
+  @IsDateString()
   to!: string;
 
   @IsOptional()
@@ -39,10 +39,10 @@ export class StockTurnoverReportRequest implements StockTurnoverReportFilterDto 
 }
 
 export class CashflowReportRequest implements CashflowReportFilterDto {
-  @IsString()
+  @IsDateString()
   from!: string;
 
-  @IsString()
+  @IsDateString()
   to!: string;
 
   @IsOptional()
@@ -55,10 +55,10 @@ export class CashflowReportRequest implements CashflowReportFilterDto {
 }
 
 export class SalesReportRequest implements SalesReportFilterDto {
-  @IsString()
+  @IsDateString()
   from!: string;
 
-  @IsString()
+  @IsDateString()
   to!: string;
 
   @IsOptional()
@@ -71,10 +71,10 @@ export class SalesReportRequest implements SalesReportFilterDto {
 }
 
 export class TopProductsReportRequest implements TopProductsReportFilterDto {
-  @IsString()
+  @IsDateString()
   from!: string;
 
-  @IsString()
+  @IsDateString()
   to!: string;
 
   @IsOptional()
@@ -90,7 +90,7 @@ export class TopProductsReportRequest implements TopProductsReportFilterDto {
 
 export class CounterpartyDebtReportRequest implements CounterpartyDebtReportFilterDto {
   @IsOptional()
-  @IsString()
+  @IsDateString()
   at?: string;
 
   @IsOptional()

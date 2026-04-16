@@ -1,6 +1,7 @@
 use serde::Serialize;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
+use tauri::{AppHandle, Manager};
 
 const MAX_IMPORT_BYTES: u64 = 5 * 1024 * 1024;
 const MAX_EXPORT_BYTES: usize = 5 * 1024 * 1024;
@@ -56,8 +57,8 @@ pub fn read_import_preview(path: String) -> Result<ImportPreview, String> {
 }
 
 #[tauri::command]
-pub fn write_export_file(path: String, contents: String) -> Result<(), String> {
-  let resolved = validate_export_path(&path)?;
+pub fn write_export_file(app: AppHandle, file_name: String, contents: String) -> Result<String, String> {
+  let resolved = resolve_export_path(&app, &file_name)?;
 
   if contents.len() > MAX_EXPORT_BYTES {
     return Err("Export payload is too large.".into());
@@ -67,30 +68,55 @@ pub fn write_export_file(path: String, contents: String) -> Result<(), String> {
     fs::create_dir_all(parent).map_err(|error| error.to_string())?;
   }
 
-  fs::write(&resolved, contents.as_bytes()).map_err(|error| error.to_string())
+  fs::write(&resolved, contents.as_bytes()).map_err(|error| error.to_string())?;
+
+  Ok(resolved.to_string_lossy().to_string())
 }
 
-fn validate_export_path(path: &str) -> Result<PathBuf, String> {
-  let resolved = PathBuf::from(path);
+fn resolve_export_path(app: &AppHandle, file_name: &str) -> Result<PathBuf, String> {
+  let relative = validate_export_name(file_name)?;
+  let app_data_dir = app
+    .path()
+    .app_data_dir()
+    .map_err(|error| error.to_string())?;
 
-  if !resolved.is_absolute() {
-    return Err("Export path must be absolute.".into());
+  Ok(app_data_dir.join("exports").join(relative))
+}
+
+fn validate_export_name(file_name: &str) -> Result<PathBuf, String> {
+  let relative = PathBuf::from(file_name);
+
+  if relative.is_absolute() {
+    return Err("Export file name must be relative to the Quanti export directory.".into());
   }
 
-  let extension = resolved
+  if has_forbidden_components(&relative) {
+    return Err("Export file name must not escape the Quanti export directory.".into());
+  }
+
+  let extension = relative
     .extension()
     .and_then(|value| value.to_str())
-    .ok_or_else(|| "Export path must include an allowed extension.".to_string())?;
+    .ok_or_else(|| "Export file name must include an allowed extension.".to_string())?;
 
   if !ALLOWED_EXPORT_EXTENSIONS.contains(&extension) {
     return Err("Export extension is not allowed.".into());
   }
 
-  if is_hidden_path(&resolved) {
-    return Err("Export path must not target hidden files or folders.".into());
+  if is_hidden_path(&relative) {
+    return Err("Export file name must not target hidden files or folders.".into());
   }
 
-  Ok(resolved)
+  Ok(relative)
+}
+
+fn has_forbidden_components(path: &Path) -> bool {
+  path.components().any(|component| {
+    matches!(
+      component,
+      Component::ParentDir | Component::RootDir | Component::Prefix(_)
+    )
+  })
 }
 
 fn is_hidden_path(path: &Path) -> bool {
@@ -102,23 +128,29 @@ fn is_hidden_path(path: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-  use super::{is_hidden_path, validate_export_path};
+  use super::{has_forbidden_components, is_hidden_path, validate_export_name};
   use std::path::Path;
 
   #[test]
-  fn accepts_absolute_export_with_allowed_extension() {
-    let result = validate_export_path("/tmp/quanti/report.csv");
+  fn accepts_relative_export_name_with_allowed_extension() {
+    let result = validate_export_name("reports/report.csv");
     assert!(result.is_ok());
   }
 
   #[test]
-  fn rejects_relative_export_paths() {
-    let result = validate_export_path("report.csv");
+  fn rejects_absolute_export_paths() {
+    let result = validate_export_name("/tmp/report.csv");
     assert!(result.is_err());
   }
 
   #[test]
   fn rejects_hidden_path_segments() {
     assert!(is_hidden_path(Path::new("/tmp/.private/report.csv")));
+  }
+
+  #[test]
+  fn rejects_parent_directory_escape() {
+    assert!(has_forbidden_components(Path::new("../report.csv")));
+    assert!(validate_export_name("../report.csv").is_err());
   }
 }

@@ -29,6 +29,8 @@ test("desktop shell exports safe native commands and Tauri config", async () => 
   assert.match(shellSource, /"read_import_preview"/);
   assert.match(shellSource, /"write_export_file"/);
   assert.match(tauriConfig, /"identifier": "com\.quanti\.desktop"/);
-  assert.match(rustCommands, /const ALLOWED_EXPORT_EXTENSIONS/);
+  assert.match(rustCommands, /app_data_dir/);
+  assert.match(rustCommands, /validate_export_name/);
+  assert.match(rustCommands, /has_forbidden_components/);
   assert.match(rustCommands, /MAX_IMPORT_BYTES/);
 });

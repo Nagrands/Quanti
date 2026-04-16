@@ -16,7 +16,7 @@ export interface ImportPreviewResult {
 }
 
 export interface WriteExportFileRequest {
-  path: string;
+  fileName: string;
   contents: string;
 }
 
