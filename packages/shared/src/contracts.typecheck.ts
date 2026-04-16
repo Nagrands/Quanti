@@ -8,9 +8,11 @@ import type {
   DocumentDto,
   PaymentDto,
   ProductDto,
+  RepostDocumentCommand,
   ReportContracts,
   ReserveStockRequestDto,
-  StockBalanceReportFilterDto
+  StockBalanceReportFilterDto,
+  UpdateDraftDocumentPatchDto
 } from "./index";
 import {
   accountTypes,
@@ -99,6 +101,23 @@ const documentView: DocumentDto = {
   items: []
 };
 
+const repostDocument: RepostDocumentCommand = {
+  id: "document-1",
+  postedAt: "2026-04-14T00:00:00.000Z"
+};
+
+const updateDraftDocument: UpdateDraftDocumentPatchDto = {
+  notes: "Updated notes",
+  items: [
+    {
+      productId: "product-1",
+      quantity: "8.000",
+      price: "15.00",
+      amount: "120.00"
+    }
+  ]
+};
+
 const paymentView: PaymentDto = {
   id: "payment-1",
   number: "PAY-0001",
@@ -138,6 +157,8 @@ void draftDocument;
 void payment;
 void reportContracts;
 void reserveStockRequest;
+void repostDocument;
+void updateDraftDocument;
 void documentView;
 void paymentView;
 void productView;

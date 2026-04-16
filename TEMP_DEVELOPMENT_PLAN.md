@@ -44,7 +44,7 @@ Status legend:
    - Add balance calculation and reservation validation rules.
    - Add integration tests for balance correctness and race-sensitive flows.
 
-7. `[ ]` Document engine
+7. `[x]` Document engine
    - Implement draft, post, unpost, and repost flows.
    - Generate movements from documents with transaction safety.
    - Enforce double-post prevention and negative stock rules.

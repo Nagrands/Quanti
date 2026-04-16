@@ -59,6 +59,18 @@ export interface UpdateDraftDocumentDto extends CreateDraftDocumentDto {
   id: DocumentId;
 }
 
+export interface UpdateDraftDocumentPatchDto {
+  number?: string;
+  type?: DocumentType;
+  documentDate?: IsoDateString;
+  notes?: string | null;
+  warehouseId?: WarehouseId | null;
+  sourceWarehouseId?: WarehouseId | null;
+  destinationWarehouseId?: WarehouseId | null;
+  counterpartyId?: CounterpartyId | null;
+  items?: CreateDocumentItemDto[];
+}
+
 export interface PostDocumentCommand {
   id: DocumentId;
   postedAt?: IsoDateString;
@@ -66,6 +78,11 @@ export interface PostDocumentCommand {
 
 export interface UnpostDocumentCommand {
   id: DocumentId;
+}
+
+export interface RepostDocumentCommand {
+  id: DocumentId;
+  postedAt?: IsoDateString;
 }
 
 export interface StockMovementDto {

@@ -51,16 +51,7 @@ export class StockService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      await this.lockScope(tx, payload.productId, payload.warehouseId);
-
-      const balance = await this.getBalance(payload.productId, payload.warehouseId, tx);
-      const availableQuantity = this.toNumber(balance.quantity);
-
-      if (availableQuantity < requiredQuantity) {
-        throw new BadRequestException(
-          `Insufficient stock for product ${payload.productId} in warehouse ${payload.warehouseId}.`
-        );
-      }
+      const balance = await this.assertAvailableStock(payload, tx);
 
       return {
         ...balance,
@@ -71,9 +62,33 @@ export class StockService {
     });
   }
 
-  private async lockScope(tx: Prisma.TransactionClient, productId: string, warehouseId: string) {
-    await tx.$queryRaw(Prisma.sql`SELECT id FROM "Product" WHERE id = ${productId} FOR UPDATE`);
-    await tx.$queryRaw(Prisma.sql`SELECT id FROM "Warehouse" WHERE id = ${warehouseId} FOR UPDATE`);
+  async assertAvailableStock(
+    payload: ReserveStockRequestDto,
+    client: DbClient = this.prisma
+  ): Promise<StockBalanceResultDto> {
+    const requiredQuantity = this.toNumber(payload.requiredQuantity);
+
+    if (requiredQuantity <= 0) {
+      throw new BadRequestException("Required quantity must be greater than zero.");
+    }
+
+    await this.lockScope(client, payload.productId, payload.warehouseId);
+
+    const balance = await this.getBalance(payload.productId, payload.warehouseId, client);
+    const availableQuantity = this.toNumber(balance.quantity);
+
+    if (availableQuantity < requiredQuantity) {
+      throw new BadRequestException(
+        `Insufficient stock for product ${payload.productId} in warehouse ${payload.warehouseId}.`
+      );
+    }
+
+    return balance;
+  }
+
+  private async lockScope(client: DbClient, productId: string, warehouseId: string) {
+    await client.$queryRaw(Prisma.sql`SELECT id FROM "Product" WHERE id = ${productId} FOR UPDATE`);
+    await client.$queryRaw(Prisma.sql`SELECT id FROM "Warehouse" WHERE id = ${warehouseId} FOR UPDATE`);
   }
 
   private toNumber(value: { toString(): string } | number | string) {
