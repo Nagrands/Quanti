@@ -1,0 +1,138 @@
+@use "../abstracts/variables" as vars;
+
+.report-tabs {
+  margin-top: 18px;
+}
+
+@media (max-width: 1180px) {
+  .report-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .report-tabs .section-tabs__item {
+    padding-inline: 10px;
+  }
+}
+
+.report-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+  margin: 20px 0 18px;
+  padding: 18px;
+  border: 1px solid vars.$color-border-strong;
+  border-radius: vars.$radius-medium;
+  background: vars.$color-surface;
+}
+
+.report-filters label {
+  display: grid;
+  min-width: 150px;
+  flex: 1 1 150px;
+  gap: 7px;
+  color: vars.$color-text;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.report-filters input,
+.report-filters select {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid vars.$color-border-strong;
+  border-radius: vars.$radius-small;
+  outline: 0;
+  color: vars.$color-text;
+  background: vars.$color-white;
+}
+
+.report-filters input:focus,
+.report-filters select:focus {
+  border-color: vars.$color-accent-600;
+  box-shadow: 0 0 0 3px rgb(9 105 218 / 12%);
+}
+
+.report-filters__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.report-filters__error {
+  width: 100%;
+}
+
+.report-results {
+  min-height: 300px;
+}
+
+.report-table {
+  min-width: 720px;
+}
+
+.report-table .numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-value--incoming {
+  color: vars.$color-success !important;
+}
+
+.report-value--outgoing {
+  color: vars.$color-danger !important;
+}
+
+@media (max-width: 760px) {
+  .report-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .report-filters {
+    align-items: stretch;
+  }
+
+  .report-filters label {
+    flex-basis: calc(50% - 8px);
+  }
+
+  .report-filters__actions {
+    width: 100%;
+  }
+
+  .report-filters__actions .button {
+    flex: 1;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .report-filters label {
+    flex-basis: 100%;
+  }
+
+  .report-filters__actions {
+    flex-direction: column;
+  }
+}
+
+@media print {
+  .sidebar,
+  .app-header,
+  .report-tabs,
+  .report-filters {
+    display: none !important;
+  }
+
+  .app-main {
+    margin: 0;
+    padding: 0;
+  }
+
+  .data-table-frame {
+    box-shadow: none;
+  }
+}

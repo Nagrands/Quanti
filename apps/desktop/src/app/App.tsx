@@ -7,6 +7,7 @@ import { MasterDataPage } from "../features/master-data/MasterDataPage";
 import { PaymentsPage } from "../features/payments/PaymentsPage";
 import { ModulePlaceholderPage } from "../features/placeholders/ModulePlaceholderPage";
 import { NotFoundPage } from "../features/placeholders/NotFoundPage";
+import { ReportsPage } from "../features/reports/ReportsPage";
 
 export function App() {
   return (
@@ -17,10 +18,7 @@ export function App() {
         <Route path="/products" element={<MasterDataPage />} />
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/payments" element={<PaymentsPage />} />
-        <Route
-          path="/reports"
-          element={<ModulePlaceholderPage title="Reports" description="Ledger-based operational and financial reports will appear here." />}
-        />
+        <Route path="/reports" element={<ReportsPage />} />
         <Route
           path="/settings"
           element={<ModulePlaceholderPage title="Settings" description="Application and workspace settings will be configured here." />}

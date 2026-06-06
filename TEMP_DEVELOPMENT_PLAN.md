@@ -88,9 +88,10 @@ Status legend:
     - Add UI tests for incoming, outgoing, and partial allocation scenarios.
     - Note: completed with payment filters, debt context, partial document allocations, read-only posted/cancelled states, confirmed lifecycle actions, and responsive UI coverage.
 
-15. `[ ]` Reports UI
+15. `[x]` Reports UI
     - Build report filters, tables, and export-ready views.
     - Add UI tests for report loading and filter behavior.
+    - Note: completed with seven typed report views, lookup-backed filters, explicit UTC date boundaries, CSV export, responsive tables, and loading/empty/error coverage.
 
 16. `[ ]` PDF printing
     - Implement backend Puppeteer + Handlebars printing flow.
