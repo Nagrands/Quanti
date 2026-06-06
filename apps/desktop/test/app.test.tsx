@@ -16,10 +16,16 @@ const mockedRequest = vi.mocked(apiClient.request);
 
 describe("Quanti application shell", () => {
   beforeEach(() => {
-    mockedRequest.mockResolvedValue({
-      service: "quanti-api",
-      status: "ok",
-      modules: ["products", "documents", "stock", "payments", "reports"]
+    mockedRequest.mockImplementation(async (path) => {
+      if (path === "/health") {
+        return {
+          service: "quanti-api",
+          status: "ok",
+          modules: ["products", "documents", "stock", "payments", "reports"]
+        };
+      }
+
+      return [];
     });
   });
 

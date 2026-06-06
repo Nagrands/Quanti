@@ -71,10 +71,11 @@ Status legend:
     - Add smoke tests for app bootstrap and route rendering.
     - Note: completed with Vite, React Router, TanStack Query, responsive ERP shell, API health state, SCSS layers, and Vitest/Testing Library coverage.
 
-12. `[ ]` Products UI
+12. `[x]` Products UI
     - Build master-data screens for products, warehouses, counterparties, and accounts.
     - Add table workflows, forms, and validation feedback.
     - Add UI tests for create/edit flows.
+    - Note: completed with shared table/form infrastructure, search, create/edit drawers, explicit deactivation, responsive behavior, and CRUD/error tests.
 
 13. `[ ]` Documents UI
     - Build document list and document form with editable rows.

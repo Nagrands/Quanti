@@ -71,11 +71,7 @@ export class ApiClient {
       );
     }
 
-    if (response.status === 204) {
-      return undefined as T;
-    }
-
-    return response.json() as Promise<T>;
+    return this.readSuccessBody<T>(response);
   }
 
   private async readJson(response: Response): Promise<unknown> {
@@ -83,6 +79,18 @@ export class ApiClient {
       return await response.json();
     } catch {
       return undefined;
+    }
+  }
+
+  private async readSuccessBody<T>(response: Response): Promise<T> {
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    try {
+      return await response.json() as T;
+    } catch {
+      return undefined as T;
     }
   }
 }

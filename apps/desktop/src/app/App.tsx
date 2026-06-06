@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "../components/layout/AppLayout";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { MasterDataPage } from "../features/master-data/MasterDataPage";
 import { ModulePlaceholderPage } from "../features/placeholders/ModulePlaceholderPage";
 import { NotFoundPage } from "../features/placeholders/NotFoundPage";
 
@@ -11,10 +12,7 @@ export function App() {
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route
-          path="/products"
-          element={<ModulePlaceholderPage title="Products" description="Product and master-data workflows will be available in the next stage." />}
-        />
+        <Route path="/products" element={<MasterDataPage />} />
         <Route
           path="/documents"
           element={<ModulePlaceholderPage title="Documents" description="Create, review, and post inventory documents from this workspace." />}

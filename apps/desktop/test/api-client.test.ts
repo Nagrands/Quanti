@@ -11,6 +11,14 @@ function createJsonResponse(body: unknown, status = 200): Response {
   } as unknown as Response;
 }
 
+function createEmptyResponse(status = 200): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: vi.fn().mockRejectedValue(new SyntaxError("Unexpected end of JSON input"))
+  } as unknown as Response;
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
@@ -69,5 +77,13 @@ describe("ApiClient", () => {
       code: "NETWORK_ERROR",
       message: "Failed to fetch"
     });
+  });
+
+  test("accepts successful responses without a JSON body", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(createEmptyResponse()));
+
+    await expect(new ApiClient().request<void>("/products/product-1", {
+      method: "DELETE"
+    })).resolves.toBeUndefined();
   });
 });
