@@ -77,10 +77,11 @@ Status legend:
     - Add UI tests for create/edit flows.
     - Note: completed with shared table/form infrastructure, search, create/edit drawers, explicit deactivation, responsive behavior, and CRUD/error tests.
 
-13. `[ ]` Documents UI
+13. `[x]` Documents UI
     - Build document list and document form with editable rows.
     - Add explicit `draft` and `posted` status states.
     - Add UI tests for create, edit, post, and unpost flows.
+    - Note: completed with client-side filters, lookup-backed draft forms, calculated line totals, read-only posted documents, and confirmed lifecycle actions.
 
 14. `[ ]` Payments UI
     - Build payments list and payment allocation workflows.
