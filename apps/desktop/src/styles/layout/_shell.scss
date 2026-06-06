@@ -1,0 +1,82 @@
+@use "../abstracts/variables" as vars;
+
+.app-shell {
+  min-height: 100vh;
+  background: vars.$color-background;
+}
+
+.app-shell__workspace {
+  min-height: 100vh;
+  margin-left: vars.$sidebar-width;
+}
+
+.app-header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  align-items: center;
+  min-height: vars.$header-height;
+  padding: 0 32px;
+  border-bottom: 1px solid vars.$color-border;
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(10px);
+}
+
+.app-header__context {
+  color: vars.$color-text-muted;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.app-header__menu {
+  display: none;
+  margin-right: 12px;
+}
+
+.app-content {
+  width: min(100%, vars.$content-max-width);
+  margin: 0 auto;
+  padding: 38px 44px 48px;
+}
+
+.navigation-scrim {
+  display: none;
+}
+
+@media (max-width: 880px) {
+  .app-shell__workspace {
+    margin-left: 0;
+  }
+
+  .app-header {
+    min-height: 64px;
+    padding: 0 20px;
+  }
+
+  .app-header__menu {
+    display: inline-grid;
+  }
+
+  .app-content {
+    padding: 28px 20px 36px;
+  }
+
+  .navigation-scrim {
+    position: fixed;
+    z-index: 29;
+    inset: 0;
+    display: block;
+    visibility: hidden;
+    background: rgb(8 39 70 / 45%);
+    opacity: 0;
+    transition:
+      opacity vars.$transition-fast,
+      visibility vars.$transition-fast;
+  }
+
+  .navigation-scrim--visible {
+    visibility: visible;
+    opacity: 1;
+  }
+}

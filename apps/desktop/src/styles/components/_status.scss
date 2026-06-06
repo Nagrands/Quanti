@@ -1,0 +1,41 @@
+@use "../abstracts/variables" as vars;
+
+.api-status {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+  color: vars.$color-text-muted;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.api-status__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: vars.$color-warning;
+  box-shadow: 0 0 0 3px rgb(197 138 22 / 12%);
+}
+
+.api-status--success .api-status__dot {
+  background: vars.$color-success;
+  box-shadow: 0 0 0 3px rgb(29 163 91 / 12%);
+}
+
+.api-status--error .api-status__dot {
+  background: vars.$color-danger;
+  box-shadow: 0 0 0 3px rgb(196 61 75 / 12%);
+}
+
+@media (max-width: 520px) {
+  .api-status span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}

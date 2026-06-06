@@ -1,0 +1,109 @@
+@use "../abstracts/variables" as vars;
+
+.page__header {
+  padding-bottom: 24px;
+  border-bottom: 1px solid vars.$color-border;
+}
+
+.page__header h1 {
+  margin: 4px 0 0;
+  color: vars.$color-text;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.page__eyebrow {
+  margin: 0;
+  color: vars.$color-text-muted;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.workspace-panel {
+  display: grid;
+  min-height: min(62vh, 620px);
+  margin-top: 28px;
+  place-items: center;
+  padding: 48px;
+  border: 1px solid vars.$color-border-strong;
+  border-radius: vars.$radius-medium;
+  background: vars.$color-surface;
+  box-shadow: vars.$shadow-panel;
+  text-align: center;
+}
+
+.workspace-panel--compact {
+  min-height: min(48vh, 460px);
+}
+
+.workspace-panel__content {
+  max-width: 560px;
+}
+
+.workspace-panel__content h2 {
+  margin: 0;
+  color: vars.$color-text;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  letter-spacing: -0.03em;
+}
+
+.workspace-panel__content p {
+  margin: 14px 0 0;
+  color: vars.$color-text-muted;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.text-link {
+  display: inline-flex;
+  margin-top: 22px;
+  color: vars.$color-accent-600;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: vars.$radius-small;
+  color: vars.$color-text;
+  background: transparent;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: vars.$color-background;
+}
+
+.icon-button:focus-visible,
+.sidebar__link:focus-visible,
+.text-link:focus-visible {
+  outline: 3px solid rgb(9 105 218 / 28%);
+  outline-offset: 2px;
+}
+
+.icon-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (max-width: 520px) {
+  .workspace-panel {
+    min-height: 52vh;
+    padding: 32px 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

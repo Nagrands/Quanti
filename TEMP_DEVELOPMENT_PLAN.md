@@ -65,10 +65,11 @@ Status legend:
     - Add safe native command boundaries for file and dialog operations.
     - Add shell/bootstrap checks.
 
-11. `[ ]` Frontend application foundation
+11. `[x]` Frontend application foundation
     - Initialize React application structure in `apps/desktop`.
     - Add routing, layout, API client/query layer, and common UI patterns.
     - Add smoke tests for app bootstrap and route rendering.
+    - Note: completed with Vite, React Router, TanStack Query, responsive ERP shell, API health state, SCSS layers, and Vitest/Testing Library coverage.
 
 12. `[ ]` Products UI
     - Build master-data screens for products, warehouses, counterparties, and accounts.

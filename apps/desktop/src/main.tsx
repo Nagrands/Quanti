@@ -1,5 +1,20 @@
-import { createDesktopApp, getSupportedDesktopShellCommands } from "./tauri-shell";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 
-export { createDesktopApp, getSupportedDesktopShellCommands } from "./tauri-shell";
+import { App } from "./app/App";
+import { AppProviders } from "./app/AppProviders";
+import "./styles/main.scss";
 
-console.log(createDesktopApp(), getSupportedDesktopShellCommands().join(","));
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Quanti root element was not found.");
+}
+
+createRoot(rootElement).render(
+  <StrictMode>
+    <AppProviders>
+      <App />
+    </AppProviders>
+  </StrictMode>
+);
