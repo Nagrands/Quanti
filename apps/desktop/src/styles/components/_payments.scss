@@ -1,0 +1,149 @@
+@use "../abstracts/variables" as vars;
+
+.payment-drawer {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  width: min(640px, 100%);
+  flex-direction: column;
+  border-left: 1px solid vars.$color-border;
+  background: vars.$color-white;
+  box-shadow: -14px 0 40px rgb(16 35 62 / 14%);
+}
+
+.payment-form {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.payment-form__body {
+  overflow-y: auto;
+  padding: 26px;
+}
+
+.debt-context {
+  margin: 0 0 20px;
+  padding: 10px 12px;
+  border-left: 3px solid vars.$color-accent-600;
+  color: vars.$color-text-muted;
+  background: #f7faff;
+  font-size: 0.8rem;
+}
+
+.allocations {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid vars.$color-border;
+}
+
+.allocations h3 {
+  margin: 0 0 14px;
+}
+
+.allocations__table {
+  min-width: 550px;
+  margin-bottom: 14px;
+  border: 1px solid vars.$color-border;
+  border-radius: vars.$radius-small;
+}
+
+.allocations__header,
+.allocation-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 2fr) 110px 130px 40px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+}
+
+.allocations__header {
+  color: vars.$color-text-muted;
+  background: #fbfcfd;
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.allocation-row {
+  border-top: 1px solid vars.$color-border;
+}
+
+.allocation-row select,
+.allocation-row input {
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid vars.$color-border-strong;
+  border-radius: vars.$radius-small;
+  background: vars.$color-white;
+}
+
+.allocation-row > span {
+  color: vars.$color-text-muted;
+  text-align: right;
+}
+
+.payment-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin-top: 24px;
+  overflow: hidden;
+  border: 1px solid vars.$color-border;
+  border-radius: vars.$radius-small;
+  background: vars.$color-border;
+}
+
+.payment-summary > div {
+  display: grid;
+  gap: 5px;
+  padding: 15px;
+  background: vars.$color-white;
+}
+
+.payment-summary span {
+  color: vars.$color-text-muted;
+  font-size: 0.72rem;
+}
+
+.payment-summary strong {
+  font-size: 1rem;
+}
+
+.payment-summary .negative {
+  color: vars.$color-danger;
+}
+
+.direction {
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.direction--incoming {
+  color: vars.$color-success;
+}
+
+.direction--outgoing {
+  color: vars.$color-danger;
+}
+
+.status-label--cancelled {
+  color: vars.$color-danger;
+  background: #fff5f6;
+}
+
+@media (max-width: 640px) {
+  .payment-drawer {
+    width: 100%;
+    border-left: 0;
+  }
+
+  .allocations {
+    overflow-x: auto;
+  }
+
+  .payment-summary {
+    grid-template-columns: 1fr;
+  }
+}

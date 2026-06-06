@@ -83,9 +83,10 @@ Status legend:
     - Add UI tests for create, edit, post, and unpost flows.
     - Note: completed with client-side filters, lookup-backed draft forms, calculated line totals, read-only posted documents, and confirmed lifecycle actions.
 
-14. `[ ]` Payments UI
+14. `[x]` Payments UI
     - Build payments list and payment allocation workflows.
     - Add UI tests for incoming, outgoing, and partial allocation scenarios.
+    - Note: completed with payment filters, debt context, partial document allocations, read-only posted/cancelled states, confirmed lifecycle actions, and responsive UI coverage.
 
 15. `[ ]` Reports UI
     - Build report filters, tables, and export-ready views.

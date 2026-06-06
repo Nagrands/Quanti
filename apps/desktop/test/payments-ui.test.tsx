@@ -1,0 +1,76 @@
+import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { PaymentsPage } from "../src/features/payments/PaymentsPage";
+import * as api from "../src/features/payments/payments-api";
+import { allocatedTotal, toPaymentPayload } from "../src/features/payments/payment-model";
+import { renderWithAppProviders } from "./render-app";
+
+vi.mock("../src/features/payments/payments-api");
+const draft = { id: "pay-1", number: "PAY-1", direction: "INCOMING" as const, status: "DRAFT" as const, paymentDate: "2026-06-06T00:00:00.000Z", amount: "100.00", notes: null, accountId: "a1", counterpartyId: "c1", allocations: [{ documentId: "d1", amount: "40.00" }] };
+const posted = { ...draft, id: "pay-2", number: "PAY-2", status: "POSTED" as const };
+const lookups = {
+  accounts: [{ id: "a1", code: "BANK", name: "Bank", type: "BANK" as const, currencyCode: "RUB", isActive: true, createdAt: "", updatedAt: "" }],
+  counterparties: [{ id: "c1", code: "C1", name: "Acme", type: "CUSTOMER" as const, taxId: null, isActive: true, createdAt: "", updatedAt: "" }],
+  documents: [{ id: "d1", number: "SO-1", type: "SALE" as const, status: "POSTED" as const, documentDate: "", postedAt: "", notes: null, totalAmount: "80.00", warehouseId: null, sourceWarehouseId: null, destinationWarehouseId: null, counterpartyId: "c1", items: [] }]
+};
+
+describe("payments workspace", () => {
+  beforeEach(() => {
+    vi.mocked(api.getPayments).mockResolvedValue([draft, posted]);
+    vi.mocked(api.getPaymentLookups).mockResolvedValue(lookups);
+    vi.mocked(api.getPaymentDebts).mockResolvedValue([{ counterpartyId: "c1", documentTotal: "80.00", paidTotal: "40.00", debtTotal: "40.00" }]);
+    vi.mocked(api.createPayment).mockResolvedValue(draft); vi.mocked(api.updatePayment).mockResolvedValue(draft);
+    vi.mocked(api.deletePayment).mockResolvedValue(undefined); vi.mocked(api.postPayment).mockResolvedValue(posted);
+    vi.mocked(api.unpostPayment).mockResolvedValue(draft); vi.mocked(api.repostPayment).mockResolvedValue(posted);
+  });
+
+  test("filters payments and opens posted read-only", async () => {
+    const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments");
+    expect(await screen.findByText("PAY-1")).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Payment status filter"), "POSTED");
+    expect(screen.queryByText("PAY-1")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "View" }));
+    expect(within(screen.getByRole("complementary", { name: "Payment details" })).queryByRole("button", { name: "Save draft" })).not.toBeInTheDocument();
+  });
+
+  test("creates an outgoing partial payment allocation", async () => {
+    const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-1");
+    await user.click(screen.getByRole("button", { name: "New payment" }));
+    const drawer = screen.getByRole("complementary", { name: "New payment" });
+    await user.type(within(drawer).getByLabelText("Number"), "PAY-3");
+    await user.selectOptions(within(drawer).getByLabelText("Direction"), "OUTGOING");
+    await user.selectOptions(within(drawer).getByLabelText("Account"), "a1");
+    await user.selectOptions(within(drawer).getByLabelText("Counterparty"), "c1");
+    const amount = within(drawer).getByLabelText("Amount"); await user.clear(amount); await user.type(amount, "100");
+    await user.click(within(drawer).getByRole("button", { name: "Add allocation" }));
+    await user.selectOptions(within(drawer).getByLabelText("Allocation document"), "d1");
+    const allocated = within(drawer).getByLabelText("Allocate amount"); await user.clear(allocated); await user.type(allocated, "40");
+    await user.click(within(drawer).getByRole("button", { name: "Save draft" }));
+    expect(api.createPayment).toHaveBeenCalledWith(expect.objectContaining({ direction: "OUTGOING", amount: "100.00", allocations: [{ documentId: "d1", amount: "40.00" }] }));
+  });
+
+  test("rejects allocations above the payment amount", async () => {
+    const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-1");
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const drawer = screen.getByRole("complementary", { name: "Payment details" });
+    const allocated = within(drawer).getByLabelText("Allocate amount");
+    await user.clear(allocated); await user.type(allocated, "101");
+    await user.click(within(drawer).getByRole("button", { name: "Save draft" }));
+    expect(within(drawer).getByRole("alert")).toHaveTextContent("Allocated amount cannot exceed payment amount.");
+    expect(api.updatePayment).not.toHaveBeenCalled();
+  });
+
+  test("confirms unposting a posted payment", async () => {
+    const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-2");
+    await user.click(screen.getByRole("button", { name: "Unpost" }));
+    await user.click(within(screen.getByRole("dialog", { name: "Unpost payment?" })).getByRole("button", { name: "Confirm" }));
+    expect(api.unpostPayment).toHaveBeenCalledWith("pay-2");
+  });
+
+  test("normalizes payment payload totals", () => {
+    const values = { number: " P1 ", direction: "OUTGOING" as const, paymentDate: "2026-06-06", amount: "100", accountId: "a1", counterpartyId: "", notes: "", allocations: [{ key: "x", documentId: "d1", amount: "30" }] };
+    expect(allocatedTotal(values)).toBe(30);
+    expect(toPaymentPayload(values)).toEqual(expect.objectContaining({ number: "P1", amount: "100.00", allocations: [{ documentId: "d1", amount: "30.00" }] }));
+  });
+});
