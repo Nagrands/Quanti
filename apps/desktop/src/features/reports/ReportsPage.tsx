@@ -49,7 +49,7 @@ export function ReportsPage() {
   }
 
   function exportCsv() {
-    downloadReportCsv(
+    void downloadReportCsv(
       `quanti-${kind}-${new Date().toISOString().slice(0, 10)}.csv`,
       reportToCsv(definition, rows, lookupMaps)
     );

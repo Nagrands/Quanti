@@ -59,10 +59,17 @@ export function DocumentsPage() {
   });
   const printMutation = useMutation({
     mutationFn: (id: string) => printDocument(id),
-    onSuccess: (result, id) => {
+    onSuccess: async (result, id) => {
       const document = documentsQuery.data?.find((item) => item.id === id);
-      downloadDocumentPdf(result.data, result.fileName || `${document?.number ?? "document"}.pdf`);
-      setPrintError("");
+      try {
+        await downloadDocumentPdf(
+          result.data,
+          result.fileName || `${document?.number ?? "document"}.pdf`
+        );
+        setPrintError("");
+      } catch (error) {
+        setPrintError(error instanceof Error ? error.message : "Unable to save PDF.");
+      }
     },
     onError: (error) => {
       setPrintError(error instanceof ApiError ? error.message : "Unable to generate PDF.");

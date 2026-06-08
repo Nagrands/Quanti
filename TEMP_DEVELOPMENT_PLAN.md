@@ -99,10 +99,11 @@ Status legend:
     - Add frontend print triggers and smoke tests for render flow.
     - Note: completed with database-backed document print templates, binary PDF endpoint, injectable renderer, document print action, and API/UI coverage.
 
-17. `[ ]` Cross-platform hardening
+17. `[x]` Cross-platform hardening
     - Validate macOS and Windows behavior for desktop shell and critical workflows.
     - Review packaging, filesystem access, and platform-specific edge cases.
     - Add targeted regression checks where needed.
+    - Note: completed with native Tauri dialogs, typed text/binary export adapters, platform bundle configs and icons, macOS bundle verification, Windows config validation, and macOS/Windows CI packaging.
 
 18. `[ ]` Release readiness
     - Review documentation, changelog, onboarding, and runbooks.

@@ -10,8 +10,8 @@
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
     "typecheck": "turbo run typecheck",
-    "test": "node --test tests/workspace.test.mjs tests/db-foundation.test.mjs tests/shared-contracts.test.mjs && pnpm --filter @quanti/api test && pnpm --filter @quanti/desktop test",
-    "check": "node scripts/validate-workspace.mjs && pnpm --filter @quanti/db db:validate && node --test tests/workspace.test.mjs tests/db-foundation.test.mjs tests/shared-contracts.test.mjs && pnpm --filter @quanti/api test && pnpm --filter @quanti/desktop test && pnpm --filter @quanti/desktop tauri:check"
+    "test": "node --test tests/workspace.test.mjs tests/db-foundation.test.mjs tests/shared-contracts.test.mjs && pnpm --filter @quanti/api test && pnpm --filter @quanti/desktop test && pnpm --filter @quanti/desktop tauri:test",
+    "check": "node scripts/validate-workspace.mjs && pnpm --filter @quanti/db db:validate && node --test tests/workspace.test.mjs tests/db-foundation.test.mjs tests/shared-contracts.test.mjs && pnpm --filter @quanti/api test && pnpm --filter @quanti/desktop test && pnpm --filter @quanti/desktop tauri:test && pnpm --filter @quanti/desktop tauri:check"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",

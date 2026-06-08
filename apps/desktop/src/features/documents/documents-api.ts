@@ -8,6 +8,7 @@ import type {
 } from "@quanti/shared";
 
 import { apiClient } from "../../api/client";
+import { saveBinaryExport } from "../../tauri-shell";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
@@ -67,11 +68,5 @@ export const printDocument = (id: string) =>
     body: "{}"
   });
 
-export function downloadDocumentPdf(data: ArrayBuffer, fileName: string) {
-  const url = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
-}
+export const downloadDocumentPdf = (data: ArrayBuffer, fileName: string) =>
+  saveBinaryExport(fileName, data, "application/pdf");

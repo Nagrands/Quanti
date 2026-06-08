@@ -1,3 +1,3 @@
 fn main() {
-  quanti_desktop_lib::run();
+    quanti_desktop_lib::run();
 }

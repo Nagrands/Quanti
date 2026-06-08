@@ -1,0 +1,46 @@
+name: Desktop cross-platform
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  desktop:
+    name: Desktop (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @quanti/desktop test
+      - run: pnpm --filter @quanti/desktop build
+      - run: cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml -- --check
+      - run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
+      - run: pnpm --filter @quanti/desktop tauri:test
+      - run: pnpm --filter @quanti/desktop tauri:build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quanti-${{ matrix.os }}
+          path: apps/desktop/src-tauri/target/release/bundle
