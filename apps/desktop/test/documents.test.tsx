@@ -6,9 +6,11 @@ import { DocumentsPage } from "../src/features/documents/DocumentsPage";
 import {
   createDocument,
   deleteDocument,
+  downloadDocumentPdf,
   getDocumentLookups,
   getDocuments,
   postDocument,
+  printDocument,
   repostDocument,
   unpostDocument,
   updateDocument
@@ -22,6 +24,8 @@ vi.mock("../src/features/documents/documents-api", () => ({
   createDocument: vi.fn(),
   updateDocument: vi.fn(),
   deleteDocument: vi.fn(),
+  printDocument: vi.fn(),
+  downloadDocumentPdf: vi.fn(),
   postDocument: vi.fn(),
   unpostDocument: vi.fn(),
   repostDocument: vi.fn()
@@ -73,6 +77,11 @@ describe("documents workspace", () => {
     vi.mocked(createDocument).mockResolvedValue(draft);
     vi.mocked(updateDocument).mockResolvedValue(draft);
     vi.mocked(deleteDocument).mockResolvedValue(undefined);
+    vi.mocked(printDocument).mockResolvedValue({
+      data: new TextEncoder().encode("%PDF-test").buffer,
+      contentType: "application/pdf",
+      fileName: "SO-001.pdf"
+    });
     vi.mocked(postDocument).mockResolvedValue(posted);
     vi.mocked(unpostDocument).mockResolvedValue(draft);
     vi.mocked(repostDocument).mockResolvedValue(posted);
@@ -147,5 +156,17 @@ describe("documents workspace", () => {
       notes: null,
       items: [expect.objectContaining({ quantity: "1.500", price: "10.00", amount: "15.00" })]
     }));
+  });
+
+  test("generates and downloads a document PDF", async () => {
+    const user = userEvent.setup();
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    const row = await screen.findByRole("row", { name: /SO-001/ });
+
+    await user.click(within(row).getByRole("button", { name: "Print" }));
+
+    expect(printDocument).toHaveBeenCalledWith("document-1");
+    expect(downloadDocumentPdf).toHaveBeenCalledWith(expect.anything(), "SO-001.pdf");
+    expect(vi.mocked(downloadDocumentPdf).mock.calls[0]?.[0].byteLength).toBeGreaterThan(0);
   });
 });

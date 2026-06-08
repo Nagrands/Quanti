@@ -8,9 +8,11 @@ import { DocumentDrawer } from "./DocumentDrawer";
 import {
   createDocument,
   deleteDocument,
+  downloadDocumentPdf,
   getDocumentLookups,
   getDocuments,
   postDocument,
+  printDocument,
   repostDocument,
   unpostDocument,
   updateDocument
@@ -27,6 +29,7 @@ export function DocumentsPage() {
   const [selected, setSelected] = useState<DocumentDto | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ action: LifecycleAction; document: DocumentDto } | null>(null);
+  const [printError, setPrintError] = useState("");
 
   const documentsQuery = useQuery({ queryKey: ["documents"], queryFn: getDocuments });
   const lookupsQuery = useQuery({ queryKey: ["document-lookups"], queryFn: getDocumentLookups });
@@ -54,6 +57,17 @@ export function DocumentsPage() {
       setPendingAction(null);
     }
   });
+  const printMutation = useMutation({
+    mutationFn: (id: string) => printDocument(id),
+    onSuccess: (result, id) => {
+      const document = documentsQuery.data?.find((item) => item.id === id);
+      downloadDocumentPdf(result.data, result.fileName || `${document?.number ?? "document"}.pdf`);
+      setPrintError("");
+    },
+    onError: (error) => {
+      setPrintError(error instanceof ApiError ? error.message : "Unable to generate PDF.");
+    }
+  });
 
   const filtered = useMemo(() => (documentsQuery.data ?? []).filter((document) => {
     const text = search.trim().toLowerCase();
@@ -71,6 +85,7 @@ export function DocumentsPage() {
         <select aria-label="Type filter" value={type} onChange={(event) => setType(event.target.value as "" | DocumentType)}><option value="">All types</option>{Object.entries(documentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
         <button type="button" className="button button--primary" onClick={() => { setSelected(null); setIsDrawerOpen(true); }}><Plus /> New document</button>
       </div>
+      {printError ? <div className="form-alert document-print-alert" role="alert">{printError}</div> : null}
 
       <div className="data-table-frame">
         {documentsQuery.isPending ? <div className="table-state">Loading documents…</div>
@@ -84,6 +99,7 @@ export function DocumentsPage() {
               <td><div className="document-actions">
                 {document.status === "DRAFT" ? <><button onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>{document.type === "STOCK_ADJUSTMENT" ? "View" : "Edit"}</button>{document.type !== "STOCK_ADJUSTMENT" ? <button onClick={() => setPendingAction({ action: "post", document })}>Post</button> : null}<button onClick={() => setPendingAction({ action: "delete", document })}>Delete</button></>
                   : <><button onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>View</button><button onClick={() => setPendingAction({ action: "unpost", document })}>Unpost</button><button onClick={() => setPendingAction({ action: "repost", document })}>Repost</button></>}
+                <button disabled={printMutation.isPending} onClick={() => printMutation.mutate(document.id)}>{printMutation.isPending && printMutation.variables === document.id ? "Printing…" : "Print"}</button>
                 <MoreHorizontal aria-hidden="true" />
               </div></td>
             </tr>)}

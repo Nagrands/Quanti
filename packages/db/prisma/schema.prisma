@@ -72,6 +72,10 @@ enum AuditAction {
   UNPOST
 }
 
+enum PrintTemplateScope {
+  DOCUMENT
+}
+
 model Product {
   id             String         @id @default(cuid())
   sku            String         @unique
@@ -259,4 +263,19 @@ model AuditLog {
   payload     Json?
   createdAt   DateTime        @default(now())
   @@index([entityType, entityId, createdAt])
+}
+
+model PrintTemplate {
+  id        String             @id @default(cuid())
+  scope     PrintTemplateScope
+  name      String
+  version   Int
+  isActive  Boolean            @default(true)
+  html      String             @db.Text
+  styles    String?            @db.Text
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([scope, version])
+  @@index([scope, isActive])
 }

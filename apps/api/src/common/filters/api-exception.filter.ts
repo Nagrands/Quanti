@@ -43,10 +43,13 @@ export class ApiExceptionFilter implements ExceptionFilter {
       const normalizedMessage = typeof exceptionResponse === "string"
         ? exceptionResponse
         : (exceptionResponse as { message?: string | string[] }).message ?? exception.message;
+      const code = typeof exceptionResponse === "string"
+        ? this.getCode(statusCode)
+        : (exceptionResponse as { code?: string }).code ?? this.getCode(statusCode);
 
       response.status(statusCode).json({
         error: {
-          code: this.getCode(statusCode),
+          code,
           message: normalizedMessage,
           statusCode
         }

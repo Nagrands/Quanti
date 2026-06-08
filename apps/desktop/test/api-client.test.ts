@@ -19,6 +19,15 @@ function createEmptyResponse(status = 200): Response {
   } as unknown as Response;
 }
 
+function createBinaryResponse(data: Uint8Array, headers: Record<string, string>): Response {
+  return {
+    ok: true,
+    status: 200,
+    headers: new Headers(headers),
+    arrayBuffer: vi.fn().mockResolvedValue(data.buffer)
+  } as unknown as Response;
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
@@ -85,5 +94,35 @@ describe("ApiClient", () => {
     await expect(new ApiClient().request<void>("/products/product-1", {
       method: "DELETE"
     })).resolves.toBeUndefined();
+  });
+
+  test("returns binary data and attachment metadata", async () => {
+    const bytes = new TextEncoder().encode("%PDF-test");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(createBinaryResponse(bytes, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": 'attachment; filename="SO-001.pdf"'
+    })));
+
+    const result = await new ApiClient("https://api.example.test").requestBinary("/documents/1/print");
+
+    expect(Array.from(new Uint8Array(result.data))).toEqual(Array.from(bytes));
+    expect(result.contentType).toBe("application/pdf");
+    expect(result.fileName).toBe("SO-001.pdf");
+  });
+
+  test("maps binary endpoint error envelopes to ApiError", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(createJsonResponse({
+      error: {
+        code: "PDF_RENDER_ERROR",
+        message: "Chromium unavailable.",
+        statusCode: 503
+      }
+    }, 503)));
+
+    await expect(new ApiClient().requestBinary("/documents/1/print")).rejects.toMatchObject({
+      status: 503,
+      code: "PDF_RENDER_ERROR",
+      message: "Chromium unavailable."
+    });
   });
 });

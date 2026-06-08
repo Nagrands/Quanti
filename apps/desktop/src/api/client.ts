@@ -3,6 +3,12 @@ import { ApiError } from "./errors";
 
 const DEFAULT_API_BASE_URL = "http://localhost:3100";
 
+export interface ApiBinaryResponse {
+  data: ArrayBuffer;
+  contentType: string;
+  fileName: string | null;
+}
+
 function getApiBaseUrl(): string {
   return import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL;
 }
@@ -44,34 +50,59 @@ export class ApiClient {
   constructor(private readonly baseUrl = getApiBaseUrl()) {}
 
   async request<T>(path: string, init?: RequestInit): Promise<T> {
-    let response: Response;
+    const response = await this.fetch(path, init);
 
+    if (!response.ok) {
+      await this.throwResponseError(response);
+    }
+
+    return this.readSuccessBody<T>(response);
+  }
+
+  async requestBinary(path: string, init?: RequestInit): Promise<ApiBinaryResponse> {
+    const response = await this.fetch(path, init);
+
+    if (!response.ok) {
+      await this.throwResponseError(response);
+    }
+
+    return {
+      data: await response.arrayBuffer(),
+      contentType: response.headers.get("Content-Type") || "application/octet-stream",
+      fileName: this.fileNameFromDisposition(response.headers.get("Content-Disposition"))
+    };
+  }
+
+  private async fetch(path: string, init?: RequestInit) {
     try {
-      response = await fetch(buildRequestUrl(this.baseUrl, path), init);
+      return await fetch(buildRequestUrl(this.baseUrl, path), init);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Network request failed.";
       throw new ApiError(0, "NETWORK_ERROR", message);
     }
+  }
 
-    if (!response.ok) {
-      const body = await this.readJson(response);
+  private async throwResponseError(response: Response): Promise<never> {
+    const body = await this.readJson(response);
 
-      if (isApiErrorEnvelope(body)) {
-        throw new ApiError(
-          response.status,
-          body.error.code,
-          normalizeErrorMessage(body.error.message)
-        );
-      }
-
+    if (isApiErrorEnvelope(body)) {
       throw new ApiError(
         response.status,
-        "HTTP_ERROR",
-        `Request failed with status ${response.status}.`
+        body.error.code,
+        normalizeErrorMessage(body.error.message)
       );
     }
 
-    return this.readSuccessBody<T>(response);
+    throw new ApiError(
+      response.status,
+      "HTTP_ERROR",
+      `Request failed with status ${response.status}.`
+    );
+  }
+
+  private fileNameFromDisposition(disposition: string | null) {
+    const match = disposition?.match(/filename="([^"]+)"/i);
+    return match?.[1] ?? null;
   }
 
   private async readJson(response: Response): Promise<unknown> {

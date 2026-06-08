@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { DocumentsModule } from "./modules/documents/documents.module";
 import { PaymentsModule } from "./modules/payments/payments.module";
+import { PrintingModule } from "./modules/printing/printing.module";
 import { ProductsModule } from "./modules/products/products.module";
 import { ReportsModule } from "./modules/reports/reports.module";
 import { StockModule } from "./modules/stock/stock.module";
@@ -12,6 +13,7 @@ export const domainModules = [
   DocumentsModule,
   StockModule,
   PaymentsModule,
+  PrintingModule,
   ReportsModule
 ] as const;
 

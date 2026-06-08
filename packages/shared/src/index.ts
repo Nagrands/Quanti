@@ -5,6 +5,7 @@ export * from "./enums";
 export * from "./master-data";
 export * from "./documents";
 export * from "./payments";
+export * from "./printing";
 export * from "./reports";
 export * from "./stock";
 

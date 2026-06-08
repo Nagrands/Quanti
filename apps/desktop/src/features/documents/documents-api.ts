@@ -59,3 +59,19 @@ export const repostDocument = (id: string) =>
     headers: jsonHeaders,
     body: "{}"
   });
+
+export const printDocument = (id: string) =>
+  apiClient.requestBinary(`/documents/${id}/print`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: "{}"
+  });
+
+export function downloadDocumentPdf(data: ArrayBuffer, fileName: string) {
+  const url = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}

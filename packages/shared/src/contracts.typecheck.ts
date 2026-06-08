@@ -5,6 +5,8 @@ import type {
   CreatePaymentDto,
   CreateProductDto,
   CreateWarehouseDto,
+  DocumentPrintDataDto,
+  DocumentPrintRequestDto,
   CounterpartyDebtReportFilterDto,
   DocumentDto,
   PaymentDto,
@@ -120,6 +122,37 @@ const reserveStockRequest: ReserveStockRequestDto = {
   requiredQuantity: "5.000"
 };
 
+const documentPrintRequest: DocumentPrintRequestDto = {
+  templateVersion: 1
+};
+
+const documentPrintData: DocumentPrintDataDto = {
+  documentId: "document-1",
+  number: "SO-0001",
+  type: "SALE",
+  status: "POSTED",
+  documentDate: "2026-04-14T00:00:00.000Z",
+  counterpartyName: "Default counterparty",
+  warehouseName: "Main warehouse",
+  sourceWarehouseName: null,
+  destinationWarehouseName: null,
+  notes: null,
+  totalAmount: "150.00",
+  items: [{
+    lineNo: 1,
+    sku: "SKU-001",
+    productName: "Widget",
+    unit: "pcs",
+    quantity: "10.000",
+    price: "15.00",
+    amount: "150.00"
+  }],
+  branding: {
+    companyName: "Quanti ERP",
+    documentTitle: "Sales document"
+  }
+};
+
 const reportContracts: ReportContracts = {
   stockBalanceFilter: reportFilter,
   stockTurnoverFilter,
@@ -206,6 +239,8 @@ void salesFilter;
 void topProductsFilter;
 void debtReportFilter;
 void reserveStockRequest;
+void documentPrintRequest;
+void documentPrintData;
 void repostDocument;
 void updateDraftDocument;
 void documentView;

@@ -9,3 +9,9 @@ test("app module registers all baseline ERP domain modules", () => {
   assert.ok(imports, "AppModule should register baseline domain modules.");
   assert.deepEqual(imports, [...domainModules]);
 });
+
+test("app module includes the printing module", () => {
+  const imports = Reflect.getMetadata("imports", AppModule) as Array<{ name?: string }> | undefined;
+
+  assert.ok(imports?.some((module) => module.name === "PrintingModule"));
+});

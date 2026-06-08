@@ -93,10 +93,11 @@ Status legend:
     - Add UI tests for report loading and filter behavior.
     - Note: completed with seven typed report views, lookup-backed filters, explicit UTC date boundaries, CSV export, responsive tables, and loading/empty/error coverage.
 
-16. `[ ]` PDF printing
+16. `[x]` PDF printing
     - Implement backend Puppeteer + Handlebars printing flow.
     - Add configurable templates and document print endpoint.
     - Add frontend print triggers and smoke tests for render flow.
+    - Note: completed with database-backed document print templates, binary PDF endpoint, injectable renderer, document print action, and API/UI coverage.
 
 17. `[ ]` Cross-platform hardening
     - Validate macOS and Windows behavior for desktop shell and critical workflows.

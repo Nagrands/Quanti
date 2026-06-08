@@ -17,6 +17,8 @@
     "@quanti/shared": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "handlebars": "^4.7.9",
+    "puppeteer-core": "^25.1.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
