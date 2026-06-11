@@ -7,11 +7,22 @@
     "node": ">=22.0.0"
   },
   "scripts": {
+    "api:smoke": "node scripts/smoke-api-runtime.mjs",
     "build": "turbo run build",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @quanti/db db:generate",
+    "db:migrate": "pnpm --filter @quanti/db db:migrate:deploy",
+    "db:setup": "node scripts/setup-local-env.mjs && docker compose up -d --wait postgres && pnpm db:generate && pnpm db:migrate",
+    "db:up": "docker compose up -d postgres",
+    "demo:seed": "node scripts/seed-demo-data.mjs",
     "dev": "turbo run dev --parallel",
+    "dev:api": "pnpm --filter @quanti/api dev",
+    "dev:desktop": "pnpm --filter @quanti/desktop dev",
+    "dev:tauri": "pnpm --filter @quanti/desktop tauri dev",
+    "release:check": "pnpm check && pnpm build && pnpm api:smoke",
     "typecheck": "turbo run typecheck",
-    "test": "node --test tests/workspace.test.mjs tests/db-foundation.test.mjs tests/shared-contracts.test.mjs && pnpm --filter @quanti/api test && pnpm --filter @quanti/desktop test && pnpm --filter @quanti/desktop tauri:test",
-    "check": "node scripts/validate-workspace.mjs && pnpm --filter @quanti/db db:validate && node --test tests/workspace.test.mjs tests/db-foundation.test.mjs tests/shared-contracts.test.mjs && pnpm --filter @quanti/api test && pnpm --filter @quanti/desktop test && pnpm --filter @quanti/desktop tauri:test && pnpm --filter @quanti/desktop tauri:check"
+    "test": "node --test tests/workspace.test.mjs tests/db-foundation.test.mjs tests/shared-contracts.test.mjs tests/release-readiness.test.mjs && pnpm --filter @quanti/api test && pnpm --filter @quanti/desktop test && pnpm --filter @quanti/desktop tauri:test",
+    "check": "node scripts/validate-workspace.mjs && pnpm --filter @quanti/db db:validate && node --test tests/workspace.test.mjs tests/db-foundation.test.mjs tests/shared-contracts.test.mjs tests/release-readiness.test.mjs && pnpm --filter @quanti/api test && pnpm --filter @quanti/desktop test && pnpm --filter @quanti/desktop tauri:test && pnpm --filter @quanti/desktop tauri:check"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",

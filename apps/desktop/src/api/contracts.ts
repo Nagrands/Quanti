@@ -1,6 +1,7 @@
 export interface ApiHealthSnapshot {
   service: "quanti-api";
   status: "ok";
+  database: "ok";
   modules: readonly string[];
 }
 

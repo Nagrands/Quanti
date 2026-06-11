@@ -53,7 +53,6 @@ importers:
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
-    devDependencies:
       tsx:
         specifier: ^4.20.6
         version: 4.21.0

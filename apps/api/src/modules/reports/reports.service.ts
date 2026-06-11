@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { Prisma } from "@quanti/db";
 import type {
   CashflowReportFilterDto,
@@ -70,7 +70,7 @@ type CounterpartyDebtRow = {
 
 @Injectable()
 export class ReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getStockBalance(filter: StockBalanceReportFilterDto): Promise<StockBalanceReportRowDto[]> {
     const conditions = [

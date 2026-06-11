@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { CounterpartyDto, CreateCounterpartyDto, UpdateCounterpartyDto } from "@quanti/shared";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
@@ -6,7 +6,7 @@ import { toCounterpartyDto } from "./master-data.mappers";
 
 @Injectable()
 export class CounterpartiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<CounterpartyDto[]> {
     const counterparties = await this.prisma.counterparty.findMany({

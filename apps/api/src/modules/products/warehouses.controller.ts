@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
 
 import { CreateWarehouseRequest } from "./dto/create-warehouse.request";
 import { UpdateWarehouseRequest } from "./dto/update-warehouse.request";
@@ -6,7 +6,7 @@ import { WarehousesService } from "./warehouses.service";
 
 @Controller("warehouses")
 export class WarehousesController {
-  constructor(private readonly warehousesService: WarehousesService) {}
+  constructor(@Inject(WarehousesService) private readonly warehousesService: WarehousesService) {}
 
   @Get()
   findAll() {

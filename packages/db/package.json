@@ -10,6 +10,7 @@
     "build": "tsc -p tsconfig.json",
     "db:format": "node ../../scripts/run-prisma-command.mjs format --schema prisma/schema.prisma",
     "db:generate": "node ../../scripts/run-prisma-command.mjs generate --schema prisma/schema.prisma",
+    "db:migrate:deploy": "node ../../scripts/run-prisma-command.mjs migrate deploy --schema prisma/schema.prisma",
     "db:validate": "node ../../scripts/run-prisma-command.mjs validate --schema prisma/schema.prisma",
     "db:migrate:init": "node ../../scripts/write-init-migration.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",

@@ -105,10 +105,14 @@ Status legend:
     - Add targeted regression checks where needed.
     - Note: completed with native Tauri dialogs, typed text/binary export adapters, platform bundle configs and icons, macOS bundle verification, Windows config validation, and macOS/Windows CI packaging.
 
-18. `[ ]` Release readiness
+18. `[x]` Release readiness
     - Review documentation, changelog, onboarding, and runbooks.
     - Run final end-to-end verification for core ERP workflows.
     - Prepare first stable milestone.
+    - Note: completed with reproducible PostgreSQL setup, current-period demo data,
+      database-aware health checks, explicit Nest runtime injection, local-only API
+      security defaults, PostgreSQL-backed CI verification, onboarding, changelog,
+      and release runbook.
 
 ## Update Rule
 

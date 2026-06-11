@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 
 import { AppController } from "./app.controller";
+import { PrismaService } from "./common/prisma/prisma.service";
 import { DocumentsModule } from "./modules/documents/documents.module";
 import { PaymentsModule } from "./modules/payments/payments.module";
 import { PrintingModule } from "./modules/printing/printing.module";
@@ -19,6 +20,7 @@ export const domainModules = [
 
 @Module({
   imports: [...domainModules],
-  controllers: [AppController]
+  controllers: [AppController],
+  providers: [PrismaService]
 })
 export class AppModule {}

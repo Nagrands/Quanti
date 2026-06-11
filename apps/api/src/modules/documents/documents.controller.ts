@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
 
 import { CreateDocumentRequest } from "./dto/create-document.request";
 import { PostDocumentRequest } from "./dto/post-document.request";
@@ -8,7 +8,7 @@ import { DocumentsService } from "./documents.service";
 
 @Controller("documents")
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) {}
+  constructor(@Inject(DocumentsService) private readonly documentsService: DocumentsService) {}
 
   @Get()
   findAll() {

@@ -26,6 +26,7 @@ describe("API health indicator", () => {
     mockedRequest.mockResolvedValue({
       service: "quanti-api",
       status: "ok",
+      database: "ok",
       modules: []
     });
 

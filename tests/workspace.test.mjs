@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-const repoRoot = "/Users/nagrand/Develop/Quanti";
+const repoRoot = path.dirname(fileURLToPath(new URL("../package.json", import.meta.url)));
 
 const readJson = async (relativePath) => {
   const filePath = path.join(repoRoot, relativePath);

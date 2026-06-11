@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
 
 import { AccountsService } from "./accounts.service";
 import { CreateAccountRequest } from "./dto/create-account.request";
@@ -6,7 +6,7 @@ import { UpdateAccountRequest } from "./dto/update-account.request";
 
 @Controller("accounts")
 export class AccountsController {
-  constructor(private readonly accountsService: AccountsService) {}
+  constructor(@Inject(AccountsService) private readonly accountsService: AccountsService) {}
 
   @Get()
   findAll() {

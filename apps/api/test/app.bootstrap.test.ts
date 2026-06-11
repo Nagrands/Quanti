@@ -13,11 +13,31 @@ test("api application bootstraps with health controller", async () => {
     await app.init();
   });
 
-  assert.deepEqual(app.get(AppController).getHealth(), {
+  const healthController = new AppController({
+    $queryRaw: async () => [{ "?column?": 1 }]
+  } as never);
+
+  assert.deepEqual(await healthController.getHealth(), {
     service: "quanti-api",
     status: "ok",
+    database: "ok",
     modules: ["products", "documents", "stock", "payments", "reports"]
   });
+
+  const unavailableController = new AppController({
+    $queryRaw: async () => {
+      throw new Error("database unavailable");
+    }
+  } as never);
+  await assert.rejects(
+    () => unavailableController.getHealth(),
+    (error: unknown) => (
+      typeof error === "object"
+      && error !== null
+      && "getStatus" in error
+      && (error as { getStatus(): number }).getStatus() === 503
+    )
+  );
 
   assert.ok(DEFAULT_DESKTOP_ORIGINS.includes("http://localhost:1420"));
   assert.ok(DEFAULT_DESKTOP_ORIGINS.includes("tauri://localhost"));

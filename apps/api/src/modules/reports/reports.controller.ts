@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { Controller, Get, Inject, Query } from "@nestjs/common";
 
 import {
   CashflowReportRequest,
@@ -12,7 +12,7 @@ import { ReportsService } from "./reports.service";
 
 @Controller("reports")
 export class ReportsController {
-  constructor(private readonly reportsService: ReportsService) {}
+  constructor(@Inject(ReportsService) private readonly reportsService: ReportsService) {}
 
   @Get("stock-balance")
   getStockBalance(@Query() filter: StockBalanceReportRequest) {

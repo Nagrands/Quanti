@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
 
 import { CreatePaymentRequest } from "./dto/create-payment.request";
 import { PostPaymentRequest } from "./dto/post-payment.request";
@@ -8,7 +8,7 @@ import { PaymentsService } from "./payments.service";
 
 @Controller("payments")
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(@Inject(PaymentsService) private readonly paymentsService: PaymentsService) {}
 
   @Get("debts/counterparties")
   getCounterpartyDebts() {

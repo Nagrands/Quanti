@@ -21,6 +21,7 @@ describe("Quanti application shell", () => {
         return {
           service: "quanti-api",
           status: "ok",
+          database: "ok",
           modules: ["products", "documents", "stock", "payments", "reports"]
         };
       }

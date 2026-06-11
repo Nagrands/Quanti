@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { AccountDto, CreateAccountDto, UpdateAccountDto } from "@quanti/shared";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
@@ -6,7 +6,7 @@ import { toAccountDto } from "./master-data.mappers";
 
 @Injectable()
 export class AccountsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<AccountDto[]> {
     const accounts = await this.prisma.account.findMany({

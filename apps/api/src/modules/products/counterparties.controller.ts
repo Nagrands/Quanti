@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
 
 import { CounterpartiesService } from "./counterparties.service";
 import { CreateCounterpartyRequest } from "./dto/create-counterparty.request";
@@ -6,7 +6,9 @@ import { UpdateCounterpartyRequest } from "./dto/update-counterparty.request";
 
 @Controller("counterparties")
 export class CounterpartiesController {
-  constructor(private readonly counterpartiesService: CounterpartiesService) {}
+  constructor(
+    @Inject(CounterpartiesService) private readonly counterpartiesService: CounterpartiesService
+  ) {}
 
   @Get()
   findAll() {

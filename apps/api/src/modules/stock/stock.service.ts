@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { Prisma } from "@quanti/db";
 import type {
   ReserveStockRequestDto,
@@ -12,7 +12,7 @@ type DbClient = PrismaService | Prisma.TransactionClient;
 
 @Injectable()
 export class StockService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getBalance(
     productId: string,

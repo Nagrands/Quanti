@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma, type Payment, type PaymentAllocation } from "@quanti/db";
 import type {
   CounterpartyDebtDto,
@@ -23,7 +23,7 @@ type DebtRow = {
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<PaymentDto[]> {
     const payments = await this.prisma.payment.findMany({

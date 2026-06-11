@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma, type Document, type DocumentItem } from "@quanti/db";
 import type {
   CreateDraftDocumentDto,
@@ -18,8 +18,8 @@ type DocumentRecord = Document & { items: DocumentItem[] };
 @Injectable()
 export class DocumentsService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly stockService: StockService
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(StockService) private readonly stockService: StockService
   ) {}
 
   async findAll(): Promise<DocumentDto[]> {

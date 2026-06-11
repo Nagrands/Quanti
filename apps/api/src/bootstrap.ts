@@ -6,6 +6,7 @@ import { ApiExceptionFilter } from "./common/filters/api-exception.filter";
 import { ApiValidationPipe } from "./common/pipes/api-validation.pipe";
 
 const DEFAULT_PORT = 3100;
+const DEFAULT_HOST = "127.0.0.1";
 export const DEFAULT_DESKTOP_ORIGINS = [
   "http://localhost:1420",
   "http://127.0.0.1:1420",
@@ -28,15 +29,19 @@ export async function createApiApplication() {
   return app;
 }
 
-export async function startApiServer(port = DEFAULT_PORT) {
+export async function startApiServer(
+  port = DEFAULT_PORT,
+  host = process.env.HOST ?? DEFAULT_HOST
+) {
   const app = await createApiApplication();
-  await app.listen(port);
+  await app.listen(port, host);
 
   return app;
 }
 
 export async function bootstrapApiServer() {
   const port = Number(process.env.PORT ?? DEFAULT_PORT);
-  await startApiServer(port);
-  Logger.log(`Quanti API is running on port ${port}.`, "Bootstrap");
+  const host = process.env.HOST ?? DEFAULT_HOST;
+  await startApiServer(port, host);
+  Logger.log(`Quanti API is running at http://${host}:${port}.`, "Bootstrap");
 }
