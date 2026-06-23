@@ -10,6 +10,7 @@ import {
   downloadDocumentPdf,
   getDocumentLookups,
   getDocuments,
+  getStockBalance,
   postDocument,
   printDocument,
   repostDocument,
@@ -21,6 +22,7 @@ import { renderWithAppProviders } from "./render-app";
 
 vi.mock("../src/features/documents/documents-api", () => ({
   getDocuments: vi.fn(),
+  getStockBalance: vi.fn(),
   getDocumentLookups: vi.fn(),
   createDocument: vi.fn(),
   updateDocument: vi.fn(),
@@ -74,6 +76,11 @@ const lookups = {
 describe("documents workspace", () => {
   beforeEach(() => {
     vi.mocked(getDocuments).mockResolvedValue([draft, posted]);
+    vi.mocked(getStockBalance).mockResolvedValue({
+      productId: "product-1",
+      warehouseId: "warehouse-1",
+      quantity: "8.000"
+    });
     vi.mocked(getDocumentLookups).mockResolvedValue(lookups);
     vi.mocked(createDocument).mockResolvedValue(draft);
     vi.mocked(updateDocument).mockResolvedValue(draft);
@@ -125,6 +132,58 @@ describe("documents workspace", () => {
     }));
   });
 
+  test("warns about insufficient stock while editing a sale draft", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getStockBalance).mockResolvedValue({
+      productId: "product-1",
+      warehouseId: "warehouse-1",
+      quantity: "1.000"
+    });
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
+
+    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    await user.type(within(drawer).getByLabelText("Номер"), "SO-003");
+    await user.selectOptions(within(drawer).getByLabelText("Склад"), "warehouse-1");
+    await user.selectOptions(within(drawer).getByLabelText("Товар"), "product-1");
+    const quantity = within(drawer).getByLabelText("Количество");
+    await user.clear(quantity);
+    await user.type(quantity, "2");
+
+    const alert = await within(drawer).findByRole("alert");
+    expect(alert).toHaveTextContent("Недостаточно остатков для проведения");
+    expect(alert).toHaveTextContent("SKU-1 · Widget");
+    expect(alert).toHaveTextContent("доступно 1.000, требуется 2.000");
+  });
+
+  test("rejects transfer drafts with identical source and destination warehouses", async () => {
+    const user = userEvent.setup();
+    const transferLookups = {
+      ...lookups,
+      warehouses: [
+        ...lookups.warehouses,
+        { id: "warehouse-2", code: "RES", name: "Reserve", isActive: true, createdAt: "", updatedAt: "" }
+      ]
+    };
+    vi.mocked(getDocumentLookups).mockResolvedValue(transferLookups);
+    vi.mocked(createDocument).mockClear();
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
+
+    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    await user.type(within(drawer).getByLabelText("Номер"), "TR-002");
+    await user.selectOptions(within(drawer).getByLabelText("Тип"), "TRANSFER");
+    await user.selectOptions(within(drawer).getByLabelText("Склад-отправитель"), "warehouse-1");
+    await user.selectOptions(within(drawer).getByLabelText("Склад-получатель"), "warehouse-1");
+    await user.selectOptions(within(drawer).getByLabelText("Товар"), "product-1");
+    await user.click(within(drawer).getByRole("button", { name: "Сохранить черновик" }));
+
+    expect(within(drawer).getAllByText("Склад-отправитель и склад-получатель должны отличаться.")).not.toHaveLength(0);
+    expect(createDocument).not.toHaveBeenCalled();
+  });
+
   test("opens posted documents read-only and confirms lifecycle actions", async () => {
     const user = userEvent.setup();
     renderWithAppProviders(<DocumentsPage />, "/documents");
@@ -152,7 +211,11 @@ describe("documents workspace", () => {
     await screen.findByText("SO-001");
 
     await user.click(screen.getByRole("button", { name: "Провести" }));
-    await user.click(within(screen.getByRole("dialog", { name: "Провести документ?" })).getByRole("button", { name: "Провести" }));
+    const dialog = screen.getByRole("dialog", { name: "Провести документ?" });
+    expect(within(dialog).getByLabelText("Предварительный просмотр движений")).toHaveTextContent("Расход");
+    expect(within(dialog).getByLabelText("Предварительный просмотр движений")).toHaveTextContent("SKU-1 · Widget");
+    expect(within(dialog).getByLabelText("Предварительный просмотр движений")).toHaveTextContent("MAIN · Main");
+    await user.click(within(dialog).getByRole("button", { name: "Провести" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("SKU-1 · Widget");
     expect(screen.getByRole("alert")).toHaveTextContent("MAIN · Main");

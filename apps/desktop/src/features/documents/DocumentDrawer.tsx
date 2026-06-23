@@ -1,6 +1,7 @@
 import type { CounterpartyDto, DocumentDto, ProductDto, WarehouseDto } from "@quanti/shared";
+import { useQueries } from "@tanstack/react-query";
 import { Plus, Trash2, X } from "lucide-react";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "../../i18n";
 import {
@@ -12,6 +13,8 @@ import {
   type DocumentFormValues,
   supportedDocumentTypes
 } from "./document-model";
+import { getRequiredStockChecks, getStockWarnings } from "./document-preview";
+import { getStockBalance } from "./documents-api";
 
 interface DocumentDrawerProps {
   document: DocumentDto | null;
@@ -36,6 +39,20 @@ export function DocumentDrawer({
   const [values, setValues] = useState<DocumentFormValues>(createEmptyDocument);
   const [error, setError] = useState("");
   const isReadOnly = document?.status === "POSTED" || document?.type === "STOCK_ADJUSTMENT";
+  const requiredStockChecks = useMemo(() => getRequiredStockChecks(values), [values]);
+  const stockBalanceQueries = useQueries({
+    queries: requiredStockChecks.map((check) => ({
+      queryKey: ["stock-balance", check.productId, check.warehouseId],
+      queryFn: () => getStockBalance(check.productId, check.warehouseId),
+      enabled: !isReadOnly
+    }))
+  });
+  const stockWarnings = useMemo(() => getStockWarnings(
+    values,
+    stockBalanceQueries.flatMap((query) => query.data ? [query.data] : []),
+    products,
+    warehouses
+  ), [products, stockBalanceQueries, values, warehouses]);
 
   useEffect(() => {
     setValues(document ? documentToForm(document) : createEmptyDocument());
@@ -65,6 +82,11 @@ export function DocumentDrawer({
 
     if (values.type === "TRANSFER" && (!values.sourceWarehouseId || !values.destinationWarehouseId)) {
       setError(t("Для перемещения укажите склад-отправитель и склад-получатель."));
+      return;
+    }
+
+    if (values.type === "TRANSFER" && values.sourceWarehouseId === values.destinationWarehouseId) {
+      setError(t("Склад-отправитель и склад-получатель должны отличаться."));
       return;
     }
 
@@ -111,6 +133,24 @@ export function DocumentDrawer({
             {error ? <div className="form-alert" role="alert">{error}</div> : null}
             {document?.type === "STOCK_ADJUSTMENT" ? (
               <div className="form-alert">{t("Проведение корректировки остатков пока не поддерживается.")}</div>
+            ) : null}
+            {!isReadOnly && values.type === "TRANSFER" && values.sourceWarehouseId && values.sourceWarehouseId === values.destinationWarehouseId ? (
+              <div className="form-alert" role="alert">{t("Склад-отправитель и склад-получатель должны отличаться.")}</div>
+            ) : null}
+            {!isReadOnly && stockWarnings.length > 0 ? (
+              <div className="form-alert form-alert--detailed" role="alert">
+                <strong>{t("Недостаточно остатков для проведения")}</strong>
+                {stockWarnings.map((warning) => (
+                  <span key={warning.key}>
+                    {t("{product} на складе {warehouse}: доступно {available}, требуется {required}.", {
+                      product: warning.productLabel,
+                      warehouse: warning.warehouseLabel,
+                      available: warning.availableQuantity,
+                      required: warning.requiredQuantity
+                    })}
+                  </span>
+                ))}
+              </div>
             ) : null}
             <div className="document-fields">
               <label>{t("Номер")}<input value={values.number} disabled={isReadOnly} onChange={(event) => setValues({ ...values, number: event.target.value })} /></label>

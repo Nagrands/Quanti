@@ -3,6 +3,7 @@ import type {
   CreateDraftDocumentDto,
   DocumentDto,
   ProductDto,
+  StockBalanceResultDto,
   UpdateDraftDocumentPatchDto,
   WarehouseDto
 } from "@quanti/shared";
@@ -13,6 +14,11 @@ import { saveBinaryExport } from "../../tauri-shell";
 const jsonHeaders = { "Content-Type": "application/json" };
 
 export const getDocuments = () => apiClient.request<DocumentDto[]>("/documents");
+export const getStockBalance = (productId: string, warehouseId: string) => {
+  const query = new URLSearchParams({ productId, warehouseId });
+  return apiClient.request<StockBalanceResultDto>(`/stock/balance?${query.toString()}`);
+};
+
 export const getDocumentLookups = async () => {
   const [products, warehouses, counterparties] = await Promise.all([
     apiClient.request<ProductDto[]>("/products"),

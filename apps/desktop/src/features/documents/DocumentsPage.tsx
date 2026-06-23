@@ -18,6 +18,7 @@ import {
   updateDocument
 } from "./documents-api";
 import { type DocumentFormValues, toDocumentPayload } from "./document-model";
+import { getDocumentMovementPreview } from "./document-preview";
 
 type LifecycleAction = "post" | "unpost" | "repost" | "delete";
 
@@ -122,7 +123,35 @@ export function DocumentsPage() {
       </div>
 
       {isDrawerOpen ? <DocumentDrawer document={selected} products={lookupsQuery.data?.products ?? []} warehouses={lookupsQuery.data?.warehouses ?? []} counterparties={lookupsQuery.data?.counterparties ?? []} isSaving={saveMutation.isPending} onClose={() => { setIsDrawerOpen(false); setSelected(null); }} onSave={(values) => saveMutation.mutateAsync({ values, document: selected }).then(() => undefined)} /> : null}
-      {pendingAction ? <div className="dialog-backdrop"><div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="lifecycle-title"><h2 id="lifecycle-title">{lifecycleLabels[pendingAction.action].title}</h2><p>{t("Операция изменит документ {number} и связанные движения учёта.", { number: pendingAction.document.number })}</p>{lifecycleMutation.isError ? <div className="form-alert form-alert--detailed" role="alert"><strong>{t("Не удалось выполнить операцию")}</strong><span>{formatApiError(lifecycleMutation.error, { products: lookupsQuery.data?.products, warehouses: lookupsQuery.data?.warehouses })}</span></div> : null}<div className="confirm-dialog__actions"><button className="button button--secondary" onClick={() => setPendingAction(null)}>{t("Отмена")}</button><button className={pendingAction.action === "delete" ? "button button--danger" : "button button--primary"} disabled={lifecycleMutation.isPending} onClick={() => lifecycleMutation.mutate(pendingAction)}>{lifecycleMutation.isPending ? t("Выполнение…") : lifecycleLabels[pendingAction.action].action}</button></div></div></div> : null}
+      {pendingAction ? (
+        <div className="dialog-backdrop">
+          <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="lifecycle-title">
+            <h2 id="lifecycle-title">{lifecycleLabels[pendingAction.action].title}</h2>
+            <p>{t("Операция изменит документ {number} и связанные движения учёта.", { number: pendingAction.document.number })}</p>
+            {["post", "repost"].includes(pendingAction.action) ? (
+              <div className="movement-preview" aria-label={t("Предварительный просмотр движений")}>
+                <strong>{t("Будут созданы складские движения")}</strong>
+                {getDocumentMovementPreview(
+                  pendingAction.document,
+                  lookupsQuery.data?.products ?? [],
+                  lookupsQuery.data?.warehouses ?? []
+                ).map((movement) => (
+                  <div className="movement-preview__row" key={movement.key}>
+                    <span className={movement.direction === "IN" ? "movement-preview__direction movement-preview__direction--in" : "movement-preview__direction movement-preview__direction--out"}>
+                      {t(movement.direction === "IN" ? "Приход" : "Расход")}
+                    </span>
+                    <span>{movement.productLabel}</span>
+                    <span>{movement.warehouseLabel}</span>
+                    <strong>{movement.quantity}</strong>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {lifecycleMutation.isError ? <div className="form-alert form-alert--detailed" role="alert"><strong>{t("Не удалось выполнить операцию")}</strong><span>{formatApiError(lifecycleMutation.error, { products: lookupsQuery.data?.products, warehouses: lookupsQuery.data?.warehouses })}</span></div> : null}
+            <div className="confirm-dialog__actions"><button className="button button--secondary" onClick={() => setPendingAction(null)}>{t("Отмена")}</button><button className={pendingAction.action === "delete" ? "button button--danger" : "button button--primary"} disabled={lifecycleMutation.isPending} onClick={() => lifecycleMutation.mutate(pendingAction)}>{lifecycleMutation.isPending ? t("Выполнение…") : lifecycleLabels[pendingAction.action].action}</button></div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
