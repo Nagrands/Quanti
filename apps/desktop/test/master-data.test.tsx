@@ -29,21 +29,44 @@ const product = {
   updatedAt: "2026-06-01T10:00:00.000Z"
 };
 
+const archivedProduct = {
+  ...product,
+  id: "product-2",
+  sku: "PRD-ARCH",
+  name: "Archived lamp",
+  isActive: false
+};
+
 describe("master data workspace", () => {
   beforeEach(() => {
+    window.localStorage.clear();
     vi.mocked(getMasterData).mockResolvedValue([product]);
     vi.mocked(createMasterData).mockResolvedValue(product);
     vi.mocked(updateMasterData).mockResolvedValue(product);
     vi.mocked(deactivateMasterData).mockResolvedValue(undefined);
   });
 
-  test("loads products and filters the table", async () => {
+  test("loads products and filters active and archived rows", async () => {
     const user = userEvent.setup();
+    vi.mocked(getMasterData).mockResolvedValue([product, archivedProduct]);
     renderWithAppProviders(<MasterDataPage />, "/products");
 
     expect(await screen.findByText("PRD-001")).toBeInTheDocument();
+    expect(screen.queryByText("PRD-ARCH")).not.toBeInTheDocument();
+
+    const summary = screen.getByLabelText("Сводка справочника");
+    expect(within(summary).getByText("Всего")).toBeInTheDocument();
+    expect(within(summary).getByText("Активные")).toBeInTheDocument();
+    expect(within(summary).getByText("Архивные")).toBeInTheDocument();
+    expect(within(summary).getAllByText("2")).toHaveLength(1);
+
+    await user.selectOptions(screen.getByLabelText("Фильтр активности"), "archived");
+    expect(await screen.findByText("PRD-ARCH")).toBeInTheDocument();
+    expect(screen.queryByText("PRD-001")).not.toBeInTheDocument();
+
     await user.type(screen.getByPlaceholderText("Поиск товаров"), "missing");
     expect(screen.getByText("Совпадений не найдено")).toBeInTheDocument();
+    expect(screen.getByText("Измените поисковый запрос или фильтр активности.")).toBeInTheDocument();
   });
 
   test("validates and creates a product", async () => {
@@ -102,5 +125,16 @@ describe("master data workspace", () => {
       await user.click(screen.getByRole("button", { name: tab }));
       expect(await screen.findByText("Записей пока нет")).toBeInTheDocument();
     }
+  });
+
+  test("localizes the master-data filters in English", async () => {
+    window.localStorage.setItem("quanti.locale", "en");
+    renderWithAppProviders(<MasterDataPage />, "/products");
+
+    expect(await screen.findByText("PRD-001")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search products")).toBeInTheDocument();
+    expect(screen.getByLabelText("Activity filter")).toHaveValue("active");
+    const summary = screen.getByLabelText("Master data summary");
+    expect(within(summary).getByText("Active")).toBeInTheDocument();
   });
 });

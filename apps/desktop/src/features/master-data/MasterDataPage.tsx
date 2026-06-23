@@ -17,11 +17,14 @@ import {
   type MasterDataResource
 } from "./master-data";
 
+type StatusFilter = "active" | "archived" | "all";
+
 export function MasterDataPage() {
   const { formatApiError, locale, t } = useI18n();
   const queryClient = useQueryClient();
   const [resource, setResource] = useState<MasterDataResource>("products");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [editingEntity, setEditingEntity] = useState<MasterDataEntity | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deactivatingEntity, setDeactivatingEntity] = useState<MasterDataEntity | null>(null);
@@ -56,32 +59,52 @@ export function MasterDataPage() {
     }
   });
 
+  const entities = entitiesQuery.data ?? [];
+  const activeCount = entities.filter((entity) => entity.isActive).length;
+  const archivedCount = entities.length - activeCount;
+
   const filteredEntities = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase();
-    if (!normalizedSearch) {
-      return entitiesQuery.data ?? [];
-    }
-
-    return (entitiesQuery.data ?? []).filter((entity) =>
-      definition.columns.some((column) =>
+    return entities.filter((entity) => {
+      const matchesStatus = statusFilter === "all"
+        || (statusFilter === "active" ? entity.isActive : !entity.isActive);
+      const matchesSearch = !normalizedSearch || definition.columns.some((column) =>
         column.render(entity).toLocaleLowerCase().includes(normalizedSearch)
-      )
-    );
-  }, [definition, entitiesQuery.data, search]);
+      );
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [definition, entities, search, statusFilter]);
 
   function selectResource(nextResource: MasterDataResource) {
     setResource(nextResource);
     setSearch("");
+    setStatusFilter("active");
     setEditingEntity(null);
     setIsFormOpen(false);
     setDeactivatingEntity(null);
   }
 
+  const emptyTitle = search
+    ? "Совпадений не найдено"
+    : statusFilter === "archived"
+      ? "Архивных записей нет"
+      : statusFilter === "active" && entities.length > 0
+        ? "Активных записей нет"
+        : "Записей пока нет";
+  const emptyDescription = search
+    ? "Измените поисковый запрос или фильтр активности."
+    : statusFilter === "archived"
+      ? "Деактивированные записи появятся здесь."
+      : statusFilter === "active" && entities.length > 0
+        ? "Переключите фильтр на все записи или создайте новую активную запись."
+        : "Создайте первую запись, чтобы начать работу.";
+
   return (
-    <section className="page master-data-page" aria-labelledby="products-title">
+    <section className="page master-data-page" aria-labelledby="master-data-title">
       <header className="page__header">
         <p className="page__eyebrow">{t("Справочники")}</p>
-        <h1 id="products-title">{definition.label}</h1>
+        <h1 id="master-data-title">{definition.label}</h1>
       </header>
 
       <nav className="section-tabs" aria-label={t("Разделы справочников")}>
@@ -98,17 +121,50 @@ export function MasterDataPage() {
         ))}
       </nav>
 
+      <div className="master-data-summary" aria-label={t("Сводка справочника")}>
+        <div className="summary-card">
+          <span>{t("Всего")}</span>
+          <strong>{entities.length}</strong>
+        </div>
+        <div className="summary-card summary-card--active">
+          <span>{t("Активные")}</span>
+          <strong>{activeCount}</strong>
+        </div>
+        <div className="summary-card summary-card--archived">
+          <span>{t("Архивные")}</span>
+          <strong>{archivedCount}</strong>
+        </div>
+        <div className="summary-card">
+          <span>{t("Показано")}</span>
+          <strong>{filteredEntities.length}</strong>
+        </div>
+      </div>
+
       <div className="data-toolbar">
-        <label className="search-field">
-          <Search aria-hidden="true" />
-          <span className="visually-hidden">{definition.searchPlaceholder}</span>
-          <input
-            type="search"
-            placeholder={definition.searchPlaceholder}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
+        <div className="data-toolbar__filters">
+          <label className="search-field">
+            <Search aria-hidden="true" />
+            <span className="visually-hidden">{definition.searchPlaceholder}</span>
+            <input
+              type="search"
+              placeholder={definition.searchPlaceholder}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+          <label className="filter-field">
+            <span>{t("Статус")}</span>
+            <select
+              value={statusFilter}
+              aria-label={t("Фильтр активности")}
+              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+            >
+              <option value="active">{t("Только активные")}</option>
+              <option value="archived">{t("Только архивные")}</option>
+              <option value="all">{t("Все записи")}</option>
+            </select>
+          </label>
+        </div>
         <button
           type="button"
           className="button button--primary"
@@ -135,8 +191,8 @@ export function MasterDataPage() {
           </div>
         ) : filteredEntities.length === 0 ? (
           <div className="table-state">
-            <strong>{t(search ? "Совпадений не найдено" : "Записей пока нет")}</strong>
-            <span>{t(search ? "Измените поисковый запрос." : "Создайте первую запись, чтобы начать работу.")}</span>
+            <strong>{t(emptyTitle)}</strong>
+            <span>{t(emptyDescription)}</span>
           </div>
         ) : (
           <div className="data-table-scroll">
@@ -144,15 +200,21 @@ export function MasterDataPage() {
               <thead>
                 <tr>
                   {definition.columns.map((column) => <th key={column.key}>{column.label}</th>)}
+                  <th>{t("Статус")}</th>
                   <th className="data-table__actions-heading">{t("Действия")}</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredEntities.map((entity) => (
-                  <tr key={entity.id}>
+                  <tr key={entity.id} className={entity.isActive ? undefined : "data-table__row--archived"}>
                     {definition.columns.map((column) => (
                       <td key={column.key}>{column.render(entity)}</td>
                     ))}
+                    <td>
+                      <span className={entity.isActive ? "status-badge status-badge--active" : "status-badge status-badge--archived"}>
+                        {t(entity.isActive ? "Активна" : "Архив")}
+                      </span>
+                    </td>
                     <td>
                       <div className="row-actions">
                         <button
@@ -170,6 +232,7 @@ export function MasterDataPage() {
                           type="button"
                           className="icon-button icon-button--danger"
                           aria-label={t("Деактивировать {name}", { name: entity.name })}
+                          disabled={!entity.isActive}
                           onClick={() => setDeactivatingEntity(entity)}
                         >
                           <Ban aria-hidden="true" />

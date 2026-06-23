@@ -14,6 +14,8 @@ All notable changes to Quanti are documented in this file.
 - React ERP workspace with API health status and responsive desktop layout.
 - Switchable Russian and English localization for the ERP workspace, plus
   actionable structured stock error messages in document workflows.
+- Master data filters, active/archive status badges, and summary counters for
+  products, warehouses, counterparties, and accounts.
 - Database maintenance scripts for local backup, restore, reset, and Prisma Studio.
 - Tauri file dialogs, validated import/export boundaries, and macOS/Windows bundles.
 - Cross-platform CI packaging and PostgreSQL-backed release workflow checks.
