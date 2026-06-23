@@ -40,9 +40,43 @@ export interface MasterDataDefinition {
   toPayload: (values: FormValues) => Record<string, unknown>;
 }
 
+const codeConfig: Partial<Record<MasterDataResource, { field: string; prefix: string }>> = {
+  products: { field: "sku", prefix: "PRD" },
+  "product-categories": { field: "code", prefix: "CAT" },
+  warehouses: { field: "code", prefix: "WH" },
+  counterparties: { field: "code", prefix: "CP" },
+  accounts: { field: "code", prefix: "ACC" }
+};
+
 function value(entity: MasterDataEntity, key: string): string {
   const fieldValue = (entity as unknown as Record<string, unknown>)[key];
   return typeof fieldValue === "string" ? fieldValue : "";
+}
+
+function nextCode(existingValues: readonly string[], prefix: string) {
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^${escapedPrefix}-(\\d+)$`);
+  const max = existingValues.reduce((currentMax, item) => {
+    const match = pattern.exec(item);
+    return match ? Math.max(currentMax, Number(match[1])) : currentMax;
+  }, 0);
+
+  return `${prefix}-${String(max + 1).padStart(4, "0")}`;
+}
+
+export function createMasterDataDefaults(
+  definition: MasterDataDefinition,
+  entities: readonly MasterDataEntity[]
+): FormValues {
+  const config = codeConfig[definition.resource];
+  if (!config) {
+    return definition.createDefaults;
+  }
+
+  return {
+    ...definition.createDefaults,
+    [config.field]: nextCode(entities.map((entity) => value(entity, config.field)), config.prefix)
+  };
 }
 
 function commonFormValues(entity: MasterDataEntity, keys: readonly string[]): FormValues {

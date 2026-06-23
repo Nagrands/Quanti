@@ -46,3 +46,17 @@ test("workspace packages use expected names", async () => {
   assert.equal(sharedPackage.name, "@quanti/shared");
   assert.equal(dbPackage.name, "@quanti/db");
 });
+
+test("workspace TypeScript aliases avoid deprecated baseUrl", async () => {
+  const tsconfig = await readJson("tsconfig.base.json");
+
+  assert.equal(tsconfig.compilerOptions.baseUrl, undefined);
+  assert.deepEqual(
+    tsconfig.compilerOptions.paths["@quanti/shared"],
+    ["./packages/shared/src/index.ts"]
+  );
+  assert.deepEqual(
+    tsconfig.compilerOptions.paths["@quanti/db"],
+    ["./packages/db/src/index.ts"]
+  );
+});

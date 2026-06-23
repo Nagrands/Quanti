@@ -15,9 +15,17 @@ assert.match(workspaceYaml, /apps\/\*/, "Workspace must include apps/*.");
 assert.match(workspaceYaml, /packages\/\*/, "Workspace must include packages/*.");
 
 const tsconfig = await readJson("tsconfig.base.json");
-assert.equal(tsconfig.compilerOptions.baseUrl, ".", "Base tsconfig must use repo root as baseUrl.");
-assert.ok(tsconfig.compilerOptions.paths["@quanti/shared"], "Shared path alias is required.");
-assert.ok(tsconfig.compilerOptions.paths["@quanti/db"], "DB path alias is required.");
+assert.equal(tsconfig.compilerOptions.baseUrl, undefined, "Base tsconfig must avoid deprecated baseUrl.");
+assert.deepEqual(
+  tsconfig.compilerOptions.paths["@quanti/shared"],
+  ["./packages/shared/src/index.ts"],
+  "Shared path alias must be relative to the base tsconfig."
+);
+assert.deepEqual(
+  tsconfig.compilerOptions.paths["@quanti/db"],
+  ["./packages/db/src/index.ts"],
+  "DB path alias must be relative to the base tsconfig."
+);
 
 const packageNames = [
   "@quanti/api",

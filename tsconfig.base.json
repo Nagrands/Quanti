@@ -10,12 +10,11 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
     "paths": {
-      "@quanti/shared": ["packages/shared/src/index.ts"],
-      "@quanti/shared/*": ["packages/shared/src/*"],
-      "@quanti/db": ["packages/db/src/index.ts"],
-      "@quanti/db/*": ["packages/db/src/*"]
+      "@quanti/shared": ["./packages/shared/src/index.ts"],
+      "@quanti/shared/*": ["./packages/shared/src/*"],
+      "@quanti/db": ["./packages/db/src/index.ts"],
+      "@quanti/db/*": ["./packages/db/src/*"]
     }
   }
 }

@@ -8,6 +8,7 @@ import {
   addDocumentLine,
   calculateAmount,
   calculateTotal,
+  createDocumentNumber,
   createEmptyDocument,
   documentToForm,
   type DocumentFormValues,
@@ -21,6 +22,7 @@ interface DocumentDrawerProps {
   products: ProductDto[];
   warehouses: WarehouseDto[];
   counterparties: CounterpartyDto[];
+  documents: DocumentDto[];
   isSaving: boolean;
   onClose: () => void;
   onSave: (values: DocumentFormValues) => Promise<void>;
@@ -31,6 +33,7 @@ export function DocumentDrawer({
   products,
   warehouses,
   counterparties,
+  documents,
   isSaving,
   onClose,
   onSave
@@ -55,9 +58,9 @@ export function DocumentDrawer({
   ), [products, stockBalanceQueries, values, warehouses]);
 
   useEffect(() => {
-    setValues(document ? documentToForm(document) : createEmptyDocument());
+    setValues(document ? documentToForm(document) : createEmptyDocument(createDocumentNumber("SALE", documents)));
     setError("");
-  }, [document]);
+  }, [document, documents]);
 
   function updateLine(key: string, field: string, value: string) {
     setValues((current) => ({
@@ -154,7 +157,17 @@ export function DocumentDrawer({
             ) : null}
             <div className="document-fields">
               <label>{t("Номер")}<input value={values.number} disabled={isReadOnly} onChange={(event) => setValues({ ...values, number: event.target.value })} /></label>
-              <label>{t("Тип")}<select value={values.type} disabled={isReadOnly} onChange={(event) => setValues({ ...values, type: event.target.value as DocumentFormValues["type"] })}>
+              <label>{t("Тип")}<select value={values.type} disabled={isReadOnly} onChange={(event) => {
+                const nextType = event.target.value as DocumentFormValues["type"];
+                const currentAutoNumber = createDocumentNumber(values.type, documents);
+                setValues({
+                  ...values,
+                  type: nextType,
+                  number: values.number === currentAutoNumber || values.number.trim() === ""
+                    ? createDocumentNumber(nextType, documents)
+                    : values.number
+                });
+              }}>
                 {supportedDocumentTypes.map((type) => <option key={type} value={type}>{documentTypeLabels[type]}</option>)}
                 {values.type === "STOCK_ADJUSTMENT" ? <option value="STOCK_ADJUSTMENT">{t("Корректировка остатков")}</option> : null}
               </select></label>

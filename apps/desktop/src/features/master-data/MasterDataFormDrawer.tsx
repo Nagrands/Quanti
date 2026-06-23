@@ -11,6 +11,7 @@ import type {
 interface MasterDataFormDrawerProps {
   definition: MasterDataDefinition;
   entity: MasterDataEntity | null;
+  initialValues: FormValues;
   isSaving: boolean;
   onClose: () => void;
   onSave: (values: FormValues) => Promise<void>;
@@ -19,20 +20,21 @@ interface MasterDataFormDrawerProps {
 export function MasterDataFormDrawer({
   definition,
   entity,
+  initialValues,
   isSaving,
   onClose,
   onSave
 }: MasterDataFormDrawerProps) {
   const { formatApiError, t } = useI18n();
-  const [values, setValues] = useState<FormValues>(definition.createDefaults);
+  const [values, setValues] = useState<FormValues>(initialValues);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [requestError, setRequestError] = useState("");
 
   useEffect(() => {
-    setValues(entity ? definition.toFormValues(entity) : definition.createDefaults);
+    setValues(entity ? definition.toFormValues(entity) : initialValues);
     setFieldErrors({});
     setRequestError("");
-  }, [definition, entity]);
+  }, [definition, entity, initialValues]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

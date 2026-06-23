@@ -122,7 +122,7 @@ export function DocumentsPage() {
           </tbody></table></div>}
       </div>
 
-      {isDrawerOpen ? <DocumentDrawer document={selected} products={lookupsQuery.data?.products ?? []} warehouses={lookupsQuery.data?.warehouses ?? []} counterparties={lookupsQuery.data?.counterparties ?? []} isSaving={saveMutation.isPending} onClose={() => { setIsDrawerOpen(false); setSelected(null); }} onSave={(values) => saveMutation.mutateAsync({ values, document: selected }).then(() => undefined)} /> : null}
+      {isDrawerOpen ? <DocumentDrawer document={selected} products={lookupsQuery.data?.products ?? []} warehouses={lookupsQuery.data?.warehouses ?? []} counterparties={lookupsQuery.data?.counterparties ?? []} documents={documentsQuery.data ?? []} isSaving={saveMutation.isPending} onClose={() => { setIsDrawerOpen(false); setSelected(null); }} onSave={(values) => saveMutation.mutateAsync({ values, document: selected }).then(() => undefined)} /> : null}
       {pendingAction ? (
         <div className="dialog-backdrop">
           <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="lifecycle-title">

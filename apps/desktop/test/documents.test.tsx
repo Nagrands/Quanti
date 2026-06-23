@@ -113,7 +113,14 @@ describe("documents workspace", () => {
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
     const drawer = screen.getByRole("complementary", { name: "Новый документ" });
-    await user.type(within(drawer).getByLabelText("Номер"), "SO-002");
+    const number = within(drawer).getByLabelText("Номер");
+    expect(number).toHaveValue("SALE-202606-0001");
+    await user.selectOptions(within(drawer).getByLabelText("Тип"), "PURCHASE");
+    expect(number).toHaveValue("PUR-202606-0001");
+    await user.selectOptions(within(drawer).getByLabelText("Тип"), "SALE");
+    expect(number).toHaveValue("SALE-202606-0001");
+    await user.clear(number);
+    await user.type(number, "SO-002");
     await user.selectOptions(within(drawer).getByLabelText("Склад"), "warehouse-1");
     await user.selectOptions(within(drawer).getByLabelText("Товар"), "product-1");
     const quantity = within(drawer).getByLabelText("Количество");
@@ -144,7 +151,9 @@ describe("documents workspace", () => {
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
     const drawer = screen.getByRole("complementary", { name: "Новый документ" });
-    await user.type(within(drawer).getByLabelText("Номер"), "SO-003");
+    const number = within(drawer).getByLabelText("Номер");
+    await user.clear(number);
+    await user.type(number, "SO-003");
     await user.selectOptions(within(drawer).getByLabelText("Склад"), "warehouse-1");
     await user.selectOptions(within(drawer).getByLabelText("Товар"), "product-1");
     const quantity = within(drawer).getByLabelText("Количество");
@@ -173,7 +182,9 @@ describe("documents workspace", () => {
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
     const drawer = screen.getByRole("complementary", { name: "Новый документ" });
-    await user.type(within(drawer).getByLabelText("Номер"), "TR-002");
+    const number = within(drawer).getByLabelText("Номер");
+    await user.clear(number);
+    await user.type(number, "TR-002");
     await user.selectOptions(within(drawer).getByLabelText("Тип"), "TRANSFER");
     await user.selectOptions(within(drawer).getByLabelText("Склад-отправитель"), "warehouse-1");
     await user.selectOptions(within(drawer).getByLabelText("Склад-получатель"), "warehouse-1");

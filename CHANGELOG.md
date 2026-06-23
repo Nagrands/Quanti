@@ -10,6 +10,7 @@ All notable changes to Quanti are documented in this file.
 - Product categories with product grouping in master data.
 - Draft, post, unpost, and repost workflows for stock documents.
 - Document stock warnings, transfer warehouse validation, and posting movement preview.
+- Editable auto-filled document numbers, product SKU values, and master-data codes.
 - Payment workflows, allocations, money movements, and counterparty debt.
 - Ledger-based stock, sales, cashflow, top-product, and debt reports.
 - PDF document printing with versioned database templates.

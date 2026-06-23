@@ -102,16 +102,19 @@ describe("master data workspace", () => {
     await user.click(screen.getByRole("button", { name: "Создать" }));
     const drawer = screen.getByRole("complementary", { name: "Новая запись" });
     await user.click(within(drawer).getByRole("button", { name: "Создать" }));
-    expect(within(drawer).getByText("Поле «SKU» обязательно.")).toBeInTheDocument();
+    expect(within(drawer).getByText("Поле «Наименование» обязательно.")).toBeInTheDocument();
 
-    await user.type(within(drawer).getByLabelText("SKU *"), " PRD-002 ");
+    const sku = within(drawer).getByLabelText("SKU *");
+    expect(sku).toHaveValue("PRD-0002");
+    await user.clear(sku);
+    await user.type(sku, " PRD-003 ");
     await user.type(within(drawer).getByLabelText("Наименование *"), " Mouse ");
     await user.selectOptions(within(drawer).getByLabelText("Категория"), "category-1");
     await user.type(within(drawer).getByLabelText("Единица *"), " pcs ");
     await user.click(within(drawer).getByRole("button", { name: "Создать" }));
 
     expect(createMasterData).toHaveBeenCalledWith("products", {
-      sku: "PRD-002",
+      sku: "PRD-003",
       name: "Mouse",
       categoryId: "category-1",
       unit: "pcs",

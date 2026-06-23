@@ -13,6 +13,7 @@ import {
 import { MasterDataFormDrawer } from "./MasterDataFormDrawer";
 import {
   type FormValues,
+  createMasterDataDefaults,
   getLocalizedMasterDataDefinitions,
   type MasterDataEntity,
   type MasterDataResource
@@ -27,6 +28,7 @@ export function MasterDataPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [editingEntity, setEditingEntity] = useState<MasterDataEntity | null>(null);
+  const [formInitialValues, setFormInitialValues] = useState<FormValues>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deactivatingEntity, setDeactivatingEntity] = useState<MasterDataEntity | null>(null);
   const [restoringEntity, setRestoringEntity] = useState<MasterDataEntity | null>(null);
@@ -198,6 +200,7 @@ export function MasterDataPage() {
           className="button button--primary"
           onClick={() => {
             setEditingEntity(null);
+            setFormInitialValues(createMasterDataDefaults(definition, entities));
             setIsFormOpen(true);
           }}
         >
@@ -252,6 +255,7 @@ export function MasterDataPage() {
                           disabled={!entity.isActive}
                           onClick={() => {
                             setEditingEntity(entity);
+                            setFormInitialValues(definition.toFormValues(entity));
                             setIsFormOpen(true);
                           }}
                         >
@@ -290,6 +294,7 @@ export function MasterDataPage() {
         <MasterDataFormDrawer
           definition={definition}
           entity={editingEntity}
+          initialValues={formInitialValues}
           isSaving={saveMutation.isPending}
           onClose={() => {
             setIsFormOpen(false);

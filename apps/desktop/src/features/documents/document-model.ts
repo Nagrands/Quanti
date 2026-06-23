@@ -32,6 +32,15 @@ export interface DocumentFormValues {
   items: DocumentLineForm[];
 }
 
+const documentNumberPrefixes: Record<DocumentType, string> = {
+  SALE: "SALE",
+  PURCHASE: "PUR",
+  TRANSFER: "TRF",
+  STOCK_ADJUSTMENT: "ADJ",
+  RETURN_IN: "RIN",
+  RETURN_OUT: "ROUT"
+};
+
 const emptyLine = (): DocumentLineForm => ({
   key: crypto.randomUUID(),
   productId: "",
@@ -40,9 +49,9 @@ const emptyLine = (): DocumentLineForm => ({
   warehouseId: ""
 });
 
-export function createEmptyDocument(): DocumentFormValues {
+export function createEmptyDocument(number = ""): DocumentFormValues {
   return {
-    number: "",
+    number,
     type: "SALE",
     documentDate: new Date().toISOString().slice(0, 10),
     notes: "",
@@ -52,6 +61,27 @@ export function createEmptyDocument(): DocumentFormValues {
     counterpartyId: "",
     items: [emptyLine()]
   };
+}
+
+function nextSequence(existingValues: readonly string[], prefix: string) {
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^${escapedPrefix}-(\\d{6})-(\\d{4})$`);
+  const max = existingValues.reduce((currentMax, value) => {
+    const match = pattern.exec(value);
+    return match ? Math.max(currentMax, Number(match[2])) : currentMax;
+  }, 0);
+
+  return String(max + 1).padStart(4, "0");
+}
+
+export function createDocumentNumber(
+  type: DocumentType,
+  existingDocuments: readonly Pick<DocumentDto, "number">[],
+  date = new Date()
+) {
+  const month = date.toISOString().slice(0, 7).replace("-", "");
+  const prefix = `${documentNumberPrefixes[type]}-${month}`;
+  return `${prefix}-${nextSequence(existingDocuments.map((document) => document.number), prefix)}`;
 }
 
 export function documentToForm(document: DocumentDto): DocumentFormValues {
