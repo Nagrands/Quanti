@@ -46,13 +46,13 @@
   border-radius: vars.$radius-small;
   outline: 0;
   color: vars.$color-text;
-  background: vars.$color-white;
+  background: vars.$color-control;
 }
 
 .report-filters input:focus,
 .report-filters select:focus {
   border-color: vars.$color-accent-600;
-  box-shadow: 0 0 0 3px rgb(9 105 218 / 12%);
+  box-shadow: 0 0 0 3px vars.$color-focus-ring;
 }
 
 .report-filters__actions {

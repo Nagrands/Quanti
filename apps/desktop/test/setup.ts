@@ -17,4 +17,6 @@ Object.defineProperty(window, "localStorage", {
 afterEach(() => {
   cleanup();
   window.localStorage.clear();
+  delete document.documentElement.dataset.theme;
+  document.documentElement.style.removeProperty("color-scheme");
 });

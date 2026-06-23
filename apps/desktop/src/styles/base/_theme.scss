@@ -1,0 +1,61 @@
+:root {
+  --color-background: #f6f8fa;
+  --color-surface: #ffffff;
+  --color-surface-muted: #fbfcfd;
+  --color-surface-hover: #f8fbff;
+  --color-control: #ffffff;
+  --color-text: #10233e;
+  --color-text-muted: #66758a;
+  --color-border: #d9e0e8;
+  --color-border-strong: #c8d1dc;
+  --color-header: rgb(255 255 255 / 94%);
+  --color-success-text: #116329;
+  --color-success-surface: #dafbe1;
+  --color-warning-text: #9a3412;
+  --color-warning-surface: #ffedd5;
+  --color-danger-text: #8e2531;
+  --color-danger-surface: #fff5f6;
+  --color-neutral-text: #46566c;
+  --color-neutral-surface: #f4f6f8;
+  --color-info-surface: #f7faff;
+  --color-focus-ring: rgb(9 105 218 / 28%);
+  --color-success-halo: rgb(29 163 91 / 12%);
+  --color-warning-halo: rgb(197 138 22 / 12%);
+  --color-danger-halo: rgb(196 61 75 / 12%);
+  --color-overlay: rgb(8 39 70 / 24%);
+  --shadow-panel: 0 1px 2px rgb(16 35 62 / 6%), 0 8px 24px rgb(16 35 62 / 5%);
+  --shadow-drawer: -14px 0 40px rgb(16 35 62 / 14%);
+  --shadow-menu: 0 16px 34px rgb(16 35 62 / 18%);
+  --shadow-dialog: 0 24px 70px rgb(16 35 62 / 24%);
+}
+
+:root[data-theme="dark"] {
+  --color-background: #0b1220;
+  --color-surface: #111c2e;
+  --color-surface-muted: #162338;
+  --color-surface-hover: #192a42;
+  --color-control: #0f1a2b;
+  --color-text: #edf4ff;
+  --color-text-muted: #9caec5;
+  --color-border: #263750;
+  --color-border-strong: #344962;
+  --color-header: rgb(17 28 46 / 94%);
+  --color-success-text: #62d994;
+  --color-success-surface: #123624;
+  --color-warning-text: #ffbc78;
+  --color-warning-surface: #412715;
+  --color-danger-text: #ff9aa6;
+  --color-danger-surface: #3d1d25;
+  --color-neutral-text: #c2cee0;
+  --color-neutral-surface: #202e42;
+  --color-info-surface: #142945;
+  --color-focus-ring: rgb(76 154 255 / 38%);
+  --color-success-halo: rgb(98 217 148 / 22%);
+  --color-warning-halo: rgb(255 188 120 / 22%);
+  --color-danger-halo: rgb(255 154 166 / 22%);
+  --color-overlay: rgb(2 8 18 / 66%);
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 24%), 0 12px 30px rgb(0 0 0 / 18%);
+  --shadow-drawer: -14px 0 40px rgb(0 0 0 / 36%);
+  --shadow-menu: 0 16px 34px rgb(0 0 0 / 42%);
+  --shadow-dialog: 0 24px 70px rgb(0 0 0 / 48%);
+}

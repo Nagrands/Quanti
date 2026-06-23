@@ -7,8 +7,8 @@
   width: min(640px, 100%);
   flex-direction: column;
   border-left: 1px solid vars.$color-border;
-  background: vars.$color-white;
-  box-shadow: -14px 0 40px rgb(16 35 62 / 14%);
+  background: vars.$color-surface;
+  box-shadow: vars.$shadow-drawer;
 }
 
 .payment-form {
@@ -28,7 +28,7 @@
   padding: 10px 12px;
   border-left: 3px solid vars.$color-accent-600;
   color: vars.$color-text-muted;
-  background: #f7faff;
+  background: vars.$color-info-surface;
   font-size: 0.8rem;
 }
 
@@ -60,7 +60,7 @@
 
 .allocations__header {
   color: vars.$color-text-muted;
-  background: #fbfcfd;
+  background: vars.$color-surface-muted;
   font-size: 0.68rem;
   font-weight: 750;
   text-transform: uppercase;
@@ -76,7 +76,8 @@
   padding: 8px;
   border: 1px solid vars.$color-border-strong;
   border-radius: vars.$radius-small;
-  background: vars.$color-white;
+  color: vars.$color-text;
+  background: vars.$color-control;
 }
 
 .allocation-row > span {
@@ -99,7 +100,7 @@
   display: grid;
   gap: 5px;
   padding: 15px;
-  background: vars.$color-white;
+  background: vars.$color-surface;
 }
 
 .payment-summary span {
@@ -130,7 +131,7 @@
 
 .status-label--cancelled {
   color: vars.$color-danger;
-  background: #fff5f6;
+  background: vars.$color-danger-surface;
 }
 
 @media (max-width: 640px) {

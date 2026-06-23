@@ -12,7 +12,7 @@ vi.mock("../src/api/client", () => ({
   }
 }));
 
-describe("language settings", () => {
+describe("application settings", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.mocked(apiClient.request).mockImplementation(async (path) => path === "/health" ? {
@@ -47,5 +47,25 @@ describe("language settings", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+  });
+
+  test("switches to dark theme immediately and persists it", async () => {
+    const user = userEvent.setup();
+    renderWithAppProviders(<App />, "/settings");
+
+    await user.selectOptions(screen.getByLabelText("Тема интерфейса"), "dark");
+
+    expect(screen.getByLabelText("Тема интерфейса")).toHaveValue("dark");
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(window.localStorage.getItem("quanti.theme")).toBe("dark");
+  });
+
+  test("restores the saved dark theme on mount", () => {
+    window.localStorage.setItem("quanti.theme", "dark");
+    renderWithAppProviders(<App />, "/settings");
+
+    expect(screen.getByLabelText("Тема интерфейса")).toHaveValue("dark");
+    expect(document.documentElement.dataset.theme).toBe("dark");
   });
 });

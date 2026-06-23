@@ -16,17 +16,17 @@
   height: 9px;
   border-radius: 50%;
   background: vars.$color-warning;
-  box-shadow: 0 0 0 3px rgb(197 138 22 / 12%);
+  box-shadow: 0 0 0 3px vars.$color-warning-halo;
 }
 
 .api-status--success .api-status__dot {
   background: vars.$color-success;
-  box-shadow: 0 0 0 3px rgb(29 163 91 / 12%);
+  box-shadow: 0 0 0 3px vars.$color-success-halo;
 }
 
 .api-status--error .api-status__dot {
   background: vars.$color-danger;
-  box-shadow: 0 0 0 3px rgb(196 61 75 / 12%);
+  box-shadow: 0 0 0 3px vars.$color-danger-halo;
 }
 
 @media (max-width: 520px) {

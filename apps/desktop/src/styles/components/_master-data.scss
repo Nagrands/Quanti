@@ -99,7 +99,7 @@
 
 .search-field:focus-within {
   border-color: vars.$color-accent-600;
-  box-shadow: 0 0 0 3px rgb(9 105 218 / 12%);
+  box-shadow: 0 0 0 3px vars.$color-focus-ring;
 }
 
 .search-field svg {
@@ -171,7 +171,7 @@
 
 .data-table th {
   color: vars.$color-text-muted;
-  background: #fbfcfd;
+  background: vars.$color-surface-muted;
   font-size: 0.75rem;
   font-weight: 750;
   letter-spacing: 0.04em;
@@ -183,7 +183,7 @@
 }
 
 .data-table tbody tr:hover {
-  background: #f8fbff;
+  background: vars.$color-surface-hover;
 }
 
 .data-table__row--archived {
@@ -205,8 +205,8 @@
 }
 
 .status-badge--active {
-  color: #116329;
-  background: #dafbe1;
+  color: vars.$color-success-text;
+  background: vars.$color-success-surface;
 }
 
 .status-badge--archived {
@@ -294,13 +294,13 @@
 }
 
 .button--primary:hover:not(:disabled) {
-  background: #075bbd;
+  background: vars.$color-accent-500;
 }
 
 .button--secondary {
   border-color: vars.$color-border-strong;
   color: vars.$color-text;
-  background: vars.$color-white;
+  background: vars.$color-surface;
 }
 
 .button--danger {
@@ -330,7 +330,7 @@
   position: fixed;
   z-index: 50;
   inset: 0;
-  background: rgb(8 39 70 / 24%);
+  background: vars.$color-overlay;
 }
 
 .form-drawer {
@@ -340,8 +340,8 @@
   width: min(460px, 100%);
   flex-direction: column;
   border-left: 1px solid vars.$color-border;
-  background: vars.$color-white;
-  box-shadow: -14px 0 40px rgb(16 35 62 / 14%);
+  background: vars.$color-surface;
+  box-shadow: vars.$shadow-drawer;
 }
 
 .form-drawer__header {
@@ -403,7 +403,7 @@
   border-radius: vars.$radius-small;
   outline: 0;
   color: vars.$color-text;
-  background: vars.$color-white;
+  background: vars.$color-control;
 }
 
 .form-field textarea {
@@ -414,7 +414,7 @@
 .form-field textarea:focus,
 .form-field select:focus {
   border-color: vars.$color-accent-600;
-  box-shadow: 0 0 0 3px rgb(9 105 218 / 12%);
+  box-shadow: 0 0 0 3px vars.$color-focus-ring;
 }
 
 .form-field [aria-invalid="true"] {
@@ -428,10 +428,10 @@
 
 .form-alert {
   padding: 12px 14px;
-  border: 1px solid rgb(196 61 75 / 25%);
+  border: 1px solid vars.$color-danger;
   border-radius: vars.$radius-small;
-  color: #8e2531;
-  background: #fff5f6;
+  color: vars.$color-danger-text;
+  background: vars.$color-danger-surface;
   font-size: 0.8125rem;
   line-height: 1.45;
 }
@@ -466,8 +466,8 @@
   width: min(100%, 430px);
   padding: 26px;
   border-radius: vars.$radius-medium;
-  background: vars.$color-white;
-  box-shadow: 0 22px 64px rgb(16 35 62 / 22%);
+  background: vars.$color-surface;
+  box-shadow: vars.$shadow-dialog;
 }
 
 .confirm-dialog h2 {

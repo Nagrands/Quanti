@@ -13,7 +13,7 @@
   border: 1px solid vars.$color-border-strong;
   border-radius: vars.$radius-small;
   color: vars.$color-text;
-  background: vars.$color-white;
+  background: vars.$color-control;
 }
 
 .documents-table .table-link {
@@ -40,14 +40,14 @@
 }
 
 .status-label--draft {
-  color: #46566c;
-  background: #f4f6f8;
+  color: vars.$color-neutral-text;
+  background: vars.$color-neutral-surface;
 }
 
 .status-label--posted {
-  border-color: rgb(29 163 91 / 22%);
-  color: #147743;
-  background: #edf9f2;
+  border-color: vars.$color-success;
+  color: vars.$color-success-text;
+  background: vars.$color-success-surface;
 }
 
 .document-actions {
@@ -110,13 +110,13 @@
 }
 
 .movement-preview__direction--in {
-  color: #116329;
-  background: #dafbe1;
+  color: vars.$color-success-text;
+  background: vars.$color-success-surface;
 }
 
 .movement-preview__direction--out {
-  color: #9a3412;
-  background: #ffedd5;
+  color: vars.$color-warning-text;
+  background: vars.$color-warning-surface;
 }
 
 .document-drawer {
@@ -127,8 +127,8 @@
   overflow-x: hidden;
   flex-direction: column;
   border-left: 1px solid vars.$color-border;
-  background: vars.$color-white;
-  box-shadow: -14px 0 40px rgb(16 35 62 / 14%);
+  background: vars.$color-surface;
+  box-shadow: vars.$shadow-drawer;
 }
 
 .document-drawer__header {
@@ -195,7 +195,7 @@
   border-radius: vars.$radius-small;
   outline: 0;
   color: vars.$color-text;
-  background: vars.$color-white;
+  background: vars.$color-control;
 }
 
 .document-fields :disabled,
@@ -238,7 +238,7 @@
 
 .line-items__header {
   color: vars.$color-text-muted;
-  background: #fbfcfd;
+  background: vars.$color-surface-muted;
   font-size: 0.7rem;
   font-weight: 750;
   text-transform: uppercase;
@@ -286,8 +286,8 @@
   overflow: hidden;
   border: 1px solid vars.$color-border-strong;
   border-radius: vars.$radius-small;
-  background: vars.$color-white;
-  box-shadow: 0 16px 34px rgb(16 35 62 / 18%);
+  background: vars.$color-surface;
+  box-shadow: vars.$shadow-menu;
 }
 
 .product-combobox__menu [role="listbox"] {
@@ -357,8 +357,8 @@
   width: min(560px, calc(100vw - 32px));
   padding: 24px;
   border-radius: vars.$radius-medium;
-  background: vars.$color-white;
-  box-shadow: 0 24px 70px rgb(16 35 62 / 24%);
+  background: vars.$color-surface;
+  box-shadow: vars.$shadow-dialog;
 }
 
 .quick-product-dialog header p {
@@ -397,7 +397,7 @@
   border: 1px solid vars.$color-border-strong;
   border-radius: vars.$radius-small;
   color: vars.$color-text;
-  background: vars.$color-white;
+  background: vars.$color-control;
 }
 
 .quick-product-dialog__wide {
