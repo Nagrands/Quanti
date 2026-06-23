@@ -3,10 +3,26 @@ import test from "node:test";
 
 import { AccountsController } from "../src/modules/products/accounts.controller";
 import { CounterpartiesController } from "../src/modules/products/counterparties.controller";
+import { ProductCategoriesController } from "../src/modules/products/product-categories.controller";
 import { ProductsController } from "../src/modules/products/products.controller";
 import { WarehousesController } from "../src/modules/products/warehouses.controller";
 
 test("master data controllers delegate CRUD calls to services", async () => {
+  const categoryCalls = { includeInactive: false, restoredId: "" };
+  const productCategoriesController = new ProductCategoriesController({
+    findAll: async (includeInactive = false) => {
+      categoryCalls.includeInactive = includeInactive;
+      return [{ id: "category-1", code: "VEG" }];
+    },
+    findOne: async (id: string) => ({ id, code: "VEG" }),
+    create: async (payload: Record<string, unknown>) => payload,
+    update: async (id: string, payload: Record<string, unknown>) => ({ id, ...payload }),
+    remove: async () => undefined,
+    restore: async (id: string) => {
+      categoryCalls.restoredId = id;
+      return { id, code: "VEG", isActive: true };
+    }
+  } as never);
   const productsCalls = { includeInactive: false, id: "", payload: {} as Record<string, unknown>, removedId: "", restoredId: "" };
   const productsController = new ProductsController({
     findAll: async (includeInactive = false) => {
@@ -76,6 +92,10 @@ test("master data controllers delegate CRUD calls to services", async () => {
   await warehousesController.remove("warehouse-1");
   assert.equal(warehousesCalls.removedId, "warehouse-1");
 
+  assert.equal((await productCategoriesController.findAll("true"))[0]?.code, "VEG");
+  assert.equal(categoryCalls.includeInactive, true);
+  await productCategoriesController.restore("category-1");
+  assert.equal(categoryCalls.restoredId, "category-1");
   assert.equal((await counterpartiesController.findOne("counterparty-1")).id, "counterparty-1");
   assert.equal((await accountsController.findOne("account-1")).id, "account-1");
 });

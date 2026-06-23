@@ -3,6 +3,7 @@ import type {
   AuditFields,
   CounterpartyId,
   DecimalString,
+  ProductCategoryId,
   ProductId,
   WarehouseId
 } from "./identifiers";
@@ -14,6 +15,8 @@ export interface ProductDto extends AuditFields {
   name: string;
   description: string | null;
   unit: string;
+  categoryId: ProductCategoryId | null;
+  categoryName: string | null;
   isActive: boolean;
 }
 
@@ -22,6 +25,7 @@ export interface CreateProductDto {
   name: string;
   description?: string | null;
   unit: string;
+  categoryId?: ProductCategoryId | null;
 }
 
 export interface UpdateProductDto {
@@ -29,6 +33,28 @@ export interface UpdateProductDto {
   name?: string;
   description?: string | null;
   unit?: string;
+  categoryId?: ProductCategoryId | null;
+  isActive?: boolean;
+}
+
+export interface ProductCategoryDto extends AuditFields {
+  id: ProductCategoryId;
+  code: string;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+}
+
+export interface CreateProductCategoryDto {
+  code: string;
+  name: string;
+  description?: string | null;
+}
+
+export interface UpdateProductCategoryDto {
+  code?: string;
+  name?: string;
+  description?: string | null;
   isActive?: boolean;
 }
 

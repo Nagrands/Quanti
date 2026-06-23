@@ -30,14 +30,22 @@ export function MasterDataPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deactivatingEntity, setDeactivatingEntity] = useState<MasterDataEntity | null>(null);
   const [restoringEntity, setRestoringEntity] = useState<MasterDataEntity | null>(null);
-  const definitions = useMemo(() => getLocalizedMasterDataDefinitions(t, locale), [locale, t]);
-  const definition = definitions.find((item) => item.resource === resource) ?? definitions[0];
   const queryKey = ["master-data", resource] as const;
 
   const entitiesQuery = useQuery({
     queryKey,
     queryFn: () => getMasterData(resource, true)
   });
+  const categoriesQuery = useQuery({
+    queryKey: ["master-data", "product-categories", "active"],
+    queryFn: () => getMasterData("product-categories")
+  });
+  const definitions = useMemo(() => getLocalizedMasterDataDefinitions(t, locale, {
+    "product-categories": (categoriesQuery.data ?? [])
+      .filter((entity) => entity.isActive)
+      .map((entity) => ({ label: entity.name, value: entity.id }))
+  }), [categoriesQuery.data, locale, t]);
+  const definition = definitions.find((item) => item.resource === resource) ?? definitions[0];
 
   const saveMutation = useMutation({
     mutationFn: ({ values, entity }: { values: FormValues; entity: MasterDataEntity | null }) => {
@@ -48,6 +56,9 @@ export function MasterDataPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
+      if (resource === "product-categories") {
+        await queryClient.invalidateQueries({ queryKey: ["master-data", "product-categories", "active"] });
+      }
       setIsFormOpen(false);
       setEditingEntity(null);
     }
@@ -57,6 +68,9 @@ export function MasterDataPage() {
     mutationFn: (entity: MasterDataEntity) => deactivateMasterData(resource, entity.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
+      if (resource === "product-categories") {
+        await queryClient.invalidateQueries({ queryKey: ["master-data", "product-categories", "active"] });
+      }
       setDeactivatingEntity(null);
     }
   });
@@ -65,6 +79,9 @@ export function MasterDataPage() {
     mutationFn: (entity: MasterDataEntity) => restoreMasterData(resource, entity.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
+      if (resource === "product-categories") {
+        await queryClient.invalidateQueries({ queryKey: ["master-data", "product-categories", "active"] });
+      }
       setRestoringEntity(null);
     }
   });

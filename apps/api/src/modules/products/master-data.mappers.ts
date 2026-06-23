@@ -1,15 +1,31 @@
-import type { Account, Counterparty, Product, Warehouse } from "@quanti/db";
-import type { AccountDto, CounterpartyDto, ProductDto, WarehouseDto } from "@quanti/shared";
+import type { Account, Counterparty, Product, ProductCategory, Warehouse } from "@quanti/db";
+import type { AccountDto, CounterpartyDto, ProductCategoryDto, ProductDto, WarehouseDto } from "@quanti/shared";
 
 const toIso = (value: Date) => value.toISOString();
 
-export function toProductDto(record: Product): ProductDto {
+type ProductRecord = Product & { category?: ProductCategory | null };
+
+export function toProductDto(record: ProductRecord): ProductDto {
   return {
     id: record.id,
     sku: record.sku,
     name: record.name,
     description: record.description,
     unit: record.unit,
+    categoryId: record.categoryId,
+    categoryName: record.category?.name ?? null,
+    isActive: record.isActive,
+    createdAt: toIso(record.createdAt),
+    updatedAt: toIso(record.updatedAt)
+  };
+}
+
+export function toProductCategoryDto(record: ProductCategory): ProductCategoryDto {
+  return {
+    id: record.id,
+    code: record.code,
+    name: record.name,
+    description: record.description,
     isActive: record.isActive,
     createdAt: toIso(record.createdAt),
     updatedAt: toIso(record.updatedAt)

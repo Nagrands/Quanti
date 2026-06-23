@@ -26,6 +26,8 @@ const product = {
   name: "Desk lamp",
   unit: "pcs",
   description: "Adjustable lamp",
+  categoryId: "category-1",
+  categoryName: "Lighting",
   isActive: true,
   createdAt: "2026-06-01T10:00:00.000Z",
   updatedAt: "2026-06-01T10:00:00.000Z"
@@ -39,10 +41,22 @@ const archivedProduct = {
   isActive: false
 };
 
+const category = {
+  id: "category-1",
+  code: "LIGHT",
+  name: "Lighting",
+  description: "Lighting products",
+  isActive: true,
+  createdAt: "2026-06-01T10:00:00.000Z",
+  updatedAt: "2026-06-01T10:00:00.000Z"
+};
+
 describe("master data workspace", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    vi.mocked(getMasterData).mockResolvedValue([product]);
+    vi.mocked(getMasterData).mockImplementation(async (resource) =>
+      resource === "product-categories" ? [category] : [product]
+    );
     vi.mocked(createMasterData).mockResolvedValue(product);
     vi.mocked(updateMasterData).mockResolvedValue(product);
     vi.mocked(deactivateMasterData).mockResolvedValue(undefined);
@@ -51,7 +65,9 @@ describe("master data workspace", () => {
 
   test("loads products and filters active and archived rows", async () => {
     const user = userEvent.setup();
-    vi.mocked(getMasterData).mockResolvedValue([product, archivedProduct]);
+    vi.mocked(getMasterData).mockImplementation(async (resource) =>
+      resource === "product-categories" ? [category] : [product, archivedProduct]
+    );
     renderWithAppProviders(<MasterDataPage />, "/products");
 
     expect(await screen.findByText("PRD-001")).toBeInTheDocument();
@@ -90,12 +106,14 @@ describe("master data workspace", () => {
 
     await user.type(within(drawer).getByLabelText("SKU *"), " PRD-002 ");
     await user.type(within(drawer).getByLabelText("Наименование *"), " Mouse ");
+    await user.selectOptions(within(drawer).getByLabelText("Категория"), "category-1");
     await user.type(within(drawer).getByLabelText("Единица *"), " pcs ");
     await user.click(within(drawer).getByRole("button", { name: "Создать" }));
 
     expect(createMasterData).toHaveBeenCalledWith("products", {
       sku: "PRD-002",
       name: "Mouse",
+      categoryId: "category-1",
       unit: "pcs",
       description: null
     });
@@ -129,7 +147,7 @@ describe("master data workspace", () => {
     renderWithAppProviders(<MasterDataPage />, "/products");
     await screen.findByText("PRD-001");
 
-    for (const tab of ["Склады", "Контрагенты", "Счета"]) {
+    for (const tab of ["Категории товаров", "Склады", "Контрагенты", "Счета"]) {
       vi.mocked(getMasterData).mockResolvedValueOnce([]);
       await user.click(screen.getByRole("button", { name: tab }));
       expect(await screen.findByText("Записей пока нет")).toBeInTheDocument();

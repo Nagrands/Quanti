@@ -3,6 +3,7 @@ import type {
   CreateCounterpartyDto,
   CreateDraftDocumentDto,
   CreatePaymentDto,
+  CreateProductCategoryDto,
   CreateProductDto,
   CreateWarehouseDto,
   DocumentPrintDataDto,
@@ -10,6 +11,7 @@ import type {
   CounterpartyDebtReportFilterDto,
   DocumentDto,
   PaymentDto,
+  ProductCategoryDto,
   ProductDto,
   RepostDocumentCommand,
   RepostPaymentCommand,
@@ -35,7 +37,13 @@ import {
 const product: CreateProductDto = {
   sku: "SKU-001",
   name: "Widget",
-  unit: "pcs"
+  unit: "pcs",
+  categoryId: "category-1"
+};
+
+const productCategory: CreateProductCategoryDto = {
+  code: "VEG",
+  name: "Vegetables"
 };
 
 const warehouse: CreateWarehouseDto = {
@@ -215,6 +223,18 @@ const productView: ProductDto = {
   name: "Widget",
   description: null,
   unit: "pcs",
+  categoryId: "category-1",
+  categoryName: "Vegetables",
+  isActive: true,
+  createdAt: "2026-04-14T00:00:00.000Z",
+  updatedAt: "2026-04-14T00:00:00.000Z"
+};
+
+const productCategoryView: ProductCategoryDto = {
+  id: "category-1",
+  code: "VEG",
+  name: "Vegetables",
+  description: null,
   isActive: true,
   createdAt: "2026-04-14T00:00:00.000Z",
   updatedAt: "2026-04-14T00:00:00.000Z"
@@ -228,6 +248,7 @@ counterpartyTypes satisfies readonly string[];
 accountTypes satisfies readonly string[];
 
 void product;
+void productCategory;
 void warehouse;
 void counterparty;
 void account;
@@ -247,3 +268,4 @@ void documentView;
 void paymentView;
 void repostPayment;
 void productView;
+void productCategoryView;

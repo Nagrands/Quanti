@@ -1,10 +1,10 @@
-import type { UpdateProductDto } from "@quanti/shared";
+import type { UpdateProductCategoryDto } from "@quanti/shared";
 import { IsBoolean, IsOptional, IsString } from "class-validator";
 
-export class UpdateProductRequest implements UpdateProductDto {
+export class UpdateProductCategoryRequest implements UpdateProductCategoryDto {
   @IsOptional()
   @IsString()
-  sku?: string;
+  code?: string;
 
   @IsOptional()
   @IsString()
@@ -13,14 +13,6 @@ export class UpdateProductRequest implements UpdateProductDto {
   @IsOptional()
   @IsString()
   description?: string | null;
-
-  @IsOptional()
-  @IsString()
-  unit?: string;
-
-  @IsOptional()
-  @IsString()
-  categoryId?: string | null;
 
   @IsOptional()
   @IsBoolean()

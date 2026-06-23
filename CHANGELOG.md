@@ -7,6 +7,7 @@ All notable changes to Quanti are documented in this file.
 ### Added
 
 - Master data management for products, warehouses, counterparties, and accounts.
+- Product categories with product grouping in master data.
 - Draft, post, unpost, and repost workflows for stock documents.
 - Document stock warnings, transfer warehouse validation, and posting movement preview.
 - Payment workflows, allocations, money movements, and counterparty debt.

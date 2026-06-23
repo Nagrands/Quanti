@@ -1,15 +1,17 @@
 import type {
   AccountDto,
   CounterpartyDto,
+  ProductCategoryDto,
   ProductDto,
   WarehouseDto
 } from "@quanti/shared";
 import type { Locale, Translate } from "../../i18n";
 
-export type MasterDataEntity = ProductDto | WarehouseDto | CounterpartyDto | AccountDto;
-export type MasterDataResource = "products" | "warehouses" | "counterparties" | "accounts";
+export type MasterDataEntity = ProductDto | ProductCategoryDto | WarehouseDto | CounterpartyDto | AccountDto;
+export type MasterDataResource = "products" | "product-categories" | "warehouses" | "counterparties" | "accounts";
 export type FormValue = string | boolean;
 export type FormValues = Record<string, FormValue>;
+export type MasterDataOptionMap = Partial<Record<MasterDataResource, readonly { label: string; value: string }[]>>;
 
 export interface MasterDataColumn {
   key: string;
@@ -78,6 +80,7 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
     columns: [
       { key: "sku", label: "SKU", render: (entity) => value(entity, "sku") },
       { key: "name", label: "Наименование", render: (entity) => entity.name },
+      { key: "categoryName", label: "Категория", render: (entity) => value(entity, "categoryName") || "—" },
       { key: "unit", label: "Единица", render: (entity) => value(entity, "unit") },
       { key: "description", label: "Описание", render: (entity) => value(entity, "description") || "—" },
       updatedColumn
@@ -85,11 +88,32 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
     fields: [
       { key: "sku", label: "SKU", required: true },
       { key: "name", label: "Наименование", required: true },
+      { key: "categoryId", label: "Категория", type: "select" },
       { key: "unit", label: "Единица", required: true, placeholder: "шт, кг, л" },
       { key: "description", label: "Описание", type: "textarea" }
     ],
-    createDefaults: { sku: "", name: "", unit: "", description: "" },
-    toFormValues: (entity) => commonFormValues(entity, ["sku", "name", "unit", "description"]),
+    createDefaults: { sku: "", name: "", categoryId: "", unit: "", description: "" },
+    toFormValues: (entity) => commonFormValues(entity, ["sku", "name", "categoryId", "unit", "description"]),
+    toPayload: (values) => trimPayload(values, ["categoryId", "description"])
+  },
+  {
+    resource: "product-categories",
+    label: "Категории товаров",
+    singularLabel: "категорию",
+    searchPlaceholder: "Поиск категорий",
+    columns: [
+      { key: "code", label: "Код", render: (entity) => value(entity, "code") },
+      { key: "name", label: "Наименование", render: (entity) => entity.name },
+      { key: "description", label: "Описание", render: (entity) => value(entity, "description") || "—" },
+      updatedColumn
+    ],
+    fields: [
+      { key: "code", label: "Код", required: true },
+      { key: "name", label: "Наименование", required: true },
+      { key: "description", label: "Описание", type: "textarea" }
+    ],
+    createDefaults: { code: "", name: "", description: "" },
+    toFormValues: (entity) => commonFormValues(entity, ["code", "name", "description"]),
     toPayload: (values) => trimPayload(values, ["description"])
   },
   {
@@ -184,7 +208,11 @@ export function getMasterDataDefinition(resource: MasterDataResource) {
     ?? masterDataDefinitions[0];
 }
 
-export function getLocalizedMasterDataDefinitions(t: Translate, locale: Locale) {
+export function getLocalizedMasterDataDefinitions(
+  t: Translate,
+  locale: Locale,
+  options: MasterDataOptionMap = {}
+) {
   return masterDataDefinitions.map((definition) => ({
     ...definition,
     label: t(definition.label),
@@ -204,7 +232,10 @@ export function getLocalizedMasterDataDefinitions(t: Translate, locale: Locale) 
       ...field,
       label: t(field.label),
       placeholder: field.placeholder ? t(field.placeholder) : undefined,
-      options: field.options?.map((option) => ({ ...option, label: t(option.label) }))
+      options: (field.key === "categoryId"
+        ? [{ label: t("Без категории"), value: "" }, ...(options["product-categories"] ?? [])]
+        : field.options
+      )?.map((option) => ({ ...option, label: t(option.label) }))
     }))
   }));
 }

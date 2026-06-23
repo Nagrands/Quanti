@@ -21,6 +21,7 @@ test("schema defines core ERP and ledger models", async () => {
 
   for (const modelName of [
     "model Product",
+    "model ProductCategory",
     "model Warehouse",
     "model Counterparty",
     "model Document",
@@ -38,6 +39,7 @@ test("schema defines core ERP and ledger models", async () => {
   assert.match(schema, /enum DocumentStatus/, "DocumentStatus enum is required.");
   assert.match(schema, /enum PaymentStatus/, "PaymentStatus enum is required.");
   assert.match(schema, /model StockBalance/, "StockBalance cache model should be explicitly modeled.");
+  assert.match(schema, /categoryId\s+String\?/, "Product category relation should be optional.");
 });
 
 test("initial migration captures ledger tables", async () => {

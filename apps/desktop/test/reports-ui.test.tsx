@@ -11,7 +11,7 @@ import { renderWithAppProviders } from "./render-app";
 vi.mock("../src/features/reports/reports-api");
 
 const lookups = {
-  products: [{ id: "p1", sku: "SKU-1", name: "Widget", description: null, unit: "pcs", isActive: true, createdAt: "", updatedAt: "" }],
+  products: [{ id: "p1", sku: "SKU-1", name: "Widget", description: null, unit: "pcs", categoryId: null, categoryName: null, isActive: true, createdAt: "", updatedAt: "" }],
   warehouses: [{ id: "w1", code: "MAIN", name: "Main warehouse", isActive: true, createdAt: "", updatedAt: "" }],
   counterparties: [{ id: "c1", code: "CLIENT", name: "Northwind", type: "CUSTOMER" as const, taxId: null, isActive: true, createdAt: "", updatedAt: "" }],
   accounts: [{ id: "a1", code: "BANK", name: "Main bank", type: "BANK" as const, currencyCode: "RUB", isActive: true, createdAt: "", updatedAt: "" }]

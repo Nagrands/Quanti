@@ -68,7 +68,7 @@ const posted = {
 };
 
 const lookups = {
-  products: [{ id: "product-1", sku: "SKU-1", name: "Widget", description: null, unit: "pcs", isActive: true, createdAt: "", updatedAt: "" }],
+  products: [{ id: "product-1", sku: "SKU-1", name: "Widget", description: null, unit: "pcs", categoryId: null, categoryName: null, isActive: true, createdAt: "", updatedAt: "" }],
   warehouses: [{ id: "warehouse-1", code: "MAIN", name: "Main", isActive: true, createdAt: "", updatedAt: "" }],
   counterparties: [{ id: "counterparty-1", code: "C-1", name: "Acme", type: "CUSTOMER" as const, taxId: null, isActive: true, createdAt: "", updatedAt: "" }]
 };

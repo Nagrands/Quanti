@@ -14,4 +14,8 @@ export class CreateProductRequest implements CreateProductDto {
 
   @IsString()
   unit!: string;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string | null;
 }

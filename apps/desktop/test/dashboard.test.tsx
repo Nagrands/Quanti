@@ -75,6 +75,8 @@ const dashboardData = {
     name: "Widget",
     description: null,
     unit: "pcs",
+    categoryId: null,
+    categoryName: null,
     isActive: true,
     createdAt: "",
     updatedAt: ""

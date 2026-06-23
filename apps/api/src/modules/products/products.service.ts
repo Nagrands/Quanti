@@ -11,6 +11,7 @@ export class ProductsService {
   async findAll(includeInactive = false): Promise<ProductDto[]> {
     const products = await this.prisma.product.findMany({
       ...(includeInactive ? {} : { where: { isActive: true } }),
+      include: { category: true },
       orderBy: { createdAt: "asc" }
     });
 
@@ -22,7 +23,8 @@ export class ProductsService {
       where: {
         id,
         isActive: true
-      }
+      },
+      include: { category: true }
     });
 
     if (!product) {
@@ -38,8 +40,10 @@ export class ProductsService {
         sku: payload.sku,
         name: payload.name,
         description: payload.description ?? null,
-        unit: payload.unit
-      }
+        unit: payload.unit,
+        categoryId: payload.categoryId ?? null
+      },
+      include: { category: true }
     });
 
     return toProductDto(product);
@@ -50,7 +54,8 @@ export class ProductsService {
 
     const product = await this.prisma.product.update({
       where: { id },
-      data: payload
+      data: payload,
+      include: { category: true }
     });
 
     return toProductDto(product);
@@ -73,7 +78,8 @@ export class ProductsService {
 
     return toProductDto(await this.prisma.product.update({
       where: { id },
-      data: { isActive: true }
+      data: { isActive: true },
+      include: { category: true }
     }));
   }
 }

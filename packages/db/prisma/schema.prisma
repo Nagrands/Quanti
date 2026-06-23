@@ -82,12 +82,27 @@ model Product {
   name           String
   description    String?
   unit           String
+  categoryId     String?
   isActive       Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  category       ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   documentItems  DocumentItem[]
   stockMovements StockMovement[]
   stockBalances  StockBalance[]
+
+  @@index([categoryId])
+}
+
+model ProductCategory {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  name        String
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
 }
 
 model Warehouse {

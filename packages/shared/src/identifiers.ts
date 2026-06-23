@@ -1,5 +1,6 @@
 export type EntityId = string;
 export type ProductId = EntityId;
+export type ProductCategoryId = EntityId;
 export type WarehouseId = EntityId;
 export type CounterpartyId = EntityId;
 export type DocumentId = EntityId;

@@ -10,6 +10,8 @@ const context = {
     name: "Widget",
     description: null,
     unit: "шт",
+    categoryId: null,
+    categoryName: null,
     isActive: true,
     createdAt: "",
     updatedAt: ""
