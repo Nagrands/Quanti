@@ -33,32 +33,40 @@ describe("Quanti application shell", () => {
   test("renders the dashboard workspace", async () => {
     renderWithAppProviders(<App />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "ERP workspace" })).toBeInTheDocument();
-    expect(await screen.findByText("API connected")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Главная" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Рабочее пространство ERP" })).toBeInTheDocument();
+    expect(await screen.findByText("API подключён")).toBeInTheDocument();
   });
 
   test("navigates through every foundation route", async () => {
     const user = userEvent.setup();
     renderWithAppProviders(<App />);
 
-    for (const routeName of ["Products", "Documents", "Payments", "Reports", "Settings"]) {
-      await user.click(screen.getByRole("link", { name: routeName }));
-      expect(screen.getByRole("heading", { level: 1, name: routeName })).toBeInTheDocument();
+    const routes = [
+      { link: "Справочники", heading: "Товары" },
+      { link: "Документы", heading: "Документы" },
+      { link: "Платежи", heading: "Платежи" },
+      { link: "Отчёты", heading: "Отчёты" },
+      { link: "Настройки", heading: "Настройки" }
+    ];
+
+    for (const route of routes) {
+      await user.click(screen.getByRole("link", { name: route.link }));
+      expect(screen.getByRole("heading", { level: 1, name: route.heading })).toBeInTheDocument();
     }
   });
 
   test("marks the current sidebar route as active", () => {
     renderWithAppProviders(<App />, "/reports");
 
-    expect(screen.getByRole("link", { name: "Reports" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Dashboard" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "Отчёты" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Главная" })).not.toHaveAttribute("aria-current");
   });
 
   test("renders a fallback for unknown routes", () => {
     renderWithAppProviders(<App />, "/missing");
 
-    expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Return to Dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Страница не найдена" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Вернуться на главную" })).toBeInTheDocument();
   });
 });

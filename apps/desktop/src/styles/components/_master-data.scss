@@ -317,6 +317,17 @@
   line-height: 1.45;
 }
 
+.form-alert--detailed {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.form-alert--detailed strong {
+  color: vars.$color-danger;
+  font-size: 0.875rem;
+}
+
 .form-drawer__footer {
   display: flex;
   justify-content: flex-end;

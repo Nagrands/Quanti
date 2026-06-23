@@ -79,6 +79,20 @@ test("stock service rejects reservation when stock is insufficient", async () =>
         warehouseId: "warehouse-1",
         requiredQuantity: "7.000"
       }),
-    (error: unknown) => error instanceof BadRequestException
+    (error: unknown) => {
+      assert.ok(error instanceof BadRequestException);
+      assert.deepEqual(error.getResponse(), {
+        code: "INSUFFICIENT_STOCK",
+        message: "Insufficient stock.",
+        details: {
+          productId: "product-1",
+          warehouseId: "warehouse-1",
+          availableQuantity: "6.000",
+          requiredQuantity: "7.000"
+        }
+      });
+
+      return true;
+    }
   );
 });

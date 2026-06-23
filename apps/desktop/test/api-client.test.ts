@@ -88,6 +88,35 @@ describe("ApiClient", () => {
     });
   });
 
+  test("preserves structured backend error details", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(createJsonResponse({
+        error: {
+          code: "INSUFFICIENT_STOCK",
+          message: "Insufficient stock.",
+          statusCode: 400,
+          details: {
+            productId: "product-1",
+            warehouseId: "warehouse-1",
+            availableQuantity: "6.000",
+            requiredQuantity: "7.000"
+          }
+        }
+      }, 400))
+    );
+
+    await expect(new ApiClient().request("/documents/document-1/post")).rejects.toMatchObject({
+      code: "INSUFFICIENT_STOCK",
+      details: {
+        productId: "product-1",
+        warehouseId: "warehouse-1",
+        availableQuantity: "6.000",
+        requiredQuantity: "7.000"
+      }
+    });
+  });
+
   test("accepts successful responses without a JSON body", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(createEmptyResponse()));
 

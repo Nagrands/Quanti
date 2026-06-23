@@ -1,0 +1,51 @@
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+
+import { apiClient } from "../src/api/client";
+import { App } from "../src/app/App";
+import { renderWithAppProviders } from "./render-app";
+
+vi.mock("../src/api/client", () => ({
+  apiClient: {
+    request: vi.fn()
+  }
+}));
+
+describe("language settings", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vi.mocked(apiClient.request).mockImplementation(async (path) => path === "/health" ? {
+      service: "quanti-api",
+      status: "ok",
+      database: "ok",
+      modules: []
+    } : []);
+  });
+
+  test("switches the complete application shell to English and persists it", async () => {
+    const user = userEvent.setup();
+    renderWithAppProviders(<App />, "/settings");
+
+    await user.selectOptions(screen.getByLabelText("Язык интерфейса"), "en");
+
+    expect(screen.getByRole("heading", { level: 1, name: "Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Interface language")).toHaveValue("en");
+    expect(window.localStorage.getItem("quanti.locale")).toBe("en");
+    expect(document.documentElement.lang).toBe("en");
+
+    await user.click(screen.getByRole("link", { name: "Documents" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Documents" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New document" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Status filter")).toBeInTheDocument();
+  });
+
+  test("restores the saved English locale on mount", () => {
+    window.localStorage.setItem("quanti.locale", "en");
+    renderWithAppProviders(<App />);
+
+    expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+  });
+});

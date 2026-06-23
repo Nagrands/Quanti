@@ -5,9 +5,9 @@ import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { DocumentsPage } from "../features/documents/DocumentsPage";
 import { MasterDataPage } from "../features/master-data/MasterDataPage";
 import { PaymentsPage } from "../features/payments/PaymentsPage";
-import { ModulePlaceholderPage } from "../features/placeholders/ModulePlaceholderPage";
 import { NotFoundPage } from "../features/placeholders/NotFoundPage";
 import { ReportsPage } from "../features/reports/ReportsPage";
+import { SettingsPage } from "../features/settings/SettingsPage";
 
 export function App() {
   return (
@@ -19,10 +19,7 @@ export function App() {
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/payments" element={<PaymentsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
-        <Route
-          path="/settings"
-          element={<ModulePlaceholderPage title="Settings" description="Application and workspace settings will be configured here." />}
-        />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

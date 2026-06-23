@@ -76,6 +76,44 @@ test("api exception filter maps validation errors into stable response shape", (
   });
 });
 
+test("api exception filter preserves structured error details", () => {
+  const filter = new ApiExceptionFilter();
+  const { response, responseState } = createResponseMock();
+
+  filter.catch(
+    new BadRequestException({
+      code: "INSUFFICIENT_STOCK",
+      message: "Insufficient stock.",
+      details: {
+        productId: "product-1",
+        warehouseId: "warehouse-1",
+        availableQuantity: "6.000",
+        requiredQuantity: "7.000"
+      }
+    }),
+    {
+      switchToHttp: () => ({
+        getResponse: () => response
+      })
+    } as never
+  );
+
+  assert.equal(responseState.statusCode, 400);
+  assert.deepEqual(responseState.body, {
+    error: {
+      code: "INSUFFICIENT_STOCK",
+      message: "Insufficient stock.",
+      statusCode: 400,
+      details: {
+        productId: "product-1",
+        warehouseId: "warehouse-1",
+        availableQuantity: "6.000",
+        requiredQuantity: "7.000"
+      }
+    }
+  });
+});
+
 test("api exception filter maps duplicate keys into conflict response shape", () => {
   const filter = new ApiExceptionFilter();
   const { response, responseState } = createResponseMock();

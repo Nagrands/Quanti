@@ -4,6 +4,7 @@ import type {
   ProductDto,
   WarehouseDto
 } from "@quanti/shared";
+import type { Locale, Translate } from "../../i18n";
 
 export type MasterDataEntity = ProductDto | WarehouseDto | CounterpartyDto | AccountDto;
 export type MasterDataResource = "products" | "warehouses" | "counterparties" | "accounts";
@@ -61,8 +62,8 @@ function trimPayload(values: FormValues, nullableKeys: readonly string[] = []) {
 
 const updatedColumn: MasterDataColumn = {
   key: "updatedAt",
-  label: "Updated",
-  render: (entity) => new Intl.DateTimeFormat(undefined, {
+  label: "Изменено",
+  render: (entity) => new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(new Date(entity.updatedAt))
@@ -71,21 +72,21 @@ const updatedColumn: MasterDataColumn = {
 export const masterDataDefinitions: readonly MasterDataDefinition[] = [
   {
     resource: "products",
-    label: "Products",
-    singularLabel: "product",
-    searchPlaceholder: "Search products",
+    label: "Товары",
+    singularLabel: "товар",
+    searchPlaceholder: "Поиск товаров",
     columns: [
       { key: "sku", label: "SKU", render: (entity) => value(entity, "sku") },
-      { key: "name", label: "Name", render: (entity) => entity.name },
-      { key: "unit", label: "Unit", render: (entity) => value(entity, "unit") },
-      { key: "description", label: "Description", render: (entity) => value(entity, "description") || "—" },
+      { key: "name", label: "Наименование", render: (entity) => entity.name },
+      { key: "unit", label: "Единица", render: (entity) => value(entity, "unit") },
+      { key: "description", label: "Описание", render: (entity) => value(entity, "description") || "—" },
       updatedColumn
     ],
     fields: [
       { key: "sku", label: "SKU", required: true },
-      { key: "name", label: "Name", required: true },
-      { key: "unit", label: "Unit", required: true, placeholder: "pcs, kg, l" },
-      { key: "description", label: "Description", type: "textarea" }
+      { key: "name", label: "Наименование", required: true },
+      { key: "unit", label: "Единица", required: true, placeholder: "шт, кг, л" },
+      { key: "description", label: "Описание", type: "textarea" }
     ],
     createDefaults: { sku: "", name: "", unit: "", description: "" },
     toFormValues: (entity) => commonFormValues(entity, ["sku", "name", "unit", "description"]),
@@ -93,17 +94,17 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
   },
   {
     resource: "warehouses",
-    label: "Warehouses",
-    singularLabel: "warehouse",
-    searchPlaceholder: "Search warehouses",
+    label: "Склады",
+    singularLabel: "склад",
+    searchPlaceholder: "Поиск складов",
     columns: [
-      { key: "code", label: "Code", render: (entity) => value(entity, "code") },
-      { key: "name", label: "Name", render: (entity) => entity.name },
+      { key: "code", label: "Код", render: (entity) => value(entity, "code") },
+      { key: "name", label: "Наименование", render: (entity) => entity.name },
       updatedColumn
     ],
     fields: [
-      { key: "code", label: "Code", required: true },
-      { key: "name", label: "Name", required: true }
+      { key: "code", label: "Код", required: true },
+      { key: "name", label: "Наименование", required: true }
     ],
     createDefaults: { code: "", name: "" },
     toFormValues: (entity) => commonFormValues(entity, ["code", "name"]),
@@ -111,32 +112,32 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
   },
   {
     resource: "counterparties",
-    label: "Counterparties",
-    singularLabel: "counterparty",
-    searchPlaceholder: "Search counterparties",
+    label: "Контрагенты",
+    singularLabel: "контрагента",
+    searchPlaceholder: "Поиск контрагентов",
     columns: [
-      { key: "code", label: "Code", render: (entity) => value(entity, "code") },
-      { key: "name", label: "Name", render: (entity) => entity.name },
-      { key: "type", label: "Type", render: (entity) => value(entity, "type") },
-      { key: "taxId", label: "Tax ID", render: (entity) => value(entity, "taxId") || "—" },
+      { key: "code", label: "Код", render: (entity) => value(entity, "code") },
+      { key: "name", label: "Наименование", render: (entity) => entity.name },
+      { key: "type", label: "Тип", render: (entity) => ({ CUSTOMER: "Покупатель", SUPPLIER: "Поставщик", BOTH: "Покупатель и поставщик", INTERNAL: "Внутренний" })[value(entity, "type")] ?? value(entity, "type") },
+      { key: "taxId", label: "ИНН", render: (entity) => value(entity, "taxId") || "—" },
       updatedColumn
     ],
     fields: [
-      { key: "code", label: "Code", required: true },
-      { key: "name", label: "Name", required: true },
+      { key: "code", label: "Код", required: true },
+      { key: "name", label: "Наименование", required: true },
       {
         key: "type",
-        label: "Type",
+        label: "Тип",
         type: "select",
         required: true,
         options: [
-          { label: "Customer", value: "CUSTOMER" },
-          { label: "Supplier", value: "SUPPLIER" },
-          { label: "Customer and supplier", value: "BOTH" },
-          { label: "Internal", value: "INTERNAL" }
+          { label: "Покупатель", value: "CUSTOMER" },
+          { label: "Поставщик", value: "SUPPLIER" },
+          { label: "Покупатель и поставщик", value: "BOTH" },
+          { label: "Внутренний", value: "INTERNAL" }
         ]
       },
-      { key: "taxId", label: "Tax ID" }
+      { key: "taxId", label: "ИНН" }
     ],
     createDefaults: { code: "", name: "", type: "CUSTOMER", taxId: "" },
     toFormValues: (entity) => commonFormValues(entity, ["code", "name", "type", "taxId"]),
@@ -144,30 +145,30 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
   },
   {
     resource: "accounts",
-    label: "Accounts",
-    singularLabel: "account",
-    searchPlaceholder: "Search accounts",
+    label: "Счета",
+    singularLabel: "счёт",
+    searchPlaceholder: "Поиск счетов",
     columns: [
-      { key: "code", label: "Code", render: (entity) => value(entity, "code") },
-      { key: "name", label: "Name", render: (entity) => entity.name },
-      { key: "type", label: "Type", render: (entity) => value(entity, "type") },
-      { key: "currencyCode", label: "Currency", render: (entity) => value(entity, "currencyCode") },
+      { key: "code", label: "Код", render: (entity) => value(entity, "code") },
+      { key: "name", label: "Наименование", render: (entity) => entity.name },
+      { key: "type", label: "Тип", render: (entity) => value(entity, "type") === "CASH" ? "Наличные" : "Банк" },
+      { key: "currencyCode", label: "Валюта", render: (entity) => value(entity, "currencyCode") },
       updatedColumn
     ],
     fields: [
-      { key: "code", label: "Code", required: true },
-      { key: "name", label: "Name", required: true },
+      { key: "code", label: "Код", required: true },
+      { key: "name", label: "Наименование", required: true },
       {
         key: "type",
-        label: "Type",
+        label: "Тип",
         type: "select",
         required: true,
         options: [
-          { label: "Cash", value: "CASH" },
-          { label: "Bank", value: "BANK" }
+          { label: "Наличные", value: "CASH" },
+          { label: "Банк", value: "BANK" }
         ]
       },
-      { key: "currencyCode", label: "Currency", required: true, placeholder: "RUB" }
+      { key: "currencyCode", label: "Валюта", required: true, placeholder: "RUB" }
     ],
     createDefaults: { code: "", name: "", type: "CASH", currencyCode: "RUB" },
     toFormValues: (entity) => commonFormValues(entity, ["code", "name", "type", "currencyCode"]),
@@ -181,4 +182,29 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
 export function getMasterDataDefinition(resource: MasterDataResource) {
   return masterDataDefinitions.find((definition) => definition.resource === resource)
     ?? masterDataDefinitions[0];
+}
+
+export function getLocalizedMasterDataDefinitions(t: Translate, locale: Locale) {
+  return masterDataDefinitions.map((definition) => ({
+    ...definition,
+    label: t(definition.label),
+    singularLabel: t(definition.singularLabel),
+    searchPlaceholder: t(definition.searchPlaceholder),
+    columns: definition.columns.map((column) => ({
+      ...column,
+      label: t(column.label),
+      render: column.key === "updatedAt"
+        ? (entity: MasterDataEntity) => new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : "en-US", {
+            dateStyle: "medium",
+            timeStyle: "short"
+          }).format(new Date(entity.updatedAt))
+        : (entity: MasterDataEntity) => t(column.render(entity))
+    })),
+    fields: definition.fields.map((field) => ({
+      ...field,
+      label: t(field.label),
+      placeholder: field.placeholder ? t(field.placeholder) : undefined,
+      options: field.options?.map((option) => ({ ...option, label: t(option.label) }))
+    }))
+  }));
 }

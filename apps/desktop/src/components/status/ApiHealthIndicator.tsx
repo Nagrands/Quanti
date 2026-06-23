@@ -2,8 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "../../api/client";
 import type { ApiHealthSnapshot } from "../../api/contracts";
+import { useI18n } from "../../i18n";
 
 export function ApiHealthIndicator() {
+  const { t } = useI18n();
   const healthQuery = useQuery({
     queryKey: ["api-health"],
     queryFn: () => apiClient.request<ApiHealthSnapshot>("/health"),
@@ -12,15 +14,15 @@ export function ApiHealthIndicator() {
   });
 
   const state = healthQuery.isPending
-    ? { modifier: "loading", label: "Connecting to API" }
+    ? { modifier: "loading", label: "Подключение к API" }
     : healthQuery.isError
-      ? { modifier: "error", label: "API unavailable" }
-      : { modifier: "success", label: "API connected" };
+      ? { modifier: "error", label: "API недоступен" }
+      : { modifier: "success", label: "API подключён" };
 
   return (
     <div className={`api-status api-status--${state.modifier}`} role="status" aria-live="polite">
       <span className="api-status__dot" aria-hidden="true" />
-      <span>{state.label}</span>
+      <span>{t(state.label)}</span>
     </div>
   );
 }

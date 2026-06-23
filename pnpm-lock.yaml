@@ -11,6 +11,9 @@ importers:
       '@types/node':
         specifier: ^24.5.2
         version: 24.12.2
+      prisma:
+        specifier: ^6.6.0
+        version: 6.19.3(typescript@5.9.3)
       turbo:
         specifier: ^2.5.0
         version: 2.9.6

@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 
-import { ApiError } from "../../api/errors";
+import { useI18n } from "../../i18n";
 import type {
   FormValues,
   MasterDataDefinition,
@@ -23,6 +23,7 @@ export function MasterDataFormDrawer({
   onClose,
   onSave
 }: MasterDataFormDrawerProps) {
+  const { formatApiError, t } = useI18n();
   const [values, setValues] = useState<FormValues>(definition.createDefaults);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [requestError, setRequestError] = useState("");
@@ -39,13 +40,13 @@ export function MasterDataFormDrawer({
     const errors = Object.fromEntries(
       definition.fields
         .filter((field) => field.required && String(values[field.key] ?? "").trim() === "")
-        .map((field) => [field.key, `${field.label} is required.`])
+        .map((field) => [field.key, t("Поле «{field}» обязательно.", { field: field.label })])
     );
 
     if (definition.resource === "accounts") {
       const currencyCode = String(values.currencyCode ?? "").trim();
       if (currencyCode && !/^[A-Za-z]{3}$/.test(currencyCode)) {
-        errors.currencyCode = "Currency must contain three letters.";
+        errors.currencyCode = t("Код валюты должен состоять из трёх букв.");
       }
     }
 
@@ -58,19 +59,19 @@ export function MasterDataFormDrawer({
     try {
       await onSave(values);
     } catch (error) {
-      setRequestError(error instanceof ApiError ? error.message : "Unable to save changes.");
+      setRequestError(formatApiError(error));
     }
   }
 
   return (
     <div className="drawer-backdrop">
-      <aside className="form-drawer" aria-label={`${entity ? "Edit" : "New"} ${definition.singularLabel}`}>
+      <aside className="form-drawer" aria-label={t(entity ? "Изменение записи" : "Новая запись")}>
         <header className="form-drawer__header">
           <div>
-            <p>{entity ? "Edit record" : "Create record"}</p>
-            <h2>{entity ? `Edit ${definition.singularLabel}` : `New ${definition.singularLabel}`}</h2>
+            <p>{t(entity ? "Изменение записи" : "Создание записи")}</p>
+            <h2>{entity ? t("Изменить: {name}", { name: entity.name }) : t("Новый {name}", { name: definition.singularLabel })}</h2>
           </div>
-          <button type="button" className="icon-button" aria-label="Close form" onClick={onClose}>
+          <button type="button" className="icon-button" aria-label={t("Закрыть форму")} onClick={onClose}>
             <X aria-hidden="true" />
           </button>
         </header>
@@ -134,10 +135,10 @@ export function MasterDataFormDrawer({
 
           <footer className="form-drawer__footer">
             <button type="button" className="button button--secondary" onClick={onClose}>
-              Cancel
+              {t("Отмена")}
             </button>
             <button type="submit" className="button button--primary" disabled={isSaving}>
-              {isSaving ? "Saving…" : entity ? "Save changes" : `Create ${definition.singularLabel}`}
+              {t(isSaving ? "Сохранение…" : entity ? "Сохранить" : "Создать")}
             </button>
           </footer>
         </form>

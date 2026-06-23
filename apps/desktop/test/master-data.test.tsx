@@ -42,8 +42,8 @@ describe("master data workspace", () => {
     renderWithAppProviders(<MasterDataPage />, "/products");
 
     expect(await screen.findByText("PRD-001")).toBeInTheDocument();
-    await user.type(screen.getByPlaceholderText("Search products"), "missing");
-    expect(screen.getByText("No matching records")).toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText("Поиск товаров"), "missing");
+    expect(screen.getByText("Совпадений не найдено")).toBeInTheDocument();
   });
 
   test("validates and creates a product", async () => {
@@ -51,15 +51,15 @@ describe("master data workspace", () => {
     renderWithAppProviders(<MasterDataPage />, "/products");
     await screen.findByText("PRD-001");
 
-    await user.click(screen.getByRole("button", { name: "New product" }));
-    const drawer = screen.getByRole("complementary", { name: "New product" });
-    await user.click(within(drawer).getByRole("button", { name: "Create product" }));
-    expect(within(drawer).getByText("SKU is required.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Создать" }));
+    const drawer = screen.getByRole("complementary", { name: "Новая запись" });
+    await user.click(within(drawer).getByRole("button", { name: "Создать" }));
+    expect(within(drawer).getByText("Поле «SKU» обязательно.")).toBeInTheDocument();
 
     await user.type(within(drawer).getByLabelText("SKU *"), " PRD-002 ");
-    await user.type(within(drawer).getByLabelText("Name *"), " Mouse ");
-    await user.type(within(drawer).getByLabelText("Unit *"), " pcs ");
-    await user.click(within(drawer).getByRole("button", { name: "Create product" }));
+    await user.type(within(drawer).getByLabelText("Наименование *"), " Mouse ");
+    await user.type(within(drawer).getByLabelText("Единица *"), " pcs ");
+    await user.click(within(drawer).getByRole("button", { name: "Создать" }));
 
     expect(createMasterData).toHaveBeenCalledWith("products", {
       sku: "PRD-002",
@@ -74,21 +74,21 @@ describe("master data workspace", () => {
     renderWithAppProviders(<MasterDataPage />, "/products");
     await screen.findByText("PRD-001");
 
-    await user.click(screen.getByRole("button", { name: "Edit Desk lamp" }));
-    const drawer = screen.getByRole("complementary", { name: "Edit product" });
-    const nameInput = within(drawer).getByLabelText("Name *");
+    await user.click(screen.getByRole("button", { name: "Изменить Desk lamp" }));
+    const drawer = screen.getByRole("complementary", { name: "Изменение записи" });
+    const nameInput = within(drawer).getByLabelText("Наименование *");
     await user.clear(nameInput);
     await user.type(nameInput, "Updated lamp");
-    await user.click(within(drawer).getByRole("button", { name: "Save changes" }));
+    await user.click(within(drawer).getByRole("button", { name: "Сохранить" }));
     expect(updateMasterData).toHaveBeenCalledWith(
       "products",
       "product-1",
       expect.objectContaining({ name: "Updated lamp" })
     );
 
-    await user.click(screen.getByRole("button", { name: "Deactivate Desk lamp" }));
-    const dialog = screen.getByRole("dialog", { name: "Deactivate product?" });
-    await user.click(within(dialog).getByRole("button", { name: "Deactivate" }));
+    await user.click(screen.getByRole("button", { name: "Деактивировать Desk lamp" }));
+    const dialog = screen.getByRole("dialog", { name: "Деактивировать запись?" });
+    await user.click(within(dialog).getByRole("button", { name: "Деактивировать" }));
     expect(deactivateMasterData).toHaveBeenCalledWith("products", "product-1");
   });
 
@@ -97,10 +97,10 @@ describe("master data workspace", () => {
     renderWithAppProviders(<MasterDataPage />, "/products");
     await screen.findByText("PRD-001");
 
-    for (const tab of ["Warehouses", "Counterparties", "Accounts"]) {
+    for (const tab of ["Склады", "Контрагенты", "Счета"]) {
       vi.mocked(getMasterData).mockResolvedValueOnce([]);
       await user.click(screen.getByRole("button", { name: tab }));
-      expect(await screen.findByText(`No ${tab.toLocaleLowerCase()} yet`)).toBeInTheDocument();
+      expect(await screen.findByText("Записей пока нет")).toBeInTheDocument();
     }
   });
 });

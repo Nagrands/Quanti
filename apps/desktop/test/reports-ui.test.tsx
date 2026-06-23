@@ -40,15 +40,15 @@ describe("reports workspace", () => {
     renderWithAppProviders(<ReportsPage />, "/reports");
     await screen.findByRole("cell", { name: "SKU-1 · Widget" });
 
-    for (const label of ["Stock balance", "Balance at date", "Sales", "Top products", "Cashflow", "Counterparty debts"]) {
+    for (const label of ["Остатки на складе", "Остаток на дату", "Продажи", "Популярные товары", "Движение денег", "Долги контрагентов"]) {
       await user.click(screen.getByRole("button", { name: label }));
       expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
     }
 
-    await user.click(screen.getByRole("button", { name: "Cashflow" }));
-    await user.selectOptions(screen.getByLabelText("Account"), "a1");
-    await user.selectOptions(screen.getByLabelText("Counterparty"), "c1");
-    await user.click(screen.getByRole("button", { name: "Run report" }));
+    await user.click(screen.getByRole("button", { name: "Движение денег" }));
+    await user.selectOptions(screen.getByLabelText("Счёт"), "a1");
+    await user.selectOptions(screen.getByLabelText("Контрагент"), "c1");
+    await user.click(screen.getByRole("button", { name: "Сформировать" }));
 
     expect(api.getReport).toHaveBeenLastCalledWith("cashflow", expect.objectContaining({
       accountId: "a1",
@@ -65,13 +65,13 @@ describe("reports workspace", () => {
     await screen.findByRole("cell", { name: "SKU-1 · Widget" });
     const initialCalls = vi.mocked(api.getReport).mock.calls.length;
 
-    await user.clear(screen.getByLabelText("From date"));
-    await user.type(screen.getByLabelText("From date"), "2026-06-20");
-    await user.clear(screen.getByLabelText("To date"));
-    await user.type(screen.getByLabelText("To date"), "2026-06-01");
-    await user.click(screen.getByRole("button", { name: "Run report" }));
+    await user.clear(screen.getByLabelText("Дата с"));
+    await user.type(screen.getByLabelText("Дата с"), "2026-06-20");
+    await user.clear(screen.getByLabelText("Дата по"));
+    await user.type(screen.getByLabelText("Дата по"), "2026-06-01");
+    await user.click(screen.getByRole("button", { name: "Сформировать" }));
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Choose a valid date range.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Укажите корректный период.");
     expect(api.getReport).toHaveBeenCalledTimes(initialCalls);
   });
 
@@ -80,9 +80,9 @@ describe("reports workspace", () => {
     vi.mocked(api.getReport).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce([]);
     renderWithAppProviders(<ReportsPage />, "/reports");
 
-    expect(await screen.findByText("Unable to load report.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Retry" }));
-    expect(await screen.findByText("No report data")).toBeInTheDocument();
+    expect(await screen.findByText("Не удалось загрузить отчёт.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Повторить" }));
+    expect(await screen.findByText("Нет данных")).toBeInTheDocument();
   });
 
   test("serializes the visible report as CSV", () => {
@@ -100,7 +100,7 @@ describe("reports workspace", () => {
       outgoing: "5.000"
     }], maps);
 
-    expect(csv).toContain("\"Product\",\"Warehouse\",\"Incoming\",\"Outgoing\"");
+    expect(csv).toContain("\"Товар\",\"Склад\",\"Приход\",\"Расход\"");
     expect(csv).toContain("\"SKU-1 · Widget\",\"MAIN · Main warehouse\",\"12.000\",\"5.000\"");
   });
 });

@@ -78,9 +78,16 @@ export class StockService {
     const availableQuantity = this.toNumber(balance.quantity);
 
     if (availableQuantity < requiredQuantity) {
-      throw new BadRequestException(
-        `Insufficient stock for product ${payload.productId} in warehouse ${payload.warehouseId}.`
-      );
+      throw new BadRequestException({
+        code: "INSUFFICIENT_STOCK",
+        message: "Insufficient stock.",
+        details: {
+          productId: payload.productId,
+          warehouseId: payload.warehouseId,
+          availableQuantity: this.formatQuantity(availableQuantity),
+          requiredQuantity: this.formatQuantity(requiredQuantity)
+        }
+      });
     }
 
     return balance;

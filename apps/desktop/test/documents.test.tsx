@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { DocumentsPage } from "../src/features/documents/DocumentsPage";
+import { ApiError } from "../src/api/errors";
 import {
   createDocument,
   deleteDocument,
@@ -93,7 +94,7 @@ describe("documents workspace", () => {
 
     expect(await screen.findByText("SO-001")).toBeInTheDocument();
     expect(screen.getByText("PO-001")).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Status filter"), "POSTED");
+    await user.selectOptions(screen.getByLabelText("Фильтр по статусу"), "POSTED");
     expect(screen.queryByText("SO-001")).not.toBeInTheDocument();
     expect(screen.getByText("PO-001")).toBeInTheDocument();
   });
@@ -102,20 +103,20 @@ describe("documents workspace", () => {
     const user = userEvent.setup();
     renderWithAppProviders(<DocumentsPage />, "/documents");
     await screen.findByText("SO-001");
-    await user.click(screen.getByRole("button", { name: "New document" }));
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
-    const drawer = screen.getByRole("complementary", { name: "New document" });
-    await user.type(within(drawer).getByLabelText("Number"), "SO-002");
-    await user.selectOptions(within(drawer).getByLabelText("Warehouse"), "warehouse-1");
-    await user.selectOptions(within(drawer).getByLabelText("Product"), "product-1");
-    const quantity = within(drawer).getByLabelText("Quantity");
-    const price = within(drawer).getByLabelText("Price");
+    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    await user.type(within(drawer).getByLabelText("Номер"), "SO-002");
+    await user.selectOptions(within(drawer).getByLabelText("Склад"), "warehouse-1");
+    await user.selectOptions(within(drawer).getByLabelText("Товар"), "product-1");
+    const quantity = within(drawer).getByLabelText("Количество");
+    const price = within(drawer).getByLabelText("Цена");
     await user.clear(quantity);
     await user.type(quantity, "2");
     await user.clear(price);
     await user.type(price, "12.50");
     expect(within(drawer).getAllByText("25.00")).toHaveLength(2);
-    await user.click(within(drawer).getByRole("button", { name: "Save draft" }));
+    await user.click(within(drawer).getByRole("button", { name: "Сохранить черновик" }));
 
     expect(createDocument).toHaveBeenCalledWith(expect.objectContaining({
       number: "SO-002",
@@ -129,14 +130,34 @@ describe("documents workspace", () => {
     renderWithAppProviders(<DocumentsPage />, "/documents");
     await screen.findByText("PO-001");
 
-    await user.click(screen.getByRole("button", { name: "View" }));
-    const drawer = screen.getByRole("complementary", { name: "Document details" });
-    expect(within(drawer).queryByRole("button", { name: "Save draft" })).not.toBeInTheDocument();
-    await user.click(within(drawer).getByRole("button", { name: "Close document" }));
+    await user.click(screen.getByRole("button", { name: "Открыть" }));
+    const drawer = screen.getByRole("complementary", { name: "Документ" });
+    expect(within(drawer).queryByRole("button", { name: "Сохранить черновик" })).not.toBeInTheDocument();
+    await user.click(within(drawer).getByRole("button", { name: "Закрыть документ" }));
 
-    await user.click(screen.getByRole("button", { name: "Unpost" }));
-    await user.click(within(screen.getByRole("dialog", { name: "Unpost document?" })).getByRole("button", { name: "Confirm" }));
+    await user.click(screen.getByRole("button", { name: "Отменить проведение" }));
+    await user.click(within(screen.getByRole("dialog", { name: "Отменить проведение?" })).getByRole("button", { name: "Отменить проведение" }));
     expect(unpostDocument).toHaveBeenCalledWith("document-2");
+  });
+
+  test("explains insufficient stock with product and warehouse names", async () => {
+    const user = userEvent.setup();
+    vi.mocked(postDocument).mockRejectedValue(new ApiError(400, "INSUFFICIENT_STOCK", "Insufficient stock.", {
+      productId: "product-1",
+      warehouseId: "warehouse-1",
+      availableQuantity: "2.000",
+      requiredQuantity: "5.000"
+    }));
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+
+    await user.click(screen.getByRole("button", { name: "Провести" }));
+    await user.click(within(screen.getByRole("dialog", { name: "Провести документ?" })).getByRole("button", { name: "Провести" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("SKU-1 · Widget");
+    expect(screen.getByRole("alert")).toHaveTextContent("MAIN · Main");
+    expect(screen.getByRole("alert")).toHaveTextContent("Доступно: 2.000, требуется: 5.000");
+    expect(screen.getByRole("alert")).toHaveTextContent("проведите поступление или уменьшите количество продажи");
   });
 
   test("calculates deterministic decimal payload values", () => {
@@ -163,7 +184,7 @@ describe("documents workspace", () => {
     renderWithAppProviders(<DocumentsPage />, "/documents");
     const row = await screen.findByRole("row", { name: /SO-001/ });
 
-    await user.click(within(row).getByRole("button", { name: "Print" }));
+    await user.click(within(row).getByRole("button", { name: "Печать" }));
 
     expect(printDocument).toHaveBeenCalledWith("document-1");
     expect(downloadDocumentPdf).toHaveBeenCalledWith(expect.anything(), "SO-001.pdf");

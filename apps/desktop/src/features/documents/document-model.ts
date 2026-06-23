@@ -12,15 +12,6 @@ export const supportedDocumentTypes = [
   "RETURN_OUT"
 ] as const satisfies readonly DocumentType[];
 
-export const documentTypeLabels: Record<DocumentType, string> = {
-  SALE: "Sale",
-  PURCHASE: "Purchase",
-  TRANSFER: "Transfer",
-  STOCK_ADJUSTMENT: "Stock adjustment",
-  RETURN_IN: "Return in",
-  RETURN_OUT: "Return out"
-};
-
 export interface DocumentLineForm {
   key: string;
   productId: string;

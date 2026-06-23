@@ -10,5 +10,6 @@ export interface ApiErrorEnvelope {
     code: string;
     message: string | string[];
     statusCode: number;
+    details?: Record<string, unknown>;
   };
 }

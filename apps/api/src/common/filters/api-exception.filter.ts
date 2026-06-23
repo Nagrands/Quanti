@@ -12,6 +12,7 @@ interface ApiErrorResponse {
     code: string;
     message: string | string[];
     statusCode: number;
+    details?: Record<string, unknown>;
   };
 }
 
@@ -46,12 +47,16 @@ export class ApiExceptionFilter implements ExceptionFilter {
       const code = typeof exceptionResponse === "string"
         ? this.getCode(statusCode)
         : (exceptionResponse as { code?: string }).code ?? this.getCode(statusCode);
+      const details = typeof exceptionResponse === "string"
+        ? undefined
+        : (exceptionResponse as { details?: Record<string, unknown> }).details;
 
       response.status(statusCode).json({
         error: {
           code,
           message: normalizedMessage,
-          statusCode
+          statusCode,
+          ...(details ? { details } : {})
         }
       } satisfies ApiErrorResponse);
 

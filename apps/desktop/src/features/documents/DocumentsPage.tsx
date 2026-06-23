@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { ApiError } from "../../api/errors";
+import { useI18n } from "../../i18n";
 import { DocumentDrawer } from "./DocumentDrawer";
 import {
   createDocument,
@@ -17,11 +17,12 @@ import {
   unpostDocument,
   updateDocument
 } from "./documents-api";
-import { documentTypeLabels, type DocumentFormValues, toDocumentPayload } from "./document-model";
+import { type DocumentFormValues, toDocumentPayload } from "./document-model";
 
 type LifecycleAction = "post" | "unpost" | "repost" | "delete";
 
 export function DocumentsPage() {
+  const { documentStatusLabels, documentTypeLabels, formatApiError, formatDate, t } = useI18n();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"" | DocumentStatus>("");
@@ -68,11 +69,11 @@ export function DocumentsPage() {
         );
         setPrintError("");
       } catch (error) {
-        setPrintError(error instanceof Error ? error.message : "Unable to save PDF.");
+        setPrintError(error instanceof Error ? error.message : t("Не удалось сохранить PDF."));
       }
     },
     onError: (error) => {
-      setPrintError(error instanceof ApiError ? error.message : "Unable to generate PDF.");
+      setPrintError(formatApiError(error));
     }
   });
 
@@ -81,32 +82,39 @@ export function DocumentsPage() {
     return (!status || document.status === status)
       && (!type || document.type === type)
       && (!text || `${document.number} ${documentTypeLabels[document.type]}`.toLowerCase().includes(text));
-  }), [documentsQuery.data, search, status, type]);
+  }), [documentTypeLabels, documentsQuery.data, search, status, type]);
+
+  const lifecycleLabels = {
+    post: { title: t("Провести документ?"), action: t("Провести") },
+    unpost: { title: t("Отменить проведение?"), action: t("Отменить проведение") },
+    repost: { title: t("Перепровести документ?"), action: t("Перепровести") },
+    delete: { title: t("Удалить документ?"), action: t("Удалить") }
+  };
 
   return (
     <section className="page documents-page" aria-labelledby="documents-title">
-      <header className="page__header"><p className="page__eyebrow">Operations</p><h1 id="documents-title">Documents</h1></header>
+      <header className="page__header"><p className="page__eyebrow">{t("Операции")}</p><h1 id="documents-title">{t("Документы")}</h1></header>
       <div className="document-toolbar">
-        <label className="search-field"><Search /><span className="visually-hidden">Search documents</span><input type="search" placeholder="Search documents" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-        <select aria-label="Status filter" value={status} onChange={(event) => setStatus(event.target.value as "" | DocumentStatus)}><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="POSTED">Posted</option></select>
-        <select aria-label="Type filter" value={type} onChange={(event) => setType(event.target.value as "" | DocumentType)}><option value="">All types</option>{Object.entries(documentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-        <button type="button" className="button button--primary" onClick={() => { setSelected(null); setIsDrawerOpen(true); }}><Plus /> New document</button>
+        <label className="search-field"><Search /><span className="visually-hidden">{t("Поиск документов")}</span><input type="search" placeholder={t("Поиск документов")} value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+        <select aria-label={t("Фильтр по статусу")} value={status} onChange={(event) => setStatus(event.target.value as "" | DocumentStatus)}><option value="">{t("Все статусы")}</option><option value="DRAFT">{t("Черновик")}</option><option value="POSTED">{t("Проведён")}</option></select>
+        <select aria-label={t("Фильтр по типу")} value={type} onChange={(event) => setType(event.target.value as "" | DocumentType)}><option value="">{t("Все типы")}</option>{Object.entries(documentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+        <button type="button" className="button button--primary" onClick={() => { setSelected(null); setIsDrawerOpen(true); }}><Plus /> {t("Новый документ")}</button>
       </div>
       {printError ? <div className="form-alert document-print-alert" role="alert">{printError}</div> : null}
 
       <div className="data-table-frame">
-        {documentsQuery.isPending ? <div className="table-state">Loading documents…</div>
-          : documentsQuery.isError ? <div className="table-state table-state--error"><strong>Unable to load documents.</strong><span>{documentsQuery.error instanceof ApiError ? documentsQuery.error.message : "Try again."}</span><button className="button button--secondary" onClick={() => void documentsQuery.refetch()}>Retry</button></div>
-          : filtered.length === 0 ? <div className="table-state"><strong>No documents found</strong><span>Create a draft or adjust the filters.</span></div>
-          : <div className="data-table-scroll"><table className="data-table documents-table"><thead><tr><th>Number</th><th>Type</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+        {documentsQuery.isPending ? <div className="table-state">{t("Загрузка документов…")}</div>
+          : documentsQuery.isError ? <div className="table-state table-state--error"><strong>{t("Не удалось загрузить документы.")}</strong><span>{formatApiError(documentsQuery.error)}</span><button className="button button--secondary" onClick={() => void documentsQuery.refetch()}>{t("Повторить")}</button></div>
+          : filtered.length === 0 ? <div className="table-state"><strong>{t("Документы не найдены")}</strong><span>{t("Создайте черновик или измените фильтры.")}</span></div>
+          : <div className="data-table-scroll"><table className="data-table documents-table"><thead><tr><th>{t("Номер")}</th><th>{t("Тип")}</th><th>{t("Дата")}</th><th>{t("Позиций")}</th><th>{t("Сумма")}</th><th>{t("Статус")}</th><th>{t("Действия")}</th></tr></thead><tbody>
             {filtered.map((document) => <tr key={document.id}>
               <td><button className="table-link" onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>{document.number}</button></td>
-              <td>{documentTypeLabels[document.type]}</td><td>{new Date(document.documentDate).toLocaleDateString()}</td><td>{document.items.length}</td><td>{document.totalAmount}</td>
-              <td><span className={`status-label status-label--${document.status.toLowerCase()}`}>{document.status}</span></td>
+              <td>{documentTypeLabels[document.type]}</td><td>{formatDate(document.documentDate)}</td><td>{document.items.length}</td><td>{document.totalAmount}</td>
+              <td><span className={`status-label status-label--${document.status.toLowerCase()}`}>{documentStatusLabels[document.status]}</span></td>
               <td><div className="document-actions">
-                {document.status === "DRAFT" ? <><button onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>{document.type === "STOCK_ADJUSTMENT" ? "View" : "Edit"}</button>{document.type !== "STOCK_ADJUSTMENT" ? <button onClick={() => setPendingAction({ action: "post", document })}>Post</button> : null}<button onClick={() => setPendingAction({ action: "delete", document })}>Delete</button></>
-                  : <><button onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>View</button><button onClick={() => setPendingAction({ action: "unpost", document })}>Unpost</button><button onClick={() => setPendingAction({ action: "repost", document })}>Repost</button></>}
-                <button disabled={printMutation.isPending} onClick={() => printMutation.mutate(document.id)}>{printMutation.isPending && printMutation.variables === document.id ? "Printing…" : "Print"}</button>
+                {document.status === "DRAFT" ? <><button onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>{t(document.type === "STOCK_ADJUSTMENT" ? "Открыть" : "Изменить")}</button>{document.type !== "STOCK_ADJUSTMENT" ? <button onClick={() => setPendingAction({ action: "post", document })}>{t("Провести")}</button> : null}<button onClick={() => setPendingAction({ action: "delete", document })}>{t("Удалить")}</button></>
+                  : <><button onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>{t("Открыть")}</button><button onClick={() => setPendingAction({ action: "unpost", document })}>{t("Отменить проведение")}</button><button onClick={() => setPendingAction({ action: "repost", document })}>{t("Перепровести")}</button></>}
+                <button disabled={printMutation.isPending} onClick={() => printMutation.mutate(document.id)}>{t(printMutation.isPending && printMutation.variables === document.id ? "Формирование…" : "Печать")}</button>
                 <MoreHorizontal aria-hidden="true" />
               </div></td>
             </tr>)}
@@ -114,7 +122,7 @@ export function DocumentsPage() {
       </div>
 
       {isDrawerOpen ? <DocumentDrawer document={selected} products={lookupsQuery.data?.products ?? []} warehouses={lookupsQuery.data?.warehouses ?? []} counterparties={lookupsQuery.data?.counterparties ?? []} isSaving={saveMutation.isPending} onClose={() => { setIsDrawerOpen(false); setSelected(null); }} onSave={(values) => saveMutation.mutateAsync({ values, document: selected }).then(() => undefined)} /> : null}
-      {pendingAction ? <div className="dialog-backdrop"><div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="lifecycle-title"><h2 id="lifecycle-title">{pendingAction.action[0].toUpperCase() + pendingAction.action.slice(1)} document?</h2><p>This operation will update document <strong>{pendingAction.document.number}</strong> and its ledger effect.</p>{lifecycleMutation.isError ? <div className="form-alert">{lifecycleMutation.error instanceof ApiError ? lifecycleMutation.error.message : "Operation failed."}</div> : null}<div className="confirm-dialog__actions"><button className="button button--secondary" onClick={() => setPendingAction(null)}>Cancel</button><button className={pendingAction.action === "delete" ? "button button--danger" : "button button--primary"} disabled={lifecycleMutation.isPending} onClick={() => lifecycleMutation.mutate(pendingAction)}>Confirm</button></div></div></div> : null}
+      {pendingAction ? <div className="dialog-backdrop"><div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="lifecycle-title"><h2 id="lifecycle-title">{lifecycleLabels[pendingAction.action].title}</h2><p>{t("Операция изменит документ {number} и связанные движения учёта.", { number: pendingAction.document.number })}</p>{lifecycleMutation.isError ? <div className="form-alert form-alert--detailed" role="alert"><strong>{t("Не удалось выполнить операцию")}</strong><span>{formatApiError(lifecycleMutation.error, { products: lookupsQuery.data?.products, warehouses: lookupsQuery.data?.warehouses })}</span></div> : null}<div className="confirm-dialog__actions"><button className="button button--secondary" onClick={() => setPendingAction(null)}>{t("Отмена")}</button><button className={pendingAction.action === "delete" ? "button button--danger" : "button button--primary"} disabled={lifecycleMutation.isPending} onClick={() => lifecycleMutation.mutate(pendingAction)}>{lifecycleMutation.isPending ? t("Выполнение…") : lifecycleLabels[pendingAction.action].action}</button></div></div></div> : null}
     </section>
   );
 }

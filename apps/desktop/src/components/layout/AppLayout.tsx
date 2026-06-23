@@ -3,14 +3,16 @@ import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import { primaryNavigation } from "../../app/navigation";
+import { useI18n } from "../../i18n";
 import { ApiHealthIndicator } from "../status/ApiHealthIndicator";
 import { Sidebar } from "./Sidebar";
 
 export function AppLayout() {
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
+  const { t } = useI18n();
   const location = useLocation();
   const currentRoute = primaryNavigation.find((item) => location.pathname.startsWith(item.path));
-  const pageTitle = currentRoute?.label ?? "Page not found";
+  const pageTitle = t(currentRoute?.label ?? "Страница не найдена");
 
   return (
     <div className="app-shell">
@@ -18,7 +20,7 @@ export function AppLayout() {
       <button
         type="button"
         className={`navigation-scrim${isNavigationOpen ? " navigation-scrim--visible" : ""}`}
-        aria-label="Close navigation"
+        aria-label={t("Закрыть навигацию")}
         onClick={() => setIsNavigationOpen(false)}
       />
 
@@ -27,7 +29,7 @@ export function AppLayout() {
           <button
             type="button"
             className="icon-button app-header__menu"
-            aria-label={isNavigationOpen ? "Close navigation" : "Open navigation"}
+            aria-label={t(isNavigationOpen ? "Закрыть навигацию" : "Открыть навигацию")}
             aria-expanded={isNavigationOpen}
             onClick={() => setIsNavigationOpen((isOpen) => !isOpen)}
           >

@@ -2,14 +2,13 @@ import type { CounterpartyDto, DocumentDto, ProductDto, WarehouseDto } from "@qu
 import { Plus, Trash2, X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 
-import { ApiError } from "../../api/errors";
+import { useI18n } from "../../i18n";
 import {
   addDocumentLine,
   calculateAmount,
   calculateTotal,
   createEmptyDocument,
   documentToForm,
-  documentTypeLabels,
   type DocumentFormValues,
   supportedDocumentTypes
 } from "./document-model";
@@ -33,6 +32,7 @@ export function DocumentDrawer({
   onClose,
   onSave
 }: DocumentDrawerProps) {
+  const { documentStatusLabels, documentTypeLabels, formatApiError, t } = useI18n();
   const [values, setValues] = useState<DocumentFormValues>(createEmptyDocument);
   const [error, setError] = useState("");
   const isReadOnly = document?.status === "POSTED" || document?.type === "STOCK_ADJUSTMENT";
@@ -59,17 +59,17 @@ export function DocumentDrawer({
     );
 
     if (!values.number.trim() || !values.documentDate || values.items.length === 0 || invalidLine) {
-      setError("Complete required fields and use positive quantities with valid prices.");
+      setError(t("Заполните обязательные поля. Количество должно быть положительным, а цена — корректной."));
       return;
     }
 
     if (values.type === "TRANSFER" && (!values.sourceWarehouseId || !values.destinationWarehouseId)) {
-      setError("Transfer requires source and destination warehouses.");
+      setError(t("Для перемещения укажите склад-отправитель и склад-получатель."));
       return;
     }
 
     if (values.type !== "TRANSFER" && !values.warehouseId) {
-      setError("Select a warehouse for this document.");
+      setError(t("Выберите склад для документа."));
       return;
     }
 
@@ -77,7 +77,7 @@ export function DocumentDrawer({
       setError("");
       await onSave(values);
     } catch (saveError) {
-      setError(saveError instanceof ApiError ? saveError.message : "Unable to save the document.");
+      setError(formatApiError(saveError, { products, warehouses }));
     }
   }
 
@@ -85,8 +85,8 @@ export function DocumentDrawer({
     const hasSelected = !selected || warehouses.some((warehouse) => warehouse.id === selected);
     return (
       <>
-        <option value="">Select warehouse</option>
-        {!hasSelected ? <option value={selected}>Unavailable: {selected}</option> : null}
+        <option value="">{t("Выберите склад")}</option>
+        {!hasSelected ? <option value={selected}>{t("Недоступен: {id}", { id: selected })}</option> : null}
         {warehouses.map((warehouse) => (
           <option key={warehouse.id} value={warehouse.id}>{warehouse.code} · {warehouse.name}</option>
         ))}
@@ -96,69 +96,69 @@ export function DocumentDrawer({
 
   return (
     <div className="drawer-backdrop">
-      <aside className="document-drawer" aria-label={document ? "Document details" : "New document"}>
+      <aside className="document-drawer" aria-label={t(document ? "Документ" : "Новый документ")}>
         <header className="document-drawer__header">
           <div>
-            <h2>Document details</h2>
-            <p>{document ? `Document: ${document.number}` : "New draft document"}</p>
+            <h2>{t("Документ")}</h2>
+            <p>{document ? `${t("Номер")}: ${document.number}` : t("Новый черновик")}</p>
           </div>
-          {document ? <span className={`status-label status-label--${document.status.toLowerCase()}`}>{document.status}</span> : null}
-          <button type="button" className="icon-button" aria-label="Close document" onClick={onClose}><X /></button>
+          {document ? <span className={`status-label status-label--${document.status.toLowerCase()}`}>{documentStatusLabels[document.status]}</span> : null}
+          <button type="button" className="icon-button" aria-label={t("Закрыть документ")} onClick={onClose}><X /></button>
         </header>
 
         <form className="document-form" onSubmit={submit}>
           <div className="document-form__body">
             {error ? <div className="form-alert" role="alert">{error}</div> : null}
             {document?.type === "STOCK_ADJUSTMENT" ? (
-              <div className="form-alert">Posting stock adjustments is not supported yet.</div>
+              <div className="form-alert">{t("Проведение корректировки остатков пока не поддерживается.")}</div>
             ) : null}
             <div className="document-fields">
-              <label>Number<input value={values.number} disabled={isReadOnly} onChange={(event) => setValues({ ...values, number: event.target.value })} /></label>
-              <label>Type<select value={values.type} disabled={isReadOnly} onChange={(event) => setValues({ ...values, type: event.target.value as DocumentFormValues["type"] })}>
+              <label>{t("Номер")}<input value={values.number} disabled={isReadOnly} onChange={(event) => setValues({ ...values, number: event.target.value })} /></label>
+              <label>{t("Тип")}<select value={values.type} disabled={isReadOnly} onChange={(event) => setValues({ ...values, type: event.target.value as DocumentFormValues["type"] })}>
                 {supportedDocumentTypes.map((type) => <option key={type} value={type}>{documentTypeLabels[type]}</option>)}
-                {values.type === "STOCK_ADJUSTMENT" ? <option value="STOCK_ADJUSTMENT">Stock adjustment</option> : null}
+                {values.type === "STOCK_ADJUSTMENT" ? <option value="STOCK_ADJUSTMENT">{t("Корректировка остатков")}</option> : null}
               </select></label>
-              <label>Document date<input type="date" value={values.documentDate} disabled={isReadOnly} onChange={(event) => setValues({ ...values, documentDate: event.target.value })} /></label>
-              <label>Counterparty<select value={values.counterpartyId} disabled={isReadOnly} onChange={(event) => setValues({ ...values, counterpartyId: event.target.value })}>
-                <option value="">No counterparty</option>
+              <label>{t("Дата документа")}<input type="date" value={values.documentDate} disabled={isReadOnly} onChange={(event) => setValues({ ...values, documentDate: event.target.value })} /></label>
+              <label>{t("Контрагент")}<select value={values.counterpartyId} disabled={isReadOnly} onChange={(event) => setValues({ ...values, counterpartyId: event.target.value })}>
+                <option value="">{t("Без контрагента")}</option>
                 {counterparties.map((counterparty) => <option key={counterparty.id} value={counterparty.id}>{counterparty.code} · {counterparty.name}</option>)}
               </select></label>
               {values.type === "TRANSFER" ? (
                 <>
-                  <label>Source warehouse<select value={values.sourceWarehouseId} disabled={isReadOnly} onChange={(event) => setValues({ ...values, sourceWarehouseId: event.target.value })}>{warehouseOptions(values.sourceWarehouseId)}</select></label>
-                  <label>Destination warehouse<select value={values.destinationWarehouseId} disabled={isReadOnly} onChange={(event) => setValues({ ...values, destinationWarehouseId: event.target.value })}>{warehouseOptions(values.destinationWarehouseId)}</select></label>
+                  <label>{t("Склад-отправитель")}<select value={values.sourceWarehouseId} disabled={isReadOnly} onChange={(event) => setValues({ ...values, sourceWarehouseId: event.target.value })}>{warehouseOptions(values.sourceWarehouseId)}</select></label>
+                  <label>{t("Склад-получатель")}<select value={values.destinationWarehouseId} disabled={isReadOnly} onChange={(event) => setValues({ ...values, destinationWarehouseId: event.target.value })}>{warehouseOptions(values.destinationWarehouseId)}</select></label>
                 </>
               ) : (
-                <label className="document-fields__wide">Warehouse<select value={values.warehouseId} disabled={isReadOnly} onChange={(event) => setValues({ ...values, warehouseId: event.target.value })}>{warehouseOptions(values.warehouseId)}</select></label>
+                <label className="document-fields__wide">{t("Склад")}<select value={values.warehouseId} disabled={isReadOnly} onChange={(event) => setValues({ ...values, warehouseId: event.target.value })}>{warehouseOptions(values.warehouseId)}</select></label>
               )}
-              <label className="document-fields__wide">Notes<textarea rows={3} value={values.notes} disabled={isReadOnly} onChange={(event) => setValues({ ...values, notes: event.target.value })} /></label>
+              <label className="document-fields__wide">{t("Комментарий")}<textarea rows={3} value={values.notes} disabled={isReadOnly} onChange={(event) => setValues({ ...values, notes: event.target.value })} /></label>
             </div>
 
             <section className="line-items">
-              <h3>Line items</h3>
+              <h3>{t("Товары")}</h3>
               <div className="line-items__table">
-                <div className="line-items__header"><span>Product</span><span>Quantity</span><span>Price</span><span>Amount</span><span /></div>
+                <div className="line-items__header"><span>{t("Товар")}</span><span>{t("Количество")}</span><span>{t("Цена")}</span><span>{t("Сумма")}</span><span /></div>
                 {values.items.map((item) => (
                   <div className="line-item" key={item.key}>
-                    <select aria-label="Product" value={item.productId} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "productId", event.target.value)}>
-                      <option value="">Select product</option>
+                    <select aria-label={t("Товар")} value={item.productId} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "productId", event.target.value)}>
+                      <option value="">{t("Выберите товар")}</option>
                       {products.map((product) => <option key={product.id} value={product.id}>{product.sku} · {product.name}</option>)}
                     </select>
-                    <input aria-label="Quantity" inputMode="decimal" value={item.quantity} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "quantity", event.target.value)} />
-                    <input aria-label="Price" inputMode="decimal" value={item.price} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "price", event.target.value)} />
+                    <input aria-label={t("Количество")} inputMode="decimal" value={item.quantity} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "quantity", event.target.value)} />
+                    <input aria-label={t("Цена")} inputMode="decimal" value={item.price} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "price", event.target.value)} />
                     <output>{calculateAmount(item.quantity, item.price)}</output>
-                    <button type="button" className="icon-button icon-button--danger" aria-label="Remove item" disabled={isReadOnly || values.items.length === 1} onClick={() => setValues({ ...values, items: values.items.filter((line) => line.key !== item.key) })}><Trash2 /></button>
+                    <button type="button" className="icon-button icon-button--danger" aria-label={t("Удалить строку")} disabled={isReadOnly || values.items.length === 1} onClick={() => setValues({ ...values, items: values.items.filter((line) => line.key !== item.key) })}><Trash2 /></button>
                   </div>
                 ))}
               </div>
-              {!isReadOnly ? <button type="button" className="button button--secondary" onClick={() => setValues({ ...values, items: addDocumentLine(values.items) })}><Plus /> Add item</button> : null}
+              {!isReadOnly ? <button type="button" className="button button--secondary" onClick={() => setValues({ ...values, items: addDocumentLine(values.items) })}><Plus /> {t("Добавить товар")}</button> : null}
             </section>
           </div>
 
           <footer className="document-drawer__footer">
-            <div><span>Total</span><strong>{calculateTotal(values.items).toFixed(2)}</strong></div>
-            <button type="button" className="button button--secondary" onClick={onClose}>Cancel</button>
-            {!isReadOnly ? <button type="submit" className="button button--primary" disabled={isSaving}>{isSaving ? "Saving…" : "Save draft"}</button> : null}
+            <div><span>{t("Итого")}</span><strong>{calculateTotal(values.items).toFixed(2)}</strong></div>
+            <button type="button" className="button button--secondary" onClick={onClose}>{t("Отмена")}</button>
+            {!isReadOnly ? <button type="submit" className="button button--primary" disabled={isSaving}>{t(isSaving ? "Сохранение…" : "Сохранить черновик")}</button> : null}
           </footer>
         </form>
       </aside>

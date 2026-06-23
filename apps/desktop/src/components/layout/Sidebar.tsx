@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 
 import { primaryNavigation } from "../../app/navigation";
+import { useI18n } from "../../i18n";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -8,8 +9,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onNavigate }: SidebarProps) {
+  const { t } = useI18n();
   return (
-    <aside className={`sidebar${isOpen ? " sidebar--open" : ""}`} aria-label="Primary navigation">
+    <aside className={`sidebar${isOpen ? " sidebar--open" : ""}`} aria-label={t("Основная навигация")}>
       <div className="sidebar__brand">Quanti</div>
       <nav className="sidebar__navigation">
         {primaryNavigation.map(({ icon: Icon, label, path }) => (
@@ -20,13 +22,13 @@ export function Sidebar({ isOpen, onNavigate }: SidebarProps) {
             onClick={onNavigate}
           >
             <Icon aria-hidden="true" />
-            <span>{label}</span>
+            <span>{t(label)}</span>
           </NavLink>
         ))}
       </nav>
       <div className="sidebar__footer">
         <span>Quanti ERP</span>
-        <span>Foundation 0.1</span>
+        <span>{t("Версия 0.1")}</span>
       </div>
     </aside>
   );

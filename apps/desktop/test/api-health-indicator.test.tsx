@@ -19,7 +19,7 @@ describe("API health indicator", () => {
 
     renderWithAppProviders(<ApiHealthIndicator />);
 
-    expect(screen.getByText("Connecting to API")).toBeInTheDocument();
+    expect(screen.getByText("Подключение к API")).toBeInTheDocument();
   });
 
   test("shows connected when the API responds", async () => {
@@ -32,7 +32,7 @@ describe("API health indicator", () => {
 
     renderWithAppProviders(<ApiHealthIndicator />);
 
-    expect(await screen.findByText("API connected")).toBeInTheDocument();
+    expect(await screen.findByText("API подключён")).toBeInTheDocument();
   });
 
   test("shows unavailable when the health request fails", async () => {
@@ -40,6 +40,6 @@ describe("API health indicator", () => {
 
     renderWithAppProviders(<ApiHealthIndicator />);
 
-    expect(await screen.findByText("API unavailable")).toBeInTheDocument();
+    expect(await screen.findByText("API недоступен")).toBeInTheDocument();
   });
 });

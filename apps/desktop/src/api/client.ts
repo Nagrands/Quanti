@@ -89,7 +89,8 @@ export class ApiClient {
       throw new ApiError(
         response.status,
         body.error.code,
-        normalizeErrorMessage(body.error.message)
+        normalizeErrorMessage(body.error.message),
+        body.error.details
       );
     }
 

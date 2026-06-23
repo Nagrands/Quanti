@@ -12,6 +12,8 @@ All notable changes to Quanti are documented in this file.
 - Ledger-based stock, sales, cashflow, top-product, and debt reports.
 - PDF document printing with versioned database templates.
 - React ERP workspace with API health status and responsive desktop layout.
+- Switchable Russian and English localization for the ERP workspace, plus
+  actionable structured stock error messages in document workflows.
 - Tauri file dialogs, validated import/export boundaries, and macOS/Windows bundles.
 - Cross-platform CI packaging and PostgreSQL-backed release workflow checks.
 
