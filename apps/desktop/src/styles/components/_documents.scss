@@ -248,6 +248,169 @@
   border-top: 1px solid vars.$color-border;
 }
 
+.product-combobox {
+  position: relative;
+  min-width: 0;
+}
+
+.product-combobox > input {
+  padding-right: 32px;
+  padding-left: 34px;
+}
+
+.product-combobox__search,
+.product-combobox__chevron {
+  position: absolute;
+  z-index: 1;
+  top: 13px;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  color: vars.$color-text-muted;
+}
+
+.product-combobox__search {
+  left: 11px;
+}
+
+.product-combobox__chevron {
+  right: 10px;
+}
+
+.product-combobox__menu {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  bottom: calc(100% + 5px);
+  left: 0;
+  overflow: hidden;
+  border: 1px solid vars.$color-border-strong;
+  border-radius: vars.$radius-small;
+  background: vars.$color-white;
+  box-shadow: 0 16px 34px rgb(16 35 62 / 18%);
+}
+
+.product-combobox__menu [role="listbox"] {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.product-combobox__option,
+.product-combobox__create {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  color: vars.$color-text;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.product-combobox__option span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.product-combobox__option strong,
+.product-combobox__option small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-combobox__option small {
+  color: vars.$color-text-muted;
+}
+
+.product-combobox__option svg {
+  width: 16px;
+  flex: 0 0 auto;
+  color: vars.$color-accent-600;
+}
+
+.product-combobox__option--active {
+  background: vars.$color-background;
+}
+
+.product-combobox__empty {
+  padding: 16px 12px;
+  color: vars.$color-text-muted;
+  text-align: center;
+}
+
+.product-combobox__create {
+  border-top: 1px solid vars.$color-border;
+  color: vars.$color-accent-600;
+  font-weight: 750;
+}
+
+.dialog-backdrop--nested {
+  z-index: 60;
+}
+
+.quick-product-dialog {
+  width: min(560px, calc(100vw - 32px));
+  padding: 24px;
+  border-radius: vars.$radius-medium;
+  background: vars.$color-white;
+  box-shadow: 0 24px 70px rgb(16 35 62 / 24%);
+}
+
+.quick-product-dialog header p {
+  margin: 0 0 5px;
+  color: vars.$color-text-muted;
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.quick-product-dialog header h2 {
+  margin: 0 0 20px;
+  color: vars.$color-text;
+}
+
+.quick-product-dialog__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.quick-product-dialog__fields label {
+  display: grid;
+  gap: 7px;
+  color: vars.$color-text;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.quick-product-dialog__fields input,
+.quick-product-dialog__fields select,
+.quick-product-dialog__fields textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid vars.$color-border-strong;
+  border-radius: vars.$radius-small;
+  color: vars.$color-text;
+  background: vars.$color-white;
+}
+
+.quick-product-dialog__wide {
+  grid-column: 1 / -1;
+}
+
+.quick-product-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
 .line-item output {
   padding: 10px;
   color: vars.$color-text-muted;
@@ -312,5 +475,13 @@
 
   .line-items {
     overflow-x: auto;
+  }
+
+  .quick-product-dialog__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-product-dialog__wide {
+    grid-column: auto;
   }
 }

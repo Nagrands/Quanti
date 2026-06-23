@@ -6,6 +6,7 @@ import { DocumentsPage } from "../src/features/documents/DocumentsPage";
 import { ApiError } from "../src/api/errors";
 import {
   createDocument,
+  createProduct,
   deleteDocument,
   downloadDocumentPdf,
   getDocumentLookups,
@@ -25,6 +26,7 @@ vi.mock("../src/features/documents/documents-api", () => ({
   getStockBalance: vi.fn(),
   getDocumentLookups: vi.fn(),
   createDocument: vi.fn(),
+  createProduct: vi.fn(),
   updateDocument: vi.fn(),
   deleteDocument: vi.fn(),
   printDocument: vi.fn(),
@@ -68,7 +70,11 @@ const posted = {
 };
 
 const lookups = {
-  products: [{ id: "product-1", sku: "SKU-1", name: "Widget", description: null, unit: "pcs", categoryId: null, categoryName: null, isActive: true, createdAt: "", updatedAt: "" }],
+  products: [
+    { id: "product-1", sku: "SKU-1", name: "Widget", description: null, unit: "pcs", categoryId: null, categoryName: null, isActive: true, createdAt: "", updatedAt: "" },
+    { id: "product-2", sku: "VEG-2", name: "Carrot", description: null, unit: "kg", categoryId: "category-1", categoryName: "Vegetables", isActive: true, createdAt: "", updatedAt: "" }
+  ],
+  categories: [{ id: "category-1", code: "CAT-0001", name: "Vegetables", description: null, isActive: true, createdAt: "", updatedAt: "" }],
   warehouses: [{ id: "warehouse-1", code: "MAIN", name: "Main", isActive: true, createdAt: "", updatedAt: "" }],
   counterparties: [{ id: "counterparty-1", code: "C-1", name: "Acme", type: "CUSTOMER" as const, taxId: null, isActive: true, createdAt: "", updatedAt: "" }]
 };
@@ -83,6 +89,7 @@ describe("documents workspace", () => {
     });
     vi.mocked(getDocumentLookups).mockResolvedValue(lookups);
     vi.mocked(createDocument).mockResolvedValue(draft);
+    vi.mocked(createProduct).mockResolvedValue(lookups.products[0]);
     vi.mocked(updateDocument).mockResolvedValue(draft);
     vi.mocked(deleteDocument).mockResolvedValue(undefined);
     vi.mocked(printDocument).mockResolvedValue({
@@ -122,7 +129,9 @@ describe("documents workspace", () => {
     await user.clear(number);
     await user.type(number, "SO-002");
     await user.selectOptions(within(drawer).getByLabelText("Склад"), "warehouse-1");
-    await user.selectOptions(within(drawer).getByLabelText("Товар"), "product-1");
+    const product = within(drawer).getByRole("combobox", { name: "Товар" });
+    await user.click(product);
+    await user.click(within(drawer).getByRole("option", { name: "SKU-1 · Widget" }));
     const quantity = within(drawer).getByLabelText("Количество");
     const price = within(drawer).getByLabelText("Цена");
     await user.clear(quantity);
@@ -155,7 +164,9 @@ describe("documents workspace", () => {
     await user.clear(number);
     await user.type(number, "SO-003");
     await user.selectOptions(within(drawer).getByLabelText("Склад"), "warehouse-1");
-    await user.selectOptions(within(drawer).getByLabelText("Товар"), "product-1");
+    const product = within(drawer).getByRole("combobox", { name: "Товар" });
+    await user.click(product);
+    await user.click(within(drawer).getByRole("option", { name: "SKU-1 · Widget" }));
     const quantity = within(drawer).getByLabelText("Количество");
     await user.clear(quantity);
     await user.type(quantity, "2");
@@ -188,7 +199,9 @@ describe("documents workspace", () => {
     await user.selectOptions(within(drawer).getByLabelText("Тип"), "TRANSFER");
     await user.selectOptions(within(drawer).getByLabelText("Склад-отправитель"), "warehouse-1");
     await user.selectOptions(within(drawer).getByLabelText("Склад-получатель"), "warehouse-1");
-    await user.selectOptions(within(drawer).getByLabelText("Товар"), "product-1");
+    const product = within(drawer).getByRole("combobox", { name: "Товар" });
+    await user.click(product);
+    await user.click(within(drawer).getByRole("option", { name: "SKU-1 · Widget" }));
     await user.click(within(drawer).getByRole("button", { name: "Сохранить черновик" }));
 
     expect(within(drawer).getAllByText("Склад-отправитель и склад-получатель должны отличаться.")).not.toHaveLength(0);
@@ -208,6 +221,71 @@ describe("documents workspace", () => {
     await user.click(screen.getByRole("button", { name: "Отменить проведение" }));
     await user.click(within(screen.getByRole("dialog", { name: "Отменить проведение?" })).getByRole("button", { name: "Отменить проведение" }));
     expect(unpostDocument).toHaveBeenCalledWith("document-2");
+  });
+
+  test("searches products by SKU and name and supports keyboard selection", async () => {
+    const user = userEvent.setup();
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
+
+    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const product = within(drawer).getByRole("combobox", { name: "Товар" });
+    expect(product).toHaveAttribute("aria-expanded", "false");
+    await user.click(product);
+    expect(product).toHaveAttribute("aria-expanded", "true");
+    expect(within(drawer).getByRole("listbox", { name: "Результаты поиска товаров" })).toBeInTheDocument();
+
+    await user.type(product, "veg-2");
+    expect(within(drawer).getByRole("option", { name: "VEG-2 · Carrot" })).toBeInTheDocument();
+    expect(within(drawer).queryByRole("option", { name: "SKU-1 · Widget" })).not.toBeInTheDocument();
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    expect(product).toHaveValue("VEG-2 · Carrot");
+    expect(product).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("shows an empty product search and creates a product for the current line", async () => {
+    const user = userEvent.setup();
+    const createdProduct = {
+      id: "product-3",
+      sku: "PRD-0001",
+      name: "Tomato",
+      description: null,
+      unit: "kg",
+      categoryId: "category-1",
+      categoryName: "Vegetables",
+      isActive: true,
+      createdAt: "",
+      updatedAt: ""
+    };
+    vi.mocked(createProduct).mockResolvedValue(createdProduct);
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
+
+    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const product = within(drawer).getByRole("combobox", { name: "Товар" });
+    await user.type(product, "missing");
+    expect(within(drawer).getByText("Товары не найдены")).toHaveAttribute("role", "status");
+    await user.click(within(drawer).getByRole("button", { name: "Создать новый товар" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Новый товар" });
+    expect(within(dialog).getByLabelText("SKU")).toHaveValue("PRD-0001");
+    await user.type(within(dialog).getByLabelText("Наименование"), "Tomato");
+    await user.type(within(dialog).getByLabelText("Единица"), "kg");
+    await user.selectOptions(within(dialog).getByLabelText("Категория"), "category-1");
+    await user.click(within(dialog).getByRole("button", { name: "Создать и выбрать" }));
+
+    expect(createProduct).toHaveBeenCalledWith({
+      sku: "PRD-0001",
+      name: "Tomato",
+      unit: "kg",
+      categoryId: "category-1",
+      description: null
+    });
+    expect(await within(drawer).findByRole("combobox", { name: "Товар" })).toHaveValue("PRD-0001 · Tomato");
+    expect(screen.queryByRole("dialog", { name: "Новый товар" })).not.toBeInTheDocument();
   });
 
   test("explains insufficient stock with product and warehouse names", async () => {

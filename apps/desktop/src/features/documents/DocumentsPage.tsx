@@ -1,4 +1,4 @@
-import type { DocumentDto, DocumentStatus, DocumentType } from "@quanti/shared";
+import type { CreateProductDto, DocumentDto, DocumentStatus, DocumentType, ProductDto } from "@quanti/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -7,6 +7,7 @@ import { useI18n } from "../../i18n";
 import { DocumentDrawer } from "./DocumentDrawer";
 import {
   createDocument,
+  createProduct,
   deleteDocument,
   downloadDocumentPdf,
   getDocumentLookups,
@@ -44,6 +45,17 @@ export function DocumentsPage() {
       await refresh();
       setIsDrawerOpen(false);
       setSelected(null);
+    }
+  });
+  const createProductMutation = useMutation({
+    mutationFn: (payload: CreateProductDto) => createProduct(payload),
+    onSuccess: (product) => {
+      queryClient.setQueryData<Awaited<ReturnType<typeof getDocumentLookups>>>(
+        ["document-lookups"],
+        (current) => current
+          ? { ...current, products: [...current.products, product] }
+          : { products: [product], categories: [], warehouses: [], counterparties: [] }
+      );
     }
   });
 
@@ -122,7 +134,7 @@ export function DocumentsPage() {
           </tbody></table></div>}
       </div>
 
-      {isDrawerOpen ? <DocumentDrawer document={selected} products={lookupsQuery.data?.products ?? []} warehouses={lookupsQuery.data?.warehouses ?? []} counterparties={lookupsQuery.data?.counterparties ?? []} documents={documentsQuery.data ?? []} isSaving={saveMutation.isPending} onClose={() => { setIsDrawerOpen(false); setSelected(null); }} onSave={(values) => saveMutation.mutateAsync({ values, document: selected }).then(() => undefined)} /> : null}
+      {isDrawerOpen ? <DocumentDrawer document={selected} products={lookupsQuery.data?.products ?? []} categories={lookupsQuery.data?.categories ?? []} warehouses={lookupsQuery.data?.warehouses ?? []} counterparties={lookupsQuery.data?.counterparties ?? []} documents={documentsQuery.data ?? []} isSaving={saveMutation.isPending} onClose={() => { setIsDrawerOpen(false); setSelected(null); }} onSave={(values) => saveMutation.mutateAsync({ values, document: selected }).then(() => undefined)} onCreateProduct={(payload) => createProductMutation.mutateAsync(payload) as Promise<ProductDto>} /> : null}
       {pendingAction ? (
         <div className="dialog-backdrop">
           <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="lifecycle-title">

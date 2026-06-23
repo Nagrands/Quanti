@@ -6,6 +6,7 @@ import type {
   WarehouseDto
 } from "@quanti/shared";
 import type { Locale, Translate } from "../../i18n";
+import { createSequenceCode } from "../../utils/sequence-code";
 
 export type MasterDataEntity = ProductDto | ProductCategoryDto | WarehouseDto | CounterpartyDto | AccountDto;
 export type MasterDataResource = "products" | "product-categories" | "warehouses" | "counterparties" | "accounts";
@@ -53,17 +54,6 @@ function value(entity: MasterDataEntity, key: string): string {
   return typeof fieldValue === "string" ? fieldValue : "";
 }
 
-function nextCode(existingValues: readonly string[], prefix: string) {
-  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`^${escapedPrefix}-(\\d+)$`);
-  const max = existingValues.reduce((currentMax, item) => {
-    const match = pattern.exec(item);
-    return match ? Math.max(currentMax, Number(match[1])) : currentMax;
-  }, 0);
-
-  return `${prefix}-${String(max + 1).padStart(4, "0")}`;
-}
-
 export function createMasterDataDefaults(
   definition: MasterDataDefinition,
   entities: readonly MasterDataEntity[]
@@ -75,7 +65,10 @@ export function createMasterDataDefaults(
 
   return {
     ...definition.createDefaults,
-    [config.field]: nextCode(entities.map((entity) => value(entity, config.field)), config.prefix)
+    [config.field]: createSequenceCode(
+      entities.map((entity) => value(entity, config.field)),
+      config.prefix
+    )
   };
 }
 

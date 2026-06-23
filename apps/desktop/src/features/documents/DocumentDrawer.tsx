@@ -1,4 +1,11 @@
-import type { CounterpartyDto, DocumentDto, ProductDto, WarehouseDto } from "@quanti/shared";
+import type {
+  CounterpartyDto,
+  CreateProductDto,
+  DocumentDto,
+  ProductCategoryDto,
+  ProductDto,
+  WarehouseDto
+} from "@quanti/shared";
 import { useQueries } from "@tanstack/react-query";
 import { Plus, Trash2, X } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
@@ -16,31 +23,39 @@ import {
 } from "./document-model";
 import { getRequiredStockChecks, getStockWarnings } from "./document-preview";
 import { getStockBalance } from "./documents-api";
+import { ProductCombobox } from "./ProductCombobox";
+import { QuickProductDialog } from "./QuickProductDialog";
 
 interface DocumentDrawerProps {
   document: DocumentDto | null;
   products: ProductDto[];
+  categories: ProductCategoryDto[];
   warehouses: WarehouseDto[];
   counterparties: CounterpartyDto[];
   documents: DocumentDto[];
   isSaving: boolean;
   onClose: () => void;
   onSave: (values: DocumentFormValues) => Promise<void>;
+  onCreateProduct: (payload: CreateProductDto) => Promise<ProductDto>;
 }
 
 export function DocumentDrawer({
   document,
   products,
+  categories,
   warehouses,
   counterparties,
   documents,
   isSaving,
   onClose,
-  onSave
+  onSave,
+  onCreateProduct
 }: DocumentDrawerProps) {
   const { documentStatusLabels, documentTypeLabels, formatApiError, t } = useI18n();
   const [values, setValues] = useState<DocumentFormValues>(createEmptyDocument);
   const [error, setError] = useState("");
+  const [quickProductLineKey, setQuickProductLineKey] = useState<string | null>(null);
+  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
   const isReadOnly = document?.status === "POSTED" || document?.type === "STOCK_ADJUSTMENT";
   const requiredStockChecks = useMemo(() => getRequiredStockChecks(values), [values]);
   const stockBalanceQueries = useQueries({
@@ -60,6 +75,7 @@ export function DocumentDrawer({
   useEffect(() => {
     setValues(document ? documentToForm(document) : createEmptyDocument(createDocumentNumber("SALE", documents)));
     setError("");
+    setQuickProductLineKey(null);
   }, [document, documents]);
 
   function updateLine(key: string, field: string, value: string) {
@@ -193,10 +209,13 @@ export function DocumentDrawer({
                 <div className="line-items__header"><span>{t("Товар")}</span><span>{t("Количество")}</span><span>{t("Цена")}</span><span>{t("Сумма")}</span><span /></div>
                 {values.items.map((item) => (
                   <div className="line-item" key={item.key}>
-                    <select aria-label={t("Товар")} value={item.productId} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "productId", event.target.value)}>
-                      <option value="">{t("Выберите товар")}</option>
-                      {products.map((product) => <option key={product.id} value={product.id}>{product.sku} · {product.name}</option>)}
-                    </select>
+                    <ProductCombobox
+                      value={item.productId}
+                      products={products}
+                      disabled={isReadOnly}
+                      onChange={(productId) => updateLine(item.key, "productId", productId)}
+                      onCreate={() => setQuickProductLineKey(item.key)}
+                    />
                     <input aria-label={t("Количество")} inputMode="decimal" value={item.quantity} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "quantity", event.target.value)} />
                     <input aria-label={t("Цена")} inputMode="decimal" value={item.price} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "price", event.target.value)} />
                     <output>{calculateAmount(item.quantity, item.price)}</output>
@@ -215,6 +234,24 @@ export function DocumentDrawer({
           </footer>
         </form>
       </aside>
+      {quickProductLineKey ? (
+        <QuickProductDialog
+          products={products}
+          categories={categories}
+          isSaving={isCreatingProduct}
+          onCancel={() => setQuickProductLineKey(null)}
+          onSave={async (payload) => {
+            setIsCreatingProduct(true);
+            try {
+              const product = await onCreateProduct(payload);
+              updateLine(quickProductLineKey, "productId", product.id);
+              setQuickProductLineKey(null);
+            } finally {
+              setIsCreatingProduct(false);
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }

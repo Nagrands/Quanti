@@ -1,7 +1,9 @@
 import type {
   CounterpartyDto,
+  CreateProductDto,
   CreateDraftDocumentDto,
   DocumentDto,
+  ProductCategoryDto,
   ProductDto,
   StockBalanceResultDto,
   UpdateDraftDocumentPatchDto,
@@ -20,14 +22,22 @@ export const getStockBalance = (productId: string, warehouseId: string) => {
 };
 
 export const getDocumentLookups = async () => {
-  const [products, warehouses, counterparties] = await Promise.all([
+  const [products, categories, warehouses, counterparties] = await Promise.all([
     apiClient.request<ProductDto[]>("/products"),
+    apiClient.request<ProductCategoryDto[]>("/product-categories"),
     apiClient.request<WarehouseDto[]>("/warehouses"),
     apiClient.request<CounterpartyDto[]>("/counterparties")
   ]);
 
-  return { products, warehouses, counterparties };
+  return { products, categories, warehouses, counterparties };
 };
+
+export const createProduct = (payload: CreateProductDto) =>
+  apiClient.request<ProductDto>("/products", {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload)
+  });
 
 export const createDocument = (payload: CreateDraftDocumentDto) =>
   apiClient.request<DocumentDto>("/documents", {
