@@ -33,6 +33,15 @@ To populate a repeatable demo workflow, keep the API running and execute:
 pnpm demo:seed
 ```
 
+Local database maintenance commands:
+
+```bash
+pnpm db:backup
+pnpm db:restore -- backups/quanti.dump
+pnpm db:reset -- --force
+pnpm db:studio
+```
+
 For the native desktop window, run the API and Tauri in separate terminals:
 
 ```bash

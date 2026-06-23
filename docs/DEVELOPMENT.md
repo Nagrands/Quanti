@@ -81,10 +81,43 @@ pnpm db:up
 pnpm db:down
 pnpm db:generate
 pnpm db:migrate
+pnpm db:studio
 ```
 
 `docker compose down` preserves the named PostgreSQL volume. Add `--volumes`
 manually only when intentionally deleting local data.
+
+## Database Maintenance
+
+Create a timestamped local backup:
+
+```bash
+pnpm db:backup
+```
+
+The backup is written to `backups/quanti_<timestamp>.dump`. To choose a file
+name explicitly:
+
+```bash
+pnpm db:backup -- backups/manual.dump
+```
+
+Restore a backup while PostgreSQL is running:
+
+```bash
+pnpm db:restore -- backups/manual.dump
+```
+
+The restore command uses `pg_restore --clean --if-exists` and should be run
+while the API is stopped, so no writes happen during the restore.
+
+Reset the local Docker database volume and reapply migrations:
+
+```bash
+pnpm db:reset -- --force
+```
+
+This deletes local PostgreSQL data. Create a backup first when the data matters.
 
 PDF printing requires Chrome or Chromium. If it is not installed in a standard
 location, set `PUPPETEER_EXECUTABLE_PATH` in `.env`.

@@ -20,16 +20,46 @@ test("workspace exposes reproducible setup and release commands", async () => {
   const rootPackage = JSON.parse(await read("package.json"));
   const apiPackage = JSON.parse(await read("apps/api/package.json"));
 
-  for (const script of ["db:setup", "demo:seed", "dev:api", "dev:tauri", "release:check"]) {
+  for (const script of [
+    "db:backup",
+    "db:reset",
+    "db:restore",
+    "db:setup",
+    "db:studio",
+    "demo:seed",
+    "dev:api",
+    "dev:tauri",
+    "release:check"
+  ]) {
     assert.equal(typeof rootPackage.scripts[script], "string", `Missing script ${script}.`);
   }
 
+  assert.match(rootPackage.scripts["db:backup"], /db-backup\.mjs/);
+  assert.match(rootPackage.scripts["db:reset"], /db-reset\.mjs/);
+  assert.match(rootPackage.scripts["db:restore"], /db-restore\.mjs/);
   assert.match(rootPackage.scripts["db:setup"], /setup-local-env/);
   assert.match(rootPackage.scripts["db:setup"], /--wait/);
+  assert.match(rootPackage.scripts["db:studio"], /prisma studio/);
   assert.match(rootPackage.scripts["release:check"], /api:smoke/);
   assert.match(apiPackage.scripts.dev, /--env-file-if-exists/);
   assert.equal(typeof apiPackage.scripts.start, "string");
   assert.equal(typeof apiPackage.dependencies.tsx, "string");
+});
+
+test("database maintenance scripts use explicit safe commands", async () => {
+  const backupScript = await read("scripts/db-backup.mjs");
+  const restoreScript = await read("scripts/db-restore.mjs");
+  const resetScript = await read("scripts/db-reset.mjs");
+  const adapterScript = await read("scripts/db-maintenance.mjs");
+
+  assert.match(backupScript, /pgDumpToFile/);
+  assert.match(restoreScript, /Usage: pnpm db:restore -- <backup-file>/);
+  assert.match(restoreScript, /pgRestoreFromFile/);
+  assert.match(resetScript, /--force/);
+  assert.match(resetScript, /down", "--volumes/);
+  assert.match(adapterScript, /pg_dump/);
+  assert.match(adapterScript, /pg_restore/);
+  assert.match(adapterScript, /shell: false/);
 });
 
 test("demo seed covers core ERP workflow through the API", async () => {
