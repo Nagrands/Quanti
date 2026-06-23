@@ -13,6 +13,8 @@ All notable changes to Quanti are documented in this file.
 - Ledger-based stock, sales, cashflow, top-product, and debt reports.
 - PDF document printing with versioned database templates.
 - React ERP workspace with API health status and responsive desktop layout.
+- Functional dashboard with monthly KPIs, recent activity, low-stock warnings,
+  counterparty debts, and quick actions.
 - Switchable Russian and English localization for the ERP workspace, plus
   actionable structured stock error messages in document workflows.
 - Master data filters, active/archive status badges, restore actions, and

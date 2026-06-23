@@ -34,7 +34,8 @@ describe("Quanti application shell", () => {
     renderWithAppProviders(<App />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Главная" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Рабочее пространство ERP" })).toBeInTheDocument();
+    expect(await screen.findByText("Создать продажу")).toBeInTheDocument();
+    expect(screen.getByText("Продажи за месяц")).toBeInTheDocument();
     expect(await screen.findByText("API подключён")).toBeInTheDocument();
   });
 
