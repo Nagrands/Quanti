@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from "@nestjs/common";
 
 import { CreateProductRequest } from "./dto/create-product.request";
 import { UpdateProductRequest } from "./dto/update-product.request";
@@ -9,8 +9,8 @@ export class ProductsController {
   constructor(@Inject(ProductsService) private readonly productsService: ProductsService) {}
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query("includeInactive") includeInactive?: string) {
+    return this.productsService.findAll(includeInactive === "true");
   }
 
   @Get(":id")
@@ -26,6 +26,11 @@ export class ProductsController {
   @Patch(":id")
   update(@Param("id") id: string, @Body() payload: UpdateProductRequest) {
     return this.productsService.update(id, payload);
+  }
+
+  @Patch(":id/restore")
+  restore(@Param("id") id: string) {
+    return this.productsService.restore(id);
   }
 
   @Delete(":id")

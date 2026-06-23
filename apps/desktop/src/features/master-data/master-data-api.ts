@@ -5,8 +5,9 @@ const jsonHeaders = {
   "Content-Type": "application/json"
 };
 
-export function getMasterData(resource: MasterDataResource) {
-  return apiClient.request<MasterDataEntity[]>(`/${resource}`);
+export function getMasterData(resource: MasterDataResource, includeInactive = false) {
+  const query = includeInactive ? "?includeInactive=true" : "";
+  return apiClient.request<MasterDataEntity[]>(`/${resource}${query}`);
 }
 
 export function createMasterData(resource: MasterDataResource, payload: Record<string, unknown>) {
@@ -32,5 +33,11 @@ export function updateMasterData(
 export function deactivateMasterData(resource: MasterDataResource, id: string) {
   return apiClient.request<void>(`/${resource}/${id}`, {
     method: "DELETE"
+  });
+}
+
+export function restoreMasterData(resource: MasterDataResource, id: string) {
+  return apiClient.request<MasterDataEntity>(`/${resource}/${id}/restore`, {
+    method: "PATCH"
   });
 }

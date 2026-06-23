@@ -8,9 +8,9 @@ import { toCounterpartyDto } from "./master-data.mappers";
 export class CounterpartiesService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<CounterpartyDto[]> {
+  async findAll(includeInactive = false): Promise<CounterpartyDto[]> {
     const counterparties = await this.prisma.counterparty.findMany({
-      where: { isActive: true },
+      ...(includeInactive ? {} : { where: { isActive: true } }),
       orderBy: { createdAt: "asc" }
     });
 
@@ -65,5 +65,18 @@ export class CounterpartiesService {
       where: { id },
       data: { isActive: false }
     });
+  }
+
+  async restore(id: string): Promise<CounterpartyDto> {
+    const counterparty = await this.prisma.counterparty.findFirst({ where: { id } });
+
+    if (!counterparty) {
+      throw new NotFoundException(`Counterparty ${id} was not found.`);
+    }
+
+    return toCounterpartyDto(await this.prisma.counterparty.update({
+      where: { id },
+      data: { isActive: true }
+    }));
   }
 }

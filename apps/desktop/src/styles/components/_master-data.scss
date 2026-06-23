@@ -240,6 +240,10 @@
   color: vars.$color-danger;
 }
 
+.icon-button--success {
+  color: vars.$color-success;
+}
+
 .table-state {
   display: grid;
   min-height: 260px;

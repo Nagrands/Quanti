@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, Pencil, Plus, Search } from "lucide-react";
+import { Ban, Pencil, Plus, RotateCcw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useI18n } from "../../i18n";
@@ -7,6 +7,7 @@ import {
   createMasterData,
   deactivateMasterData,
   getMasterData,
+  restoreMasterData,
   updateMasterData
 } from "./master-data-api";
 import { MasterDataFormDrawer } from "./MasterDataFormDrawer";
@@ -28,13 +29,14 @@ export function MasterDataPage() {
   const [editingEntity, setEditingEntity] = useState<MasterDataEntity | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deactivatingEntity, setDeactivatingEntity] = useState<MasterDataEntity | null>(null);
+  const [restoringEntity, setRestoringEntity] = useState<MasterDataEntity | null>(null);
   const definitions = useMemo(() => getLocalizedMasterDataDefinitions(t, locale), [locale, t]);
   const definition = definitions.find((item) => item.resource === resource) ?? definitions[0];
   const queryKey = ["master-data", resource] as const;
 
   const entitiesQuery = useQuery({
     queryKey,
-    queryFn: () => getMasterData(resource)
+    queryFn: () => getMasterData(resource, true)
   });
 
   const saveMutation = useMutation({
@@ -56,6 +58,14 @@ export function MasterDataPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
       setDeactivatingEntity(null);
+    }
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: (entity: MasterDataEntity) => restoreMasterData(resource, entity.id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+      setRestoringEntity(null);
     }
   });
 
@@ -83,6 +93,7 @@ export function MasterDataPage() {
     setEditingEntity(null);
     setIsFormOpen(false);
     setDeactivatingEntity(null);
+    setRestoringEntity(null);
   }
 
   const emptyTitle = search
@@ -221,6 +232,7 @@ export function MasterDataPage() {
                           type="button"
                           className="icon-button"
                           aria-label={t("Изменить {name}", { name: entity.name })}
+                          disabled={!entity.isActive}
                           onClick={() => {
                             setEditingEntity(entity);
                             setIsFormOpen(true);
@@ -228,15 +240,25 @@ export function MasterDataPage() {
                         >
                           <Pencil aria-hidden="true" />
                         </button>
-                        <button
-                          type="button"
-                          className="icon-button icon-button--danger"
-                          aria-label={t("Деактивировать {name}", { name: entity.name })}
-                          disabled={!entity.isActive}
-                          onClick={() => setDeactivatingEntity(entity)}
-                        >
-                          <Ban aria-hidden="true" />
-                        </button>
+                        {entity.isActive ? (
+                          <button
+                            type="button"
+                            className="icon-button icon-button--danger"
+                            aria-label={t("Деактивировать {name}", { name: entity.name })}
+                            onClick={() => setDeactivatingEntity(entity)}
+                          >
+                            <Ban aria-hidden="true" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="icon-button icon-button--success"
+                            aria-label={t("Восстановить {name}", { name: entity.name })}
+                            onClick={() => setRestoringEntity(entity)}
+                          >
+                            <RotateCcw aria-hidden="true" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -265,7 +287,7 @@ export function MasterDataPage() {
           <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="deactivate-title">
             <h2 id="deactivate-title">{t("Деактивировать запись?")}</h2>
             <p>
-              {t("{name} исчезнет из активных списков. Восстановление через интерфейс пока не поддерживается.", { name: deactivatingEntity.name })}
+              {t("{name} исчезнет из активных списков. Запись можно будет восстановить из архива.", { name: deactivatingEntity.name })}
             </p>
             {deactivateMutation.isError ? (
               <div className="form-alert" role="alert">
@@ -287,6 +309,39 @@ export function MasterDataPage() {
                 onClick={() => deactivateMutation.mutate(deactivatingEntity)}
               >
                 {t(deactivateMutation.isPending ? "Деактивация…" : "Деактивировать")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {restoringEntity ? (
+        <div className="dialog-backdrop" role="presentation">
+          <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="restore-title">
+            <h2 id="restore-title">{t("Восстановить запись?")}</h2>
+            <p>
+              {t("{name} вернётся в активные списки и снова будет доступен для новых операций.", { name: restoringEntity.name })}
+            </p>
+            {restoreMutation.isError ? (
+              <div className="form-alert" role="alert">
+                {formatApiError(restoreMutation.error)}
+              </div>
+            ) : null}
+            <div className="confirm-dialog__actions">
+              <button
+                type="button"
+                className="button button--secondary"
+                onClick={() => setRestoringEntity(null)}
+              >
+                {t("Отмена")}
+              </button>
+              <button
+                type="button"
+                className="button button--primary"
+                disabled={restoreMutation.isPending}
+                onClick={() => restoreMutation.mutate(restoringEntity)}
+              >
+                {t(restoreMutation.isPending ? "Восстановление…" : "Восстановить")}
               </button>
             </div>
           </div>

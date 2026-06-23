@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from "@nestjs/common";
 
 import { CounterpartiesService } from "./counterparties.service";
 import { CreateCounterpartyRequest } from "./dto/create-counterparty.request";
@@ -11,8 +11,8 @@ export class CounterpartiesController {
   ) {}
 
   @Get()
-  findAll() {
-    return this.counterpartiesService.findAll();
+  findAll(@Query("includeInactive") includeInactive?: string) {
+    return this.counterpartiesService.findAll(includeInactive === "true");
   }
 
   @Get(":id")
@@ -28,6 +28,11 @@ export class CounterpartiesController {
   @Patch(":id")
   update(@Param("id") id: string, @Body() payload: UpdateCounterpartyRequest) {
     return this.counterpartiesService.update(id, payload);
+  }
+
+  @Patch(":id/restore")
+  restore(@Param("id") id: string) {
+    return this.counterpartiesService.restore(id);
   }
 
   @Delete(":id")

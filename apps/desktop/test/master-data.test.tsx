@@ -7,6 +7,7 @@ import {
   createMasterData,
   deactivateMasterData,
   getMasterData,
+  restoreMasterData,
   updateMasterData
 } from "../src/features/master-data/master-data-api";
 import { renderWithAppProviders } from "./render-app";
@@ -15,7 +16,8 @@ vi.mock("../src/features/master-data/master-data-api", () => ({
   getMasterData: vi.fn(),
   createMasterData: vi.fn(),
   updateMasterData: vi.fn(),
-  deactivateMasterData: vi.fn()
+  deactivateMasterData: vi.fn(),
+  restoreMasterData: vi.fn()
 }));
 
 const product = {
@@ -44,6 +46,7 @@ describe("master data workspace", () => {
     vi.mocked(createMasterData).mockResolvedValue(product);
     vi.mocked(updateMasterData).mockResolvedValue(product);
     vi.mocked(deactivateMasterData).mockResolvedValue(undefined);
+    vi.mocked(restoreMasterData).mockResolvedValue(product);
   });
 
   test("loads products and filters active and archived rows", async () => {
@@ -52,6 +55,7 @@ describe("master data workspace", () => {
     renderWithAppProviders(<MasterDataPage />, "/products");
 
     expect(await screen.findByText("PRD-001")).toBeInTheDocument();
+    expect(getMasterData).toHaveBeenCalledWith("products", true);
     expect(screen.queryByText("PRD-ARCH")).not.toBeInTheDocument();
 
     const summary = screen.getByLabelText("Сводка справочника");
@@ -63,6 +67,11 @@ describe("master data workspace", () => {
     await user.selectOptions(screen.getByLabelText("Фильтр активности"), "archived");
     expect(await screen.findByText("PRD-ARCH")).toBeInTheDocument();
     expect(screen.queryByText("PRD-001")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Восстановить Archived lamp" }));
+    const restoreDialog = screen.getByRole("dialog", { name: "Восстановить запись?" });
+    await user.click(within(restoreDialog).getByRole("button", { name: "Восстановить" }));
+    expect(restoreMasterData).toHaveBeenCalledWith("products", "product-2");
 
     await user.type(screen.getByPlaceholderText("Поиск товаров"), "missing");
     expect(screen.getByText("Совпадений не найдено")).toBeInTheDocument();

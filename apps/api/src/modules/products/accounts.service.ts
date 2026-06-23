@@ -8,9 +8,9 @@ import { toAccountDto } from "./master-data.mappers";
 export class AccountsService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<AccountDto[]> {
+  async findAll(includeInactive = false): Promise<AccountDto[]> {
     const accounts = await this.prisma.account.findMany({
-      where: { isActive: true },
+      ...(includeInactive ? {} : { where: { isActive: true } }),
       orderBy: { createdAt: "asc" }
     });
 
@@ -62,5 +62,18 @@ export class AccountsService {
       where: { id },
       data: { isActive: false }
     });
+  }
+
+  async restore(id: string): Promise<AccountDto> {
+    const account = await this.prisma.account.findFirst({ where: { id } });
+
+    if (!account) {
+      throw new NotFoundException(`Account ${id} was not found.`);
+    }
+
+    return toAccountDto(await this.prisma.account.update({
+      where: { id },
+      data: { isActive: true }
+    }));
   }
 }

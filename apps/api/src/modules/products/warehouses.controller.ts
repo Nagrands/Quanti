@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from "@nestjs/common";
 
 import { CreateWarehouseRequest } from "./dto/create-warehouse.request";
 import { UpdateWarehouseRequest } from "./dto/update-warehouse.request";
@@ -9,8 +9,8 @@ export class WarehousesController {
   constructor(@Inject(WarehousesService) private readonly warehousesService: WarehousesService) {}
 
   @Get()
-  findAll() {
-    return this.warehousesService.findAll();
+  findAll(@Query("includeInactive") includeInactive?: string) {
+    return this.warehousesService.findAll(includeInactive === "true");
   }
 
   @Get(":id")
@@ -26,6 +26,11 @@ export class WarehousesController {
   @Patch(":id")
   update(@Param("id") id: string, @Body() payload: UpdateWarehouseRequest) {
     return this.warehousesService.update(id, payload);
+  }
+
+  @Patch(":id/restore")
+  restore(@Param("id") id: string) {
+    return this.warehousesService.restore(id);
   }
 
   @Delete(":id")

@@ -214,4 +214,30 @@ test("master data services map CRUD records into shared DTOs", async () => {
   assert.deepEqual(prisma.operations.accountFindFirstArgs.at(-1), {
     where: { id: "account-1", isActive: true }
   });
+
+  assert.equal((await productsService.findAll(true))[0]?.sku, "SKU-001");
+  assert.equal((await warehousesService.findAll(true))[0]?.code, "MAIN");
+  assert.equal((await counterpartiesService.findAll(true))[0]?.code, "C-001");
+  assert.equal((await accountsService.findAll(true))[0]?.code, "CASH-001");
+  assert.deepEqual(prisma.operations.productFindManyArgs.at(-1), {
+    orderBy: { createdAt: "asc" }
+  });
+  assert.deepEqual(prisma.operations.warehouseFindManyArgs.at(-1), {
+    orderBy: { createdAt: "asc" }
+  });
+  assert.deepEqual(prisma.operations.counterpartyFindManyArgs.at(-1), {
+    orderBy: { createdAt: "asc" }
+  });
+  assert.deepEqual(prisma.operations.accountFindManyArgs.at(-1), {
+    orderBy: { createdAt: "asc" }
+  });
+
+  assert.equal((await productsService.restore("product-1")).isActive, true);
+  assert.equal((await warehousesService.restore("warehouse-1")).isActive, true);
+  assert.equal((await counterpartiesService.restore("counterparty-1")).isActive, true);
+  assert.equal((await accountsService.restore("account-1")).isActive, true);
+  assert.deepEqual(prisma.operations.productUpdateCalls.at(-1), { isActive: true });
+  assert.deepEqual(prisma.operations.warehouseUpdateCalls.at(-1), { isActive: true });
+  assert.deepEqual(prisma.operations.counterpartyUpdateCalls.at(-1), { isActive: true });
+  assert.deepEqual(prisma.operations.accountUpdateCalls.at(-1), { isActive: true });
 });

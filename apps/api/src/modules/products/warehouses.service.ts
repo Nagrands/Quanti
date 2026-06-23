@@ -8,9 +8,9 @@ import { toWarehouseDto } from "./master-data.mappers";
 export class WarehousesService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<WarehouseDto[]> {
+  async findAll(includeInactive = false): Promise<WarehouseDto[]> {
     const warehouses = await this.prisma.warehouse.findMany({
-      where: { isActive: true },
+      ...(includeInactive ? {} : { where: { isActive: true } }),
       orderBy: { createdAt: "asc" }
     });
 
@@ -60,5 +60,18 @@ export class WarehousesService {
       where: { id },
       data: { isActive: false }
     });
+  }
+
+  async restore(id: string): Promise<WarehouseDto> {
+    const warehouse = await this.prisma.warehouse.findFirst({ where: { id } });
+
+    if (!warehouse) {
+      throw new NotFoundException(`Warehouse ${id} was not found.`);
+    }
+
+    return toWarehouseDto(await this.prisma.warehouse.update({
+      where: { id },
+      data: { isActive: true }
+    }));
   }
 }

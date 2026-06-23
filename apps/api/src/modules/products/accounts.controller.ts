@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from "@nestjs/common";
 
 import { AccountsService } from "./accounts.service";
 import { CreateAccountRequest } from "./dto/create-account.request";
@@ -9,8 +9,8 @@ export class AccountsController {
   constructor(@Inject(AccountsService) private readonly accountsService: AccountsService) {}
 
   @Get()
-  findAll() {
-    return this.accountsService.findAll();
+  findAll(@Query("includeInactive") includeInactive?: string) {
+    return this.accountsService.findAll(includeInactive === "true");
   }
 
   @Get(":id")
@@ -26,6 +26,11 @@ export class AccountsController {
   @Patch(":id")
   update(@Param("id") id: string, @Body() payload: UpdateAccountRequest) {
     return this.accountsService.update(id, payload);
+  }
+
+  @Patch(":id/restore")
+  restore(@Param("id") id: string) {
+    return this.accountsService.restore(id);
   }
 
   @Delete(":id")

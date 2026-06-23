@@ -8,9 +8,9 @@ import { toProductDto } from "./master-data.mappers";
 export class ProductsService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<ProductDto[]> {
+  async findAll(includeInactive = false): Promise<ProductDto[]> {
     const products = await this.prisma.product.findMany({
-      where: { isActive: true },
+      ...(includeInactive ? {} : { where: { isActive: true } }),
       orderBy: { createdAt: "asc" }
     });
 
@@ -62,5 +62,18 @@ export class ProductsService {
       where: { id },
       data: { isActive: false }
     });
+  }
+
+  async restore(id: string): Promise<ProductDto> {
+    const product = await this.prisma.product.findFirst({ where: { id } });
+
+    if (!product) {
+      throw new NotFoundException(`Product ${id} was not found.`);
+    }
+
+    return toProductDto(await this.prisma.product.update({
+      where: { id },
+      data: { isActive: true }
+    }));
   }
 }
