@@ -10,20 +10,25 @@ import { createSequenceCode } from "../../utils/sequence-code";
 
 export type MasterDataEntity = ProductDto | ProductCategoryDto | WarehouseDto | CounterpartyDto | AccountDto;
 export type MasterDataResource = "products" | "product-categories" | "warehouses" | "counterparties" | "accounts";
-export type FormValue = string | boolean;
+export interface ProductUnitFormValue {
+  key: string;
+  name: string;
+  conversionFactor: string;
+}
+export type FormValue = string | boolean | ProductUnitFormValue[];
 export type FormValues = Record<string, FormValue>;
 export type MasterDataOptionMap = Partial<Record<MasterDataResource, readonly { label: string; value: string }[]>>;
 
 export interface MasterDataColumn {
   key: string;
   label: string;
-  render: (entity: MasterDataEntity) => string;
+  render: (entity: MasterDataEntity, t?: Translate) => string;
 }
 
 export interface MasterDataField {
   key: string;
   label: string;
-  type?: "text" | "textarea" | "select";
+  type?: "text" | "textarea" | "select" | "product-units";
   required?: boolean;
   options?: readonly { label: string; value: string }[];
   placeholder?: string;
@@ -52,6 +57,14 @@ const codeConfig: Partial<Record<MasterDataResource, { field: string; prefix: st
 function value(entity: MasterDataEntity, key: string): string {
   const fieldValue = (entity as unknown as Record<string, unknown>)[key];
   return typeof fieldValue === "string" ? fieldValue : "";
+}
+
+function productEntity(entity: MasterDataEntity): ProductDto | null {
+  return "sku" in entity ? entity : null;
+}
+
+function productUnits(entity: MasterDataEntity) {
+  return productEntity(entity)?.units ?? [];
 }
 
 export function createMasterDataDefaults(
@@ -105,23 +118,64 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
     singularLabel: "товар",
     searchPlaceholder: "Поиск товаров",
     columns: [
-      { key: "sku", label: "SKU", render: (entity) => value(entity, "sku") },
-      { key: "name", label: "Наименование", render: (entity) => entity.name },
-      { key: "categoryName", label: "Категория", render: (entity) => value(entity, "categoryName") || "—" },
-      { key: "unit", label: "Единица", render: (entity) => value(entity, "unit") },
-      { key: "description", label: "Описание", render: (entity) => value(entity, "description") || "—" },
+      {
+        key: "product",
+        label: "Товар",
+        render: (entity, t = (text) => text) =>
+          `${entity.name}\n${value(entity, "sku")} · ${value(entity, "categoryName") || t("Без категории")}`
+      },
+      {
+        key: "units",
+        label: "Единицы",
+        render: (entity, t = (text) => text) => {
+          const alternatives = productUnits(entity);
+          return `${value(entity, "unit")}\n${alternatives.length
+            ? alternatives.map((unit) => `${unit.name} × ${unit.conversionFactor}`).join(", ")
+            : t("Без дополнительных единиц")}`;
+        }
+      },
+      {
+        key: "prices",
+        label: "Последние цены",
+        render: (entity, t = (text) => text) => {
+          const product = productEntity(entity);
+          const purchase = product?.lastPurchasePrice
+            ? `${product.lastPurchasePrice} / ${product.lastPurchaseUnit ?? value(entity, "unit")}`
+            : "—";
+          const sale = product?.lastSalePrice
+            ? `${product.lastSalePrice} / ${product.lastSaleUnit ?? value(entity, "unit")}`
+            : "—";
+          return `${t("Закупка")}: ${purchase}\n${t("Продажа")}: ${sale}`;
+        }
+      },
       updatedColumn
     ],
     fields: [
       { key: "sku", label: "SKU", required: true },
       { key: "name", label: "Наименование", required: true },
       { key: "categoryId", label: "Категория", type: "select" },
-      { key: "unit", label: "Единица", required: true, placeholder: "шт, кг, л" },
+      { key: "unit", label: "Базовая единица", required: true, placeholder: "шт, кг, л" },
+      { key: "units", label: "Дополнительные единицы", type: "product-units" },
       { key: "description", label: "Описание", type: "textarea" }
     ],
-    createDefaults: { sku: "", name: "", categoryId: "", unit: "", description: "" },
-    toFormValues: (entity) => commonFormValues(entity, ["sku", "name", "categoryId", "unit", "description"]),
-    toPayload: (values) => trimPayload(values, ["categoryId", "description"])
+    createDefaults: { sku: "", name: "", categoryId: "", unit: "", units: [], description: "" },
+    toFormValues: (entity) => ({
+      ...commonFormValues(entity, ["sku", "name", "categoryId", "unit", "description"]),
+      units: productUnits(entity).map((unit) => ({
+        key: unit.id,
+        name: unit.name,
+        conversionFactor: unit.conversionFactor
+      }))
+    }),
+    toPayload: (values) => ({
+      ...trimPayload(values, ["categoryId", "description"]),
+      units: Array.isArray(values.units)
+        ? values.units.map((unit) => ({
+            name: unit.name.trim(),
+            conversionFactor: unit.conversionFactor.trim()
+          }))
+        : []
+    })
   },
   {
     resource: "product-categories",
@@ -253,7 +307,7 @@ export function getLocalizedMasterDataDefinitions(
             dateStyle: "medium",
             timeStyle: "short"
           }).format(new Date(entity.updatedAt))
-        : (entity: MasterDataEntity) => t(column.render(entity))
+        : (entity: MasterDataEntity) => column.render(entity, t)
     })),
     fields: definition.fields.map((field) => ({
       ...field,

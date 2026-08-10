@@ -53,6 +53,8 @@ const draft = {
     id: "item-1",
     lineNo: 1,
     productId: "product-1",
+    unit: "pcs",
+    unitFactor: "1.000000",
     quantity: "2.000",
     price: "10.00",
     amount: "20.00",
@@ -71,8 +73,40 @@ const posted = {
 
 const lookups = {
   products: [
-    { id: "product-1", sku: "SKU-1", name: "Widget", description: null, unit: "pcs", categoryId: null, categoryName: null, isActive: true, createdAt: "", updatedAt: "" },
-    { id: "product-2", sku: "VEG-2", name: "Carrot", description: null, unit: "kg", categoryId: "category-1", categoryName: "Vegetables", isActive: true, createdAt: "", updatedAt: "" }
+    {
+      id: "product-1",
+      sku: "SKU-1",
+      name: "Widget",
+      description: null,
+      unit: "pcs",
+      units: [],
+      lastSalePrice: "10.00",
+      lastSaleUnit: "pcs",
+      lastPurchasePrice: "7.50",
+      lastPurchaseUnit: "pcs",
+      categoryId: null,
+      categoryName: null,
+      isActive: true,
+      createdAt: "",
+      updatedAt: ""
+    },
+    {
+      id: "product-2",
+      sku: "VEG-2",
+      name: "Carrot",
+      description: null,
+      unit: "kg",
+      units: [{ id: "unit-bunch", name: "bunch", conversionFactor: "0.100000" }],
+      lastSalePrice: "4.50",
+      lastSaleUnit: "bunch",
+      lastPurchasePrice: "30.00",
+      lastPurchaseUnit: "kg",
+      categoryId: "category-1",
+      categoryName: "Vegetables",
+      isActive: true,
+      createdAt: "",
+      updatedAt: ""
+    }
   ],
   categories: [{ id: "category-1", code: "CAT-0001", name: "Vegetables", description: null, isActive: true, createdAt: "", updatedAt: "" }],
   warehouses: [{ id: "warehouse-1", code: "MAIN", name: "Main", isActive: true, createdAt: "", updatedAt: "" }],
@@ -144,8 +178,52 @@ describe("documents workspace", () => {
     expect(createDocument).toHaveBeenCalledWith(expect.objectContaining({
       number: "SO-002",
       warehouseId: "warehouse-1",
-      items: [expect.objectContaining({ quantity: "2.000", price: "12.50", amount: "25.00" })]
+      items: [expect.objectContaining({ unit: "pcs", quantity: "2.000", price: "12.50", amount: "25.00" })]
     }));
+  });
+
+  test("increments the automatic number after creating a draft", async () => {
+    const user = userEvent.setup();
+    vi.mocked(createDocument).mockResolvedValueOnce({
+      ...draft,
+      id: "document-3",
+      number: "PUR-202606-0001",
+      type: "PURCHASE"
+    });
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
+
+    let drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    await user.selectOptions(within(drawer).getByLabelText("Тип"), "PURCHASE");
+    await user.selectOptions(within(drawer).getByLabelText("Склад"), "warehouse-1");
+    const product = within(drawer).getByRole("combobox", { name: "Товар" });
+    await user.click(product);
+    await user.click(within(drawer).getByRole("option", { name: "SKU-1 · Widget" }));
+    await user.click(within(drawer).getByRole("button", { name: "Сохранить черновик" }));
+
+    expect(await screen.findByText("PUR-202606-0001")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
+    drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    await user.selectOptions(within(drawer).getByLabelText("Тип"), "PURCHASE");
+    expect(within(drawer).getByLabelText("Номер")).toHaveValue("PUR-202606-0002");
+  });
+
+  test("uses the remembered price and selected unit conversion", async () => {
+    const user = userEvent.setup();
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
+
+    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const product = within(drawer).getByRole("combobox", { name: "Товар" });
+    await user.click(product);
+    await user.click(within(drawer).getByRole("option", { name: "VEG-2 · Carrot" }));
+
+    expect(within(drawer).getByLabelText("Единица")).toHaveValue("bunch");
+    expect(within(drawer).getByLabelText("Цена")).toHaveValue("4.50");
+    await user.selectOptions(within(drawer).getByLabelText("Единица"), "kg");
+    expect(within(drawer).getByLabelText("Единица")).toHaveValue("kg");
   });
 
   test("warns about insufficient stock while editing a sale draft", async () => {
@@ -253,6 +331,11 @@ describe("documents workspace", () => {
       name: "Tomato",
       description: null,
       unit: "kg",
+      units: [],
+      lastSalePrice: null,
+      lastSaleUnit: null,
+      lastPurchasePrice: null,
+      lastPurchaseUnit: null,
       categoryId: "category-1",
       categoryName: "Vegetables",
       isActive: true,
@@ -285,6 +368,7 @@ describe("documents workspace", () => {
       description: null
     });
     expect(await within(drawer).findByRole("combobox", { name: "Товар" })).toHaveValue("PRD-0001 · Tomato");
+    expect(within(drawer).getByLabelText("Единица")).toHaveValue("kg");
     expect(screen.queryByRole("dialog", { name: "Новый товар" })).not.toBeInTheDocument();
   });
 
@@ -323,11 +407,11 @@ describe("documents workspace", () => {
       sourceWarehouseId: "warehouse-1",
       destinationWarehouseId: "warehouse-2",
       counterpartyId: "",
-      items: [{ key: "1", productId: "product-1", quantity: "1.5", price: "10", warehouseId: "" }]
+      items: [{ key: "1", productId: "product-1", unit: "pcs", unitFactor: "1", quantity: "1.5", price: "10", warehouseId: "" }]
     })).toEqual(expect.objectContaining({
       number: "TR-1",
       notes: null,
-      items: [expect.objectContaining({ quantity: "1.500", price: "10.00", amount: "15.00" })]
+      items: [expect.objectContaining({ unit: "pcs", quantity: "1.500", price: "10.00", amount: "15.00" })]
     }));
   });
 

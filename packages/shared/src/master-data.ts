@@ -15,9 +15,25 @@ export interface ProductDto extends AuditFields {
   name: string;
   description: string | null;
   unit: string;
+  units: ProductUnitDto[];
+  lastSalePrice: DecimalString | null;
+  lastSaleUnit: string | null;
+  lastPurchasePrice: DecimalString | null;
+  lastPurchaseUnit: string | null;
   categoryId: ProductCategoryId | null;
   categoryName: string | null;
   isActive: boolean;
+}
+
+export interface ProductUnitDto {
+  id: string;
+  name: string;
+  conversionFactor: DecimalString;
+}
+
+export interface CreateProductUnitDto {
+  name: string;
+  conversionFactor: DecimalString;
 }
 
 export interface CreateProductDto {
@@ -25,6 +41,7 @@ export interface CreateProductDto {
   name: string;
   description?: string | null;
   unit: string;
+  units?: CreateProductUnitDto[];
   categoryId?: ProductCategoryId | null;
 }
 
@@ -33,6 +50,7 @@ export interface UpdateProductDto {
   name?: string;
   description?: string | null;
   unit?: string;
+  units?: CreateProductUnitDto[];
   categoryId?: ProductCategoryId | null;
   isActive?: boolean;
 }

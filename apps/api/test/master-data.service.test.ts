@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { Prisma } from "@quanti/db";
 
 import { AccountsService } from "../src/modules/products/accounts.service";
 import { CounterpartiesService } from "../src/modules/products/counterparties.service";
@@ -36,6 +37,7 @@ function createPrismaMock() {
     name: "Widget",
     description: null,
     unit: "pcs",
+    units: [{ id: "unit-1", productId: "product-1", name: "box", conversionFactor: new Prisma.Decimal(10), createdAt: new Date("2026-04-14T00:00:00.000Z"), updatedAt: new Date("2026-04-14T00:00:00.000Z") }],
     categoryId: "category-1",
     isActive: true,
     createdAt: new Date("2026-04-14T00:00:00.000Z"),
@@ -101,6 +103,12 @@ function createPrismaMock() {
         operations.productDeleteCalls += 1;
         return productRecord;
       }
+    },
+    documentItem: {
+      findFirst: async ({ where }: { where: { document: { type: { in: string[] } } } }) =>
+        where.document.type.in.includes("SALE")
+          ? { price: new Prisma.Decimal("25.00"), unit: "box" }
+          : { price: new Prisma.Decimal("18.00"), unit: "pcs" }
     },
     productCategory: {
       findMany: async (args: Record<string, unknown>) => {
@@ -201,6 +209,8 @@ test("master data services map CRUD records into shared DTOs", async () => {
   assert.equal((await productCategoriesService.findAll())[0]?.code, "VEG");
   assert.equal((await productsService.findAll())[0]?.sku, "SKU-001");
   assert.equal((await productsService.findAll())[0]?.categoryName, "Vegetables");
+  assert.equal((await productsService.findAll())[0]?.lastSalePrice, "25");
+  assert.equal((await productsService.findAll())[0]?.units[0]?.name, "box");
   assert.equal((await warehousesService.findAll())[0]?.code, "MAIN");
   assert.equal((await counterpartiesService.findAll())[0]?.code, "C-001");
   assert.equal((await accountsService.findAll())[0]?.code, "CASH-001");
@@ -238,7 +248,7 @@ test("master data services map CRUD records into shared DTOs", async () => {
   });
   assert.deepEqual(prisma.operations.productFindManyArgs.at(-1), {
     where: { isActive: true },
-    include: { category: true },
+    include: { category: true, units: { orderBy: { createdAt: "asc" } } },
     orderBy: { createdAt: "asc" }
   });
   assert.deepEqual(prisma.operations.warehouseFindManyArgs.at(-1), {
@@ -258,7 +268,7 @@ test("master data services map CRUD records into shared DTOs", async () => {
   });
   assert.deepEqual(prisma.operations.productFindFirstArgs.at(-1), {
     where: { id: "product-1", isActive: true },
-    include: { category: true }
+    include: { category: true, units: { orderBy: { createdAt: "asc" } } }
   });
   assert.deepEqual(prisma.operations.warehouseFindFirstArgs.at(-1), {
     where: { id: "warehouse-1", isActive: true }
@@ -279,7 +289,7 @@ test("master data services map CRUD records into shared DTOs", async () => {
     orderBy: { createdAt: "asc" }
   });
   assert.deepEqual(prisma.operations.productFindManyArgs.at(-1), {
-    include: { category: true },
+    include: { category: true, units: { orderBy: { createdAt: "asc" } } },
     orderBy: { createdAt: "asc" }
   });
   assert.deepEqual(prisma.operations.warehouseFindManyArgs.at(-1), {
@@ -302,4 +312,55 @@ test("master data services map CRUD records into shared DTOs", async () => {
   assert.deepEqual(prisma.operations.warehouseUpdateCalls.at(-1), { isActive: true });
   assert.deepEqual(prisma.operations.counterpartyUpdateCalls.at(-1), { isActive: true });
   assert.deepEqual(prisma.operations.accountUpdateCalls.at(-1), { isActive: true });
+});
+
+test("products service replaces additional units transactionally", async () => {
+  const operations = {
+    deleted: false,
+    created: [] as Array<Record<string, unknown>>
+  };
+  const record = {
+    id: "product-1",
+    sku: "SKU-001",
+    name: "Dill",
+    description: null,
+    unit: "kg",
+    categoryId: null,
+    isActive: true,
+    createdAt: new Date("2026-06-24T00:00:00.000Z"),
+    updatedAt: new Date("2026-06-24T00:00:00.000Z"),
+    category: null,
+    units: []
+  };
+  const tx = {
+    product: {
+      update: async () => record
+    },
+    productUnit: {
+      deleteMany: async () => {
+        operations.deleted = true;
+      },
+      createMany: async ({ data }: { data: Array<Record<string, unknown>> }) => {
+        operations.created = data;
+      }
+    }
+  };
+  const prisma = {
+    product: {
+      findFirst: async () => record
+    },
+    documentItem: {
+      findFirst: async () => null
+    },
+    $transaction: async <T>(callback: (client: typeof tx) => Promise<T>) => callback(tx)
+  };
+  const service = new ProductsService(prisma as never);
+
+  await service.update("product-1", {
+    units: [{ name: "bunch", conversionFactor: "0.100000" }]
+  });
+
+  assert.equal(operations.deleted, true);
+  assert.equal(operations.created[0]?.name, "bunch");
+  assert.equal((operations.created[0]?.conversionFactor as Prisma.Decimal).toString(), "0.1");
 });

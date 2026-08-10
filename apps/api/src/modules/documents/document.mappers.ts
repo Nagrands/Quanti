@@ -23,6 +23,8 @@ export function toDocumentDto(
       id: item.id,
       lineNo: item.lineNo,
       productId: item.productId,
+      unit: item.unit,
+      unitFactor: item.unitFactor.toString(),
       quantity: item.quantity.toString(),
       price: item.price.toString(),
       amount: item.amount.toString(),

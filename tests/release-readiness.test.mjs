@@ -41,6 +41,7 @@ test("workspace exposes reproducible setup and release commands", async () => {
   assert.match(rootPackage.scripts["db:setup"], /--wait/);
   assert.match(rootPackage.scripts["db:studio"], /prisma studio/);
   assert.match(rootPackage.scripts["release:check"], /api:smoke/);
+  assert.match(apiPackage.scripts.dev, /--watch/);
   assert.match(apiPackage.scripts.dev, /--env-file-if-exists/);
   assert.equal(typeof apiPackage.scripts.start, "string");
   assert.equal(typeof apiPackage.dependencies.tsx, "string");

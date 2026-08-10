@@ -239,7 +239,21 @@ export function MasterDataPage() {
                 {filteredEntities.map((entity) => (
                   <tr key={entity.id} className={entity.isActive ? undefined : "data-table__row--archived"}>
                     {definition.columns.map((column) => (
-                      <td key={column.key}>{column.render(entity)}</td>
+                      <td
+                        className={`data-table__cell data-table__cell--${column.key}`}
+                        key={column.key}
+                      >
+                        {column.render(entity).split("\n").map((line, index) => (
+                          <span
+                            className={index === 0
+                              ? "data-table__cell-line data-table__cell-line--primary"
+                              : "data-table__cell-line data-table__cell-line--secondary"}
+                            key={`${column.key}-${index}`}
+                          >
+                            {line}
+                          </span>
+                        ))}
+                      </td>
                     ))}
                     <td>
                       <span className={entity.isActive ? "status-badge status-badge--active" : "status-badge status-badge--archived"}>

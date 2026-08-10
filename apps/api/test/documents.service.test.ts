@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { BadRequestException } from "@nestjs/common";
+import { Prisma } from "@quanti/db";
 
 import { DocumentsService } from "../src/modules/documents/documents.service";
 
@@ -31,10 +32,12 @@ function createDocumentsPrismaMock() {
       id: "item-1",
       documentId: "document-1",
       productId: "product-1",
+      unit: "box",
+      unitFactor: new Prisma.Decimal("2.000000"),
       lineNo: 1,
-      quantity: { toString: () => "5.000" },
-      price: { toString: () => "30.00" },
-      amount: { toString: () => "150.00" },
+      quantity: new Prisma.Decimal("5.000"),
+      price: new Prisma.Decimal("30.00"),
+      amount: new Prisma.Decimal("150.00"),
       warehouseId: null,
       createdAt: new Date("2026-04-16T00:00:00.000Z"),
       updatedAt: new Date("2026-04-16T00:00:00.000Z")
@@ -115,6 +118,10 @@ test("documents service posts a draft document and creates stock movements", asy
 
   assert.equal(result.status, "POSTED");
   assert.equal(prisma.operations.stockMovementCreateMany.length, 1);
+  assert.deepEqual(
+    (prisma.operations.stockMovementCreateMany[0].data as Array<{ quantity: Prisma.Decimal }>)[0].quantity.toString(),
+    "10"
+  );
   assert.deepEqual(prisma.operations.documentStatusUpdates.at(-1), {
     status: "POSTED",
     postedAt: new Date("2026-04-16T10:00:00.000Z")
@@ -160,4 +167,43 @@ test("documents service reposts by deleting old movements and creating new ones"
   assert.equal(result.status, "POSTED");
   assert.equal(prisma.operations.stockMovementDeleteMany.length, 1);
   assert.equal(prisma.operations.stockMovementCreateMany.length, 1);
+});
+
+test("documents service rejects units that are not configured for the product", async () => {
+  const tx = {
+    product: {
+      findMany: async () => [{
+        id: "product-1",
+        unit: "kg",
+        isActive: true,
+        units: []
+      }]
+    },
+    document: {
+      create: async () => {
+        throw new Error("Document must not be created.");
+      }
+    }
+  };
+  const prisma = {
+    $transaction: async <T>(callback: (client: typeof tx) => Promise<T>) => callback(tx)
+  };
+  const service = new DocumentsService(
+    prisma as never,
+    { assertAvailableStock: async () => undefined } as never
+  );
+
+  await assert.rejects(() => service.createDraft({
+    number: "PUR-202606-0001",
+    type: "PURCHASE",
+    documentDate: "2026-06-24T00:00:00.000Z",
+    warehouseId: "warehouse-1",
+    items: [{
+      productId: "product-1",
+      unit: "bunch",
+      quantity: "1.000",
+      price: "10.00",
+      amount: "10.00"
+    }]
+  }), (error: unknown) => error instanceof BadRequestException);
 });

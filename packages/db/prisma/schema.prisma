@@ -87,11 +87,25 @@ model Product {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   category       ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  units          ProductUnit[]
   documentItems  DocumentItem[]
   stockMovements StockMovement[]
   stockBalances  StockBalance[]
 
   @@index([categoryId])
+}
+
+model ProductUnit {
+  id               String   @id @default(cuid())
+  productId        String
+  name             String
+  conversionFactor Decimal  @db.Decimal(18, 6)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, name])
+  @@index([productId])
 }
 
 model ProductCategory {
@@ -164,6 +178,8 @@ model DocumentItem {
   id             String          @id @default(cuid())
   documentId     String
   productId      String
+  unit           String
+  unitFactor     Decimal         @default(1) @db.Decimal(18, 6)
   lineNo         Int
   quantity       Decimal         @db.Decimal(18, 3)
   price          Decimal         @db.Decimal(18, 2)

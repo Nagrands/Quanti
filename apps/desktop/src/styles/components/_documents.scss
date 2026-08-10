@@ -72,32 +72,73 @@
 }
 
 .movement-preview {
-  display: grid;
-  gap: 8px;
   margin: 16px 0;
-  padding: 14px;
   border: 1px solid vars.$color-border;
   border-radius: vars.$radius-small;
   background: vars.$color-background;
+  overflow: hidden;
 }
 
-.movement-preview > strong {
+.movement-preview__header {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid vars.$color-border;
+  background: vars.$color-surface-muted;
+}
+
+.movement-preview__header strong {
   color: vars.$color-text;
   font-size: 0.875rem;
 }
 
+.movement-preview__header span {
+  display: inline-grid;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  color: vars.$color-text-muted;
+  background: vars.$color-control;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.movement-preview__list {
+  max-height: min(42vh, 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .movement-preview__row {
   display: grid;
-  grid-template-columns: 80px minmax(120px, 1fr) minmax(120px, 1fr) 72px;
-  gap: 10px;
+  grid-template-columns: 76px minmax(150px, 1.35fr) minmax(140px, 1fr) 72px;
+  gap: 12px;
   align-items: center;
+  min-height: 52px;
+  padding: 8px 16px;
+  border-bottom: 1px solid vars.$color-border;
   color: vars.$color-text-muted;
   font-size: 0.8125rem;
+}
+
+.movement-preview__row:last-child {
+  border-bottom: 0;
 }
 
 .movement-preview__row strong {
   color: vars.$color-text;
   text-align: right;
+  white-space: nowrap;
+}
+
+.movement-preview__entity {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .movement-preview__direction {
@@ -107,6 +148,29 @@
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 750;
+  white-space: nowrap;
+}
+
+.confirm-dialog--document {
+  display: flex;
+  width: min(100%, 680px);
+  max-height: calc(100vh - 40px);
+  padding: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.confirm-dialog--document .confirm-dialog__body {
+  min-height: 0;
+  padding: 26px 26px 0;
+  overflow-y: auto;
+}
+
+.confirm-dialog--document .confirm-dialog__actions {
+  margin-top: 18px;
+  padding: 18px 26px 26px;
+  border-top: 1px solid vars.$color-border;
+  background: vars.$color-surface;
 }
 
 .movement-preview__direction--in {
@@ -129,6 +193,30 @@
   border-left: 1px solid vars.$color-border;
   background: vars.$color-surface;
   box-shadow: vars.$shadow-drawer;
+}
+
+@media (max-width: 640px) {
+  .confirm-dialog--document {
+    max-height: calc(100vh - 24px);
+  }
+
+  .confirm-dialog--document .confirm-dialog__body {
+    padding: 20px 18px 0;
+  }
+
+  .confirm-dialog--document .confirm-dialog__actions {
+    padding: 16px 18px 20px;
+  }
+
+  .movement-preview__row {
+    grid-template-columns: 72px minmax(0, 1fr) 68px;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .movement-preview__row .movement-preview__entity:nth-of-type(3) {
+    display: none;
+  }
 }
 
 .document-drawer__header {
@@ -221,7 +309,7 @@
 }
 
 .line-items__table {
-  min-width: 590px;
+  min-width: 680px;
   margin-bottom: 14px;
   border: 1px solid vars.$color-border;
   border-radius: vars.$radius-small;
@@ -230,7 +318,7 @@
 .line-items__header,
 .line-item {
   display: grid;
-  grid-template-columns: minmax(170px, 2fr) 92px 100px 105px 40px;
+  grid-template-columns: minmax(170px, 2fr) 90px 82px 92px 96px 40px;
   gap: 8px;
   align-items: center;
   padding: 10px;

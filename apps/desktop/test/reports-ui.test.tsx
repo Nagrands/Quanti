@@ -11,7 +11,23 @@ import { renderWithAppProviders } from "./render-app";
 vi.mock("../src/features/reports/reports-api");
 
 const lookups = {
-  products: [{ id: "p1", sku: "SKU-1", name: "Widget", description: null, unit: "pcs", categoryId: null, categoryName: null, isActive: true, createdAt: "", updatedAt: "" }],
+  products: [{
+    id: "p1",
+    sku: "SKU-1",
+    name: "Widget",
+    description: null,
+    unit: "кг",
+    units: [{ id: "unit-bunch", name: "пучок", conversionFactor: "0.100000" }],
+    lastSalePrice: null,
+    lastSaleUnit: null,
+    lastPurchasePrice: null,
+    lastPurchaseUnit: null,
+    categoryId: null,
+    categoryName: null,
+    isActive: true,
+    createdAt: "",
+    updatedAt: ""
+  }],
   warehouses: [{ id: "w1", code: "MAIN", name: "Main warehouse", isActive: true, createdAt: "", updatedAt: "" }],
   counterparties: [{ id: "c1", code: "CLIENT", name: "Northwind", type: "CUSTOMER" as const, taxId: null, isActive: true, createdAt: "", updatedAt: "" }],
   accounts: [{ id: "a1", code: "BANK", name: "Main bank", type: "BANK" as const, currencyCode: "RUB", isActive: true, createdAt: "", updatedAt: "" }]
@@ -33,6 +49,31 @@ describe("reports workspace", () => {
 
     expect(await screen.findByRole("cell", { name: "SKU-1 · Widget" })).toBeInTheDocument();
     expect(screen.getByRole("cell", { name: "MAIN · Main warehouse" })).toBeInTheDocument();
+  });
+
+  test("shows base and additional units in both stock balance reports", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.getReport).mockResolvedValue([{
+      productId: "p1",
+      warehouseId: "w1",
+      quantity: "8.000"
+    }] as never);
+    renderWithAppProviders(<ReportsPage />, "/reports");
+
+    await user.click(screen.getByRole("button", { name: "Остатки на складе" }));
+    expect(await screen.findByRole("cell", { name: "кг, пучок" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Остаток на дату" }));
+    expect(await screen.findByRole("cell", { name: "кг, пучок" })).toBeInTheDocument();
+  });
+
+  test("localizes the units column in English", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("quanti.locale", "en");
+    renderWithAppProviders(<ReportsPage />, "/reports");
+
+    await user.click(screen.getByRole("button", { name: "Stock balance" }));
+    expect(await screen.findByRole("columnheader", { name: "Units" })).toBeInTheDocument();
   });
 
   test("switches report types and applies explicit filters", async () => {
@@ -89,6 +130,7 @@ describe("reports workspace", () => {
     const definition = reportDefinitions.find((item) => item.kind === "stock-turnover")!;
     const maps = {
       products: new Map([["p1", "SKU-1 · Widget"]]),
+      productUnits: new Map([["p1", "pcs"]]),
       warehouses: new Map([["w1", "MAIN · Main warehouse"]]),
       counterparties: new Map(),
       accounts: new Map()
@@ -102,5 +144,24 @@ describe("reports workspace", () => {
 
     expect(csv).toContain("\"Товар\",\"Склад\",\"Приход\",\"Расход\"");
     expect(csv).toContain("\"SKU-1 · Widget\",\"MAIN · Main warehouse\",\"12.000\",\"5.000\"");
+  });
+
+  test("exports stock balance units and keeps a base-only unit unchanged", () => {
+    const definition = reportDefinitions.find((item) => item.kind === "stock-balance")!;
+    const maps = {
+      products: new Map([["p1", "SKU-1 · Basil"], ["p2", "SKU-2 · Salt"]]),
+      productUnits: new Map([["p1", "кг, пучок"], ["p2", "кг"]]),
+      warehouses: new Map([["w1", "MAIN · Main warehouse"]]),
+      counterparties: new Map(),
+      accounts: new Map()
+    };
+    const csv = reportToCsv(definition, [
+      { productId: "p1", warehouseId: "w1", quantity: "8.000" },
+      { productId: "p2", warehouseId: "w1", quantity: "4.000" }
+    ], maps);
+
+    expect(csv).toContain("\"Товар\",\"Склад\",\"Количество\",\"Единицы\"");
+    expect(csv).toContain("\"SKU-1 · Basil\",\"MAIN · Main warehouse\",\"8.000\",\"кг, пучок\"");
+    expect(csv).toContain("\"SKU-2 · Salt\",\"MAIN · Main warehouse\",\"4.000\",\"кг\"");
   });
 });

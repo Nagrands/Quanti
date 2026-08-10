@@ -13,6 +13,10 @@ class CreateDocumentItemRequest {
   @IsString()
   productId!: string;
 
+  @IsOptional()
+  @IsString()
+  unit?: string;
+
   @IsString()
   quantity!: string;
 

@@ -19,6 +19,7 @@ import {
   createEmptyDocument,
   documentToForm,
   type DocumentFormValues,
+  rememberedProductSelection,
   supportedDocumentTypes
 } from "./document-model";
 import { getRequiredStockChecks, getStockWarnings } from "./document-preview";
@@ -85,10 +86,39 @@ export function DocumentDrawer({
     }));
   }
 
+  function selectProduct(key: string, productId: string, productOverride?: ProductDto) {
+    const product = productOverride ?? products.find((item) => item.id === productId);
+    const remembered = product ? rememberedProductSelection(product, values.type) : null;
+    const alternative = product?.units?.find((unit) => unit.name === remembered?.unit);
+    setValues((current) => ({
+      ...current,
+      items: current.items.map((item) => item.key === key ? {
+        ...item,
+        productId,
+        unit: remembered?.unit ?? "",
+        unitFactor: remembered?.unit === product?.unit ? "1" : alternative?.conversionFactor ?? "1",
+        price: remembered?.price ?? "0"
+      } : item)
+    }));
+  }
+
+  function selectUnit(key: string, product: ProductDto | undefined, unit: string) {
+    const alternative = product?.units?.find((item) => item.name === unit);
+    setValues((current) => ({
+      ...current,
+      items: current.items.map((item) => item.key === key ? {
+        ...item,
+        unit,
+        unitFactor: unit === product?.unit ? "1" : alternative?.conversionFactor ?? "1"
+      } : item)
+    }));
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     const invalidLine = values.items.some((item) =>
       !item.productId
+      || !item.unit
       || !/^\d+(\.\d{1,3})?$/.test(item.quantity)
       || Number(item.quantity) <= 0
       || !/^\d+(\.\d{1,2})?$/.test(item.price)
@@ -206,22 +236,37 @@ export function DocumentDrawer({
             <section className="line-items">
               <h3>{t("Товары")}</h3>
               <div className="line-items__table">
-                <div className="line-items__header"><span>{t("Товар")}</span><span>{t("Количество")}</span><span>{t("Цена")}</span><span>{t("Сумма")}</span><span /></div>
-                {values.items.map((item) => (
+                <div className="line-items__header"><span>{t("Товар")}</span><span>{t("Единица")}</span><span>{t("Количество")}</span><span>{t("Цена")}</span><span>{t("Сумма")}</span><span /></div>
+                {values.items.map((item) => {
+                  const product = products.find((candidate) => candidate.id === item.productId);
+                  return (
                   <div className="line-item" key={item.key}>
                     <ProductCombobox
                       value={item.productId}
                       products={products}
                       disabled={isReadOnly}
-                      onChange={(productId) => updateLine(item.key, "productId", productId)}
+                      onChange={(productId) => selectProduct(item.key, productId)}
                       onCreate={() => setQuickProductLineKey(item.key)}
                     />
+                    <select
+                      aria-label={t("Единица")}
+                      value={item.unit}
+                      disabled={isReadOnly || !product}
+                      onChange={(event) => selectUnit(item.key, product, event.target.value)}
+                    >
+                      {!product ? <option value="">{t("Выберите товар")}</option> : (
+                        <>
+                          <option value={product.unit}>{product.unit}</option>
+                          {(product.units ?? []).map((unit) => <option key={unit.id} value={unit.name}>{unit.name}</option>)}
+                        </>
+                      )}
+                    </select>
                     <input aria-label={t("Количество")} inputMode="decimal" value={item.quantity} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "quantity", event.target.value)} />
                     <input aria-label={t("Цена")} inputMode="decimal" value={item.price} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "price", event.target.value)} />
                     <output>{calculateAmount(item.quantity, item.price)}</output>
                     <button type="button" className="icon-button icon-button--danger" aria-label={t("Удалить строку")} disabled={isReadOnly || values.items.length === 1} onClick={() => setValues({ ...values, items: values.items.filter((line) => line.key !== item.key) })}><Trash2 /></button>
                   </div>
-                ))}
+                )})}
               </div>
               {!isReadOnly ? <button type="button" className="button button--secondary" onClick={() => setValues({ ...values, items: addDocumentLine(values.items) })}><Plus /> {t("Добавить товар")}</button> : null}
             </section>
@@ -244,7 +289,7 @@ export function DocumentDrawer({
             setIsCreatingProduct(true);
             try {
               const product = await onCreateProduct(payload);
-              updateLine(quickProductLineKey, "productId", product.id);
+              selectProduct(quickProductLineKey, product.id, product);
               setQuickProductLineKey(null);
             } finally {
               setIsCreatingProduct(false);

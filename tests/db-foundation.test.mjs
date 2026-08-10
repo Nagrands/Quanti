@@ -10,10 +10,15 @@ const migrationPath = path.join(
   repoRoot,
   "packages/db/prisma/migrations/0001_init/migration.sql"
 );
+const productUnitsMigrationPath = path.join(
+  repoRoot,
+  "packages/db/prisma/migrations/0004_product_units_and_document_item_units/migration.sql"
+);
 
 test("database foundation files exist", async () => {
   await assert.doesNotReject(() => access(schemaPath));
   await assert.doesNotReject(() => access(migrationPath));
+  await assert.doesNotReject(() => access(productUnitsMigrationPath));
 });
 
 test("schema defines core ERP and ledger models", async () => {
@@ -22,6 +27,7 @@ test("schema defines core ERP and ledger models", async () => {
   for (const modelName of [
     "model Product",
     "model ProductCategory",
+    "model ProductUnit",
     "model Warehouse",
     "model Counterparty",
     "model Document",
@@ -40,6 +46,15 @@ test("schema defines core ERP and ledger models", async () => {
   assert.match(schema, /enum PaymentStatus/, "PaymentStatus enum is required.");
   assert.match(schema, /model StockBalance/, "StockBalance cache model should be explicitly modeled.");
   assert.match(schema, /categoryId\s+String\?/, "Product category relation should be optional.");
+});
+
+test("product unit migration preserves document unit snapshots", async () => {
+  const migration = await readFile(productUnitsMigrationPath, "utf8");
+
+  assert.match(migration, /CREATE TABLE "ProductUnit"/);
+  assert.match(migration, /ADD COLUMN "unit" TEXT/);
+  assert.match(migration, /ADD COLUMN "unitFactor" DECIMAL\(18,6\)/);
+  assert.match(migration, /UPDATE "DocumentItem"/);
 });
 
 test("initial migration captures ledger tables", async () => {

@@ -8,6 +8,7 @@ const indexPath = path.join(repoRoot, "packages/shared/src/index.ts");
 const enumsPath = path.join(repoRoot, "packages/shared/src/enums.ts");
 const documentsPath = path.join(repoRoot, "packages/shared/src/documents.ts");
 const paymentsPath = path.join(repoRoot, "packages/shared/src/payments.ts");
+const masterDataPath = path.join(repoRoot, "packages/shared/src/master-data.ts");
 
 test("shared contracts export the expected modules", async () => {
   const indexContent = await readFile(indexPath, "utf8");
@@ -32,4 +33,14 @@ test("shared contracts define ERP status and workflow DTOs", async () => {
   assert.match(documentsContent, /export interface PostDocumentCommand/);
   assert.match(paymentsContent, /export interface CreatePaymentDto/);
   assert.match(paymentsContent, /export interface CounterpartyDebtDto/);
+});
+
+test("shared product contracts expose units and remembered prices", async () => {
+  const masterDataContent = await readFile(masterDataPath, "utf8");
+  const documentsContent = await readFile(documentsPath, "utf8");
+
+  assert.match(masterDataContent, /export interface ProductUnitDto/);
+  assert.match(masterDataContent, /lastSalePrice: DecimalString \| null/);
+  assert.match(masterDataContent, /lastPurchasePrice: DecimalString \| null/);
+  assert.match(documentsContent, /unitFactor: DecimalString/);
 });

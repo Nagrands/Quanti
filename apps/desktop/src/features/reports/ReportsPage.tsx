@@ -34,6 +34,10 @@ export function ReportsPage() {
 
   const lookupMaps = useMemo(() => ({
     products: new Map((lookupsQuery.data?.products ?? []).map((item) => [item.id, `${item.sku} · ${item.name}`])),
+    productUnits: new Map((lookupsQuery.data?.products ?? []).map((item) => [
+      item.id,
+      [item.unit, ...(item.units ?? []).map((unit) => unit.name)].join(", ")
+    ])),
     warehouses: new Map((lookupsQuery.data?.warehouses ?? []).map((item) => [item.id, `${item.code} · ${item.name}`])),
     counterparties: new Map((lookupsQuery.data?.counterparties ?? []).map((item) => [item.id, `${item.code} · ${item.name}`])),
     accounts: new Map((lookupsQuery.data?.accounts ?? []).map((item) => [item.id, `${item.code} · ${item.name}`]))

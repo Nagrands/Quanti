@@ -25,6 +25,11 @@ const product = {
   sku: "PRD-001",
   name: "Desk lamp",
   unit: "pcs",
+  units: [{ id: "unit-pack", name: "pack", conversionFactor: "10.000000" }],
+  lastSalePrice: "25.00",
+  lastSaleUnit: "pack",
+  lastPurchasePrice: "18.00",
+  lastPurchaseUnit: "pack",
   description: "Adjustable lamp",
   categoryId: "category-1",
   categoryName: "Lighting",
@@ -70,9 +75,9 @@ describe("master data workspace", () => {
     );
     renderWithAppProviders(<MasterDataPage />, "/products");
 
-    expect(await screen.findByText("PRD-001")).toBeInTheDocument();
+    expect(await screen.findByText(/PRD-001/)).toBeInTheDocument();
     expect(getMasterData).toHaveBeenCalledWith("products", true);
-    expect(screen.queryByText("PRD-ARCH")).not.toBeInTheDocument();
+    expect(screen.queryByText(/PRD-ARCH/)).not.toBeInTheDocument();
 
     const summary = screen.getByLabelText("Сводка справочника");
     expect(within(summary).getByText("Всего")).toBeInTheDocument();
@@ -81,8 +86,8 @@ describe("master data workspace", () => {
     expect(within(summary).getAllByText("2")).toHaveLength(1);
 
     await user.selectOptions(screen.getByLabelText("Фильтр активности"), "archived");
-    expect(await screen.findByText("PRD-ARCH")).toBeInTheDocument();
-    expect(screen.queryByText("PRD-001")).not.toBeInTheDocument();
+    expect(await screen.findByText(/PRD-ARCH/)).toBeInTheDocument();
+    expect(screen.queryByText(/PRD-001/)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Восстановить Archived lamp" }));
     const restoreDialog = screen.getByRole("dialog", { name: "Восстановить запись?" });
@@ -97,7 +102,7 @@ describe("master data workspace", () => {
   test("validates and creates a product", async () => {
     const user = userEvent.setup();
     renderWithAppProviders(<MasterDataPage />, "/products");
-    await screen.findByText("PRD-001");
+    await screen.findByText(/PRD-001/);
 
     await user.click(screen.getByRole("button", { name: "Создать" }));
     const drawer = screen.getByRole("complementary", { name: "Новая запись" });
@@ -110,7 +115,12 @@ describe("master data workspace", () => {
     await user.type(sku, " PRD-003 ");
     await user.type(within(drawer).getByLabelText("Наименование *"), " Mouse ");
     await user.selectOptions(within(drawer).getByLabelText("Категория"), "category-1");
-    await user.type(within(drawer).getByLabelText("Единица *"), " pcs ");
+    await user.type(within(drawer).getByLabelText("Базовая единица *"), " pcs ");
+    await user.click(within(drawer).getByRole("button", { name: "Добавить единицу" }));
+    await user.type(within(drawer).getByLabelText("Название единицы"), " pack ");
+    const factor = within(drawer).getByLabelText("Коэффициент пересчёта");
+    await user.clear(factor);
+    await user.type(factor, "10");
     await user.click(within(drawer).getByRole("button", { name: "Создать" }));
 
     expect(createMasterData).toHaveBeenCalledWith("products", {
@@ -118,14 +128,40 @@ describe("master data workspace", () => {
       name: "Mouse",
       categoryId: "category-1",
       unit: "pcs",
+      units: [{ name: "pack", conversionFactor: "10" }],
       description: null
     });
+  });
+
+  test("shows remembered prices and edits additional product units", async () => {
+    const user = userEvent.setup();
+    renderWithAppProviders(<MasterDataPage />, "/products");
+
+    expect(await screen.findByText(/Продажа: 25.00 \/ pack/)).toBeInTheDocument();
+    expect(screen.getByText(/Закупка: 18.00 \/ pack/)).toBeInTheDocument();
+    expect(screen.getByText(/pack × 10.000000/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Изменить Desk lamp" }));
+    const drawer = screen.getByRole("complementary", { name: "Изменение записи" });
+    expect(within(drawer).getByLabelText("Название единицы")).toHaveValue("pack");
+    const factor = within(drawer).getByLabelText("Коэффициент пересчёта");
+    await user.clear(factor);
+    await user.type(factor, "12");
+    await user.click(within(drawer).getByRole("button", { name: "Сохранить" }));
+
+    expect(updateMasterData).toHaveBeenCalledWith(
+      "products",
+      "product-1",
+      expect.objectContaining({
+        units: [{ name: "pack", conversionFactor: "12" }]
+      })
+    );
   });
 
   test("edits and deactivates a product", async () => {
     const user = userEvent.setup();
     renderWithAppProviders(<MasterDataPage />, "/products");
-    await screen.findByText("PRD-001");
+    await screen.findByText(/PRD-001/);
 
     await user.click(screen.getByRole("button", { name: "Изменить Desk lamp" }));
     const drawer = screen.getByRole("complementary", { name: "Изменение записи" });
@@ -148,7 +184,7 @@ describe("master data workspace", () => {
   test("switches to every master-data resource", async () => {
     const user = userEvent.setup();
     renderWithAppProviders(<MasterDataPage />, "/products");
-    await screen.findByText("PRD-001");
+    await screen.findByText(/PRD-001/);
 
     for (const tab of ["Категории товаров", "Склады", "Контрагенты", "Счета"]) {
       vi.mocked(getMasterData).mockResolvedValueOnce([]);
@@ -161,7 +197,7 @@ describe("master data workspace", () => {
     window.localStorage.setItem("quanti.locale", "en");
     renderWithAppProviders(<MasterDataPage />, "/products");
 
-    expect(await screen.findByText("PRD-001")).toBeInTheDocument();
+    expect(await screen.findByText(/PRD-001/)).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Search products")).toBeInTheDocument();
     expect(screen.getByLabelText("Activity filter")).toHaveValue("active");
     const summary = screen.getByLabelText("Master data summary");

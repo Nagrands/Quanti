@@ -41,8 +41,15 @@ export function DocumentsPage() {
   const saveMutation = useMutation({
     mutationFn: ({ values, document }: { values: DocumentFormValues; document: DocumentDto | null }) =>
       document ? updateDocument(document.id, toDocumentPayload(values)) : createDocument(toDocumentPayload(values)),
-    onSuccess: async () => {
-      await refresh();
+    onSuccess: async (savedDocument) => {
+      queryClient.setQueryData<DocumentDto[]>(["documents"], (current = []) => {
+        const existingIndex = current.findIndex((item) => item.id === savedDocument.id);
+        if (existingIndex === -1) {
+          return [...current, savedDocument];
+        }
+
+        return current.map((item) => item.id === savedDocument.id ? savedDocument : item);
+      });
       setIsDrawerOpen(false);
       setSelected(null);
     }
@@ -137,29 +144,43 @@ export function DocumentsPage() {
       {isDrawerOpen ? <DocumentDrawer document={selected} products={lookupsQuery.data?.products ?? []} categories={lookupsQuery.data?.categories ?? []} warehouses={lookupsQuery.data?.warehouses ?? []} counterparties={lookupsQuery.data?.counterparties ?? []} documents={documentsQuery.data ?? []} isSaving={saveMutation.isPending} onClose={() => { setIsDrawerOpen(false); setSelected(null); }} onSave={(values) => saveMutation.mutateAsync({ values, document: selected }).then(() => undefined)} onCreateProduct={(payload) => createProductMutation.mutateAsync(payload) as Promise<ProductDto>} /> : null}
       {pendingAction ? (
         <div className="dialog-backdrop">
-          <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="lifecycle-title">
-            <h2 id="lifecycle-title">{lifecycleLabels[pendingAction.action].title}</h2>
-            <p>{t("Операция изменит документ {number} и связанные движения учёта.", { number: pendingAction.document.number })}</p>
+          <div className="confirm-dialog confirm-dialog--document" role="dialog" aria-modal="true" aria-labelledby="lifecycle-title">
+            <div className="confirm-dialog__body">
+              <h2 id="lifecycle-title">{lifecycleLabels[pendingAction.action].title}</h2>
+              <p>{t("Операция изменит документ {number} и связанные движения учёта.", { number: pendingAction.document.number })}</p>
             {["post", "repost"].includes(pendingAction.action) ? (
               <div className="movement-preview" aria-label={t("Предварительный просмотр движений")}>
-                <strong>{t("Будут созданы складские движения")}</strong>
-                {getDocumentMovementPreview(
-                  pendingAction.document,
-                  lookupsQuery.data?.products ?? [],
-                  lookupsQuery.data?.warehouses ?? []
-                ).map((movement) => (
-                  <div className="movement-preview__row" key={movement.key}>
-                    <span className={movement.direction === "IN" ? "movement-preview__direction movement-preview__direction--in" : "movement-preview__direction movement-preview__direction--out"}>
-                      {t(movement.direction === "IN" ? "Приход" : "Расход")}
-                    </span>
-                    <span>{movement.productLabel}</span>
-                    <span>{movement.warehouseLabel}</span>
-                    <strong>{movement.quantity}</strong>
-                  </div>
-                ))}
+                {(() => {
+                  const movements = getDocumentMovementPreview(
+                    pendingAction.document,
+                    lookupsQuery.data?.products ?? [],
+                    lookupsQuery.data?.warehouses ?? []
+                  );
+                  return (
+                    <>
+                      <div className="movement-preview__header">
+                        <strong>{t("Будут созданы складские движения")}</strong>
+                        <span>{movements.length}</span>
+                      </div>
+                      <div className="movement-preview__list">
+                        {movements.map((movement) => (
+                          <div className="movement-preview__row" key={movement.key}>
+                            <span className={movement.direction === "IN" ? "movement-preview__direction movement-preview__direction--in" : "movement-preview__direction movement-preview__direction--out"}>
+                              {t(movement.direction === "IN" ? "Приход" : "Расход")}
+                            </span>
+                            <span className="movement-preview__entity">{movement.productLabel}</span>
+                            <span className="movement-preview__entity">{movement.warehouseLabel}</span>
+                            <strong>{movement.quantity}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             ) : null}
             {lifecycleMutation.isError ? <div className="form-alert form-alert--detailed" role="alert"><strong>{t("Не удалось выполнить операцию")}</strong><span>{formatApiError(lifecycleMutation.error, { products: lookupsQuery.data?.products, warehouses: lookupsQuery.data?.warehouses })}</span></div> : null}
+            </div>
             <div className="confirm-dialog__actions"><button className="button button--secondary" onClick={() => setPendingAction(null)}>{t("Отмена")}</button><button className={pendingAction.action === "delete" ? "button button--danger" : "button button--primary"} disabled={lifecycleMutation.isPending} onClick={() => lifecycleMutation.mutate(pendingAction)}>{lifecycleMutation.isPending ? t("Выполнение…") : lifecycleLabels[pendingAction.action].action}</button></div>
           </div>
         </div>

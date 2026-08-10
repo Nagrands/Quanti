@@ -1,7 +1,8 @@
 import type {
   CreateDraftDocumentDto,
   DocumentDto,
-  DocumentType
+  DocumentType,
+  ProductDto
 } from "@quanti/shared";
 
 export const supportedDocumentTypes = [
@@ -15,6 +16,8 @@ export const supportedDocumentTypes = [
 export interface DocumentLineForm {
   key: string;
   productId: string;
+  unit: string;
+  unitFactor: string;
   quantity: string;
   price: string;
   warehouseId: string;
@@ -44,6 +47,8 @@ const documentNumberPrefixes: Record<DocumentType, string> = {
 const emptyLine = (): DocumentLineForm => ({
   key: crypto.randomUUID(),
   productId: "",
+  unit: "",
+  unitFactor: "1",
   quantity: "1",
   price: "0",
   warehouseId: ""
@@ -65,10 +70,10 @@ export function createEmptyDocument(number = ""): DocumentFormValues {
 
 function nextSequence(existingValues: readonly string[], prefix: string) {
   const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`^${escapedPrefix}-(\\d{6})-(\\d{4})$`);
+  const pattern = new RegExp(`^${escapedPrefix}-(\\d{4})$`);
   const max = existingValues.reduce((currentMax, value) => {
     const match = pattern.exec(value);
-    return match ? Math.max(currentMax, Number(match[2])) : currentMax;
+    return match ? Math.max(currentMax, Number(match[1])) : currentMax;
   }, 0);
 
   return String(max + 1).padStart(4, "0");
@@ -97,6 +102,8 @@ export function documentToForm(document: DocumentDto): DocumentFormValues {
     items: document.items.map((item) => ({
       key: item.id,
       productId: item.productId,
+      unit: item.unit,
+      unitFactor: item.unitFactor,
       quantity: item.quantity,
       price: item.price,
       warehouseId: item.warehouseId ?? ""
@@ -128,6 +135,7 @@ export function toDocumentPayload(values: DocumentFormValues): CreateDraftDocume
     counterpartyId: values.counterpartyId || null,
     items: values.items.map((item) => ({
       productId: item.productId,
+      unit: item.unit,
       quantity: Number(item.quantity).toFixed(3),
       price: Number(item.price).toFixed(2),
       amount: calculateAmount(item.quantity, item.price),
@@ -138,4 +146,22 @@ export function toDocumentPayload(values: DocumentFormValues): CreateDraftDocume
 
 export function addDocumentLine(items: DocumentLineForm[]) {
   return [...items, emptyLine()];
+}
+
+export function rememberedProductSelection(product: ProductDto, type: DocumentType) {
+  if (type === "SALE" || type === "RETURN_IN") {
+    return {
+      price: product.lastSalePrice ?? "0",
+      unit: product.lastSaleUnit ?? product.unit
+    };
+  }
+
+  if (type === "PURCHASE" || type === "RETURN_OUT") {
+    return {
+      price: product.lastPurchasePrice ?? "0",
+      unit: product.lastPurchaseUnit ?? product.unit
+    };
+  }
+
+  return { price: "0", unit: product.unit };
 }

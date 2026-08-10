@@ -38,6 +38,10 @@ function formatQuantity(value: string | number) {
   return Number(value).toFixed(3);
 }
 
+function baseQuantity(quantity: string, factor: string) {
+  return formatQuantity(toNumber(quantity) * toNumber(factor || "1"));
+}
+
 function productLabel(products: ProductDto[], productId: string) {
   const product = products.find((item) => item.id === productId);
   return product ? `${product.sku} · ${product.name}` : productId;
@@ -54,7 +58,7 @@ export function getDocumentMovementPreview(
   warehouses: WarehouseDto[]
 ): DocumentMovementPreview[] {
   return document.items.flatMap((item) => {
-    const quantity = formatQuantity(item.quantity);
+    const quantity = baseQuantity(item.quantity, item.unitFactor);
     const product = productLabel(products, item.productId);
 
     if (document.type === "TRANSFER" && document.sourceWarehouseId && document.destinationWarehouseId) {
@@ -110,7 +114,7 @@ export function getRequiredStockChecks(values: DocumentFormValues) {
         lineKey: item.key,
         productId: item.productId,
         warehouseId: values.sourceWarehouseId,
-        requiredQuantity: formatQuantity(item.quantity)
+        requiredQuantity: baseQuantity(item.quantity, item.unitFactor)
       }));
   }
 
@@ -125,7 +129,7 @@ export function getRequiredStockChecks(values: DocumentFormValues) {
       lineKey: item.key,
       productId: item.productId,
       warehouseId: values.warehouseId,
-      requiredQuantity: formatQuantity(item.quantity)
+      requiredQuantity: baseQuantity(item.quantity, item.unitFactor)
     }));
 }
 

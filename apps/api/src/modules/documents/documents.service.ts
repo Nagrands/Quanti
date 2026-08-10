@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma, type Document, type DocumentItem } from "@quanti/db";
 import type {
+  CreateDocumentItemDto,
   CreateDraftDocumentDto,
   DocumentDto,
   RepostDocumentCommand,
@@ -38,6 +39,7 @@ export class DocumentsService {
 
   async createDraft(payload: CreateDraftDocumentDto): Promise<DocumentDto> {
     const document = await this.prisma.$transaction(async (tx) => {
+      const items = await this.resolveItems(payload.items, tx);
       return tx.document.create({
         data: {
           number: payload.number,
@@ -45,15 +47,17 @@ export class DocumentsService {
           status: "DRAFT",
           documentDate: new Date(payload.documentDate),
           notes: payload.notes ?? null,
-          totalAmount: this.sumAmounts(payload.items),
+          totalAmount: this.sumAmounts(items),
           warehouseId: payload.warehouseId ?? null,
           sourceWarehouseId: payload.sourceWarehouseId ?? null,
           destinationWarehouseId: payload.destinationWarehouseId ?? null,
           counterpartyId: payload.counterpartyId ?? null,
           items: {
-            create: payload.items.map((item, index) => ({
+            create: items.map((item, index) => ({
               lineNo: index + 1,
               productId: item.productId,
+              unit: item.unit,
+              unitFactor: item.unitFactor,
               quantity: this.decimal(item.quantity),
               price: this.decimal(item.price),
               amount: this.decimal(item.amount),
@@ -72,6 +76,7 @@ export class DocumentsService {
     return this.prisma.$transaction(async (tx) => {
       const existing = await this.getDocumentRecord(id, tx);
       this.ensureDraft(existing);
+      const items = payload.items ? await this.resolveItems(payload.items, tx) : undefined;
 
       const updatedDocument = await tx.document.update({
         where: { id },
@@ -82,8 +87,8 @@ export class DocumentsService {
             ? new Date(payload.documentDate)
             : existing.documentDate,
           notes: payload.notes === undefined ? existing.notes : payload.notes,
-          totalAmount: payload.items
-            ? this.sumAmounts(payload.items)
+          totalAmount: items
+            ? this.sumAmounts(items)
             : existing.totalAmount,
           warehouseId: payload.warehouseId === undefined ? existing.warehouseId : payload.warehouseId,
           sourceWarehouseId: payload.sourceWarehouseId === undefined
@@ -99,13 +104,15 @@ export class DocumentsService {
         include: { items: { orderBy: { lineNo: "asc" } } }
       });
 
-      if (payload.items) {
+      if (items) {
         await tx.documentItem.deleteMany({ where: { documentId: id } });
         await tx.documentItem.createMany({
-          data: payload.items.map((item, index) => ({
+          data: items.map((item, index) => ({
             documentId: id,
             lineNo: index + 1,
             productId: item.productId,
+            unit: item.unit,
+            unitFactor: item.unitFactor,
             quantity: this.decimal(item.quantity),
             price: this.decimal(item.price),
             amount: this.decimal(item.amount),
@@ -257,7 +264,7 @@ export class DocumentsService {
           await this.stockService.assertAvailableStock({
             productId: item.productId,
             warehouseId,
-            requiredQuantity: item.quantity.toString()
+            requiredQuantity: this.baseQuantity(item).toString()
           }, tx);
 
           movements.push(this.createMovement(item, document.id, warehouseId, movementDate, "OUT"));
@@ -276,7 +283,7 @@ export class DocumentsService {
           await this.stockService.assertAvailableStock({
             productId: item.productId,
             warehouseId: sourceWarehouseId,
-            requiredQuantity: item.quantity.toString()
+            requiredQuantity: this.baseQuantity(item).toString()
           }, tx);
 
           movements.push(
@@ -309,7 +316,7 @@ export class DocumentsService {
       documentItemId: item.id,
       movementDate,
       direction,
-      quantity: item.quantity.toString()
+      quantity: this.baseQuantity(item).toString()
     };
   }
 
@@ -343,5 +350,42 @@ export class DocumentsService {
 
   private decimal(value: string) {
     return new Prisma.Decimal(value);
+  }
+
+  private baseQuantity(item: DocumentItem) {
+    return item.quantity.mul(item.unitFactor);
+  }
+
+  private async resolveItems(
+    items: CreateDocumentItemDto[],
+    tx: Prisma.TransactionClient
+  ) {
+    const productIds = [...new Set(items.map((item) => item.productId))];
+    const products = await tx.product.findMany({
+      where: { id: { in: productIds }, isActive: true },
+      include: { units: true }
+    });
+    const productsById = new Map(products.map((product) => [product.id, product]));
+
+    return items.map((item) => {
+      const product = productsById.get(item.productId);
+      if (!product) {
+        throw new BadRequestException(`Product ${item.productId} is unavailable.`);
+      }
+
+      const requestedUnit = item.unit?.trim() || product.unit;
+      const alternative = product.units.find((unit) => unit.name === requestedUnit);
+      if (requestedUnit !== product.unit && !alternative) {
+        throw new BadRequestException(
+          `Unit ${requestedUnit} is not configured for product ${product.id}.`
+        );
+      }
+
+      return {
+        ...item,
+        unit: requestedUnit,
+        unitFactor: alternative?.conversionFactor ?? new Prisma.Decimal(1)
+      };
+    });
   }
 }

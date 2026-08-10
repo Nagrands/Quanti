@@ -13,6 +13,10 @@ class UpdateDocumentItemRequest {
   @IsString()
   productId!: string;
 
+  @IsOptional()
+  @IsString()
+  unit?: string;
+
   @IsString()
   quantity!: string;
 

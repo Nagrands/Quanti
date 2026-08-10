@@ -11,6 +11,7 @@ export type {
   PaymentAllocation,
   Product,
   ProductCategory,
+  ProductUnit,
   StockBalance,
   StockMovement,
   Warehouse

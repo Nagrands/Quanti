@@ -13,6 +13,8 @@ export interface DocumentItemDto {
   id: DocumentItemId;
   lineNo: number;
   productId: ProductId;
+  unit: string;
+  unitFactor: DecimalString;
   quantity: DecimalString;
   price: DecimalString;
   amount: DecimalString;
@@ -37,6 +39,7 @@ export interface DocumentDto {
 
 export interface CreateDocumentItemDto {
   productId: ProductId;
+  unit?: string;
   quantity: DecimalString;
   price: DecimalString;
   amount: DecimalString;

@@ -34,6 +34,10 @@ pnpm dev:api
 pnpm dev:desktop
 ```
 
+The development API restarts automatically when backend source files change.
+After applying Prisma schema changes, run `pnpm db:generate && pnpm db:migrate`
+and restart any API process that was already running before the migration.
+
 Start the native Tauri application while the API is running:
 
 ```bash
@@ -71,8 +75,13 @@ If the API returns `Unexpected server error`, verify Docker and migrations:
 
 ```bash
 docker compose ps
+pnpm db:generate
 pnpm db:migrate
 ```
+
+If the frontend already shows new fields but the API response does not contain
+them, stop the existing API process and start `pnpm dev:api` again. This means
+the frontend and backend were started from different source revisions.
 
 Useful database commands:
 

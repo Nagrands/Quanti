@@ -1,17 +1,39 @@
-import type { Account, Counterparty, Product, ProductCategory, Warehouse } from "@quanti/db";
+import type { Account, Counterparty, Product, ProductCategory, ProductUnit, Warehouse } from "@quanti/db";
 import type { AccountDto, CounterpartyDto, ProductCategoryDto, ProductDto, WarehouseDto } from "@quanti/shared";
 
 const toIso = (value: Date) => value.toISOString();
 
-type ProductRecord = Product & { category?: ProductCategory | null };
+type ProductRecord = Product & {
+  category?: ProductCategory | null;
+  units?: ProductUnit[];
+};
 
-export function toProductDto(record: ProductRecord): ProductDto {
+interface ProductPriceSnapshot {
+  lastSalePrice?: string | null;
+  lastSaleUnit?: string | null;
+  lastPurchasePrice?: string | null;
+  lastPurchaseUnit?: string | null;
+}
+
+export function toProductDto(
+  record: ProductRecord,
+  prices: ProductPriceSnapshot = {}
+): ProductDto {
   return {
     id: record.id,
     sku: record.sku,
     name: record.name,
     description: record.description,
     unit: record.unit,
+    units: (record.units ?? []).map((unit) => ({
+      id: unit.id,
+      name: unit.name,
+      conversionFactor: unit.conversionFactor.toString()
+    })),
+    lastSalePrice: prices.lastSalePrice ?? null,
+    lastSaleUnit: prices.lastSaleUnit ?? null,
+    lastPurchasePrice: prices.lastPurchasePrice ?? null,
+    lastPurchaseUnit: prices.lastPurchaseUnit ?? null,
     categoryId: record.categoryId,
     categoryName: record.category?.name ?? null,
     isActive: record.isActive,

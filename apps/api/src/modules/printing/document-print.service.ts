@@ -74,7 +74,7 @@ export class DocumentPrintService {
         lineNo: item.lineNo,
         sku: item.product.sku,
         productName: item.product.name,
-        unit: item.product.unit,
+        unit: item.unit,
         quantity: item.quantity.toString(),
         price: item.price.toString(),
         amount: item.amount.toString()

@@ -1,5 +1,7 @@
 import type { UpdateProductDto } from "@quanti/shared";
-import { IsBoolean, IsOptional, IsString } from "class-validator";
+import { Type } from "class-transformer";
+import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from "class-validator";
+import { ProductUnitRequest } from "./create-product.request";
 
 export class UpdateProductRequest implements UpdateProductDto {
   @IsOptional()
@@ -17,6 +19,12 @@ export class UpdateProductRequest implements UpdateProductDto {
   @IsOptional()
   @IsString()
   unit?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductUnitRequest)
+  units?: ProductUnitRequest[];
 
   @IsOptional()
   @IsString()

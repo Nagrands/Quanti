@@ -1,11 +1,12 @@
-import { X } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 
 import { useI18n } from "../../i18n";
 import type {
   FormValues,
   MasterDataDefinition,
-  MasterDataEntity
+  MasterDataEntity,
+  ProductUnitFormValue
 } from "./master-data";
 
 interface MasterDataFormDrawerProps {
@@ -15,6 +16,10 @@ interface MasterDataFormDrawerProps {
   isSaving: boolean;
   onClose: () => void;
   onSave: (values: FormValues) => Promise<void>;
+}
+
+function productUnits(value: FormValues[string] | undefined): ProductUnitFormValue[] {
+  return Array.isArray(value) ? value : [];
 }
 
 export function MasterDataFormDrawer({
@@ -52,6 +57,25 @@ export function MasterDataFormDrawer({
       }
     }
 
+    if (definition.resource === "products") {
+      const baseUnit = String(values.unit ?? "").trim().toLocaleLowerCase();
+      const units = productUnits(values.units);
+      const normalizedNames = units.map((unit) => unit.name.trim().toLocaleLowerCase());
+      const invalidUnits = units.some((unit) =>
+        !unit.name.trim()
+        || !/^\d+(\.\d{1,6})?$/.test(unit.conversionFactor)
+        || Number(unit.conversionFactor) <= 0
+      );
+      const duplicateUnits = new Set(normalizedNames).size !== normalizedNames.length
+        || normalizedNames.includes(baseUnit);
+
+      if (invalidUnits) {
+        errors.units = t("Для каждой дополнительной единицы укажите название и положительный коэффициент.");
+      } else if (duplicateUnits) {
+        errors.units = t("Названия единиц не должны повторяться или совпадать с базовой единицей.");
+      }
+    }
+
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       return;
@@ -83,7 +107,10 @@ export function MasterDataFormDrawer({
             {requestError ? <div className="form-alert" role="alert">{requestError}</div> : null}
             {definition.fields.map((field) => {
               const inputId = `${definition.resource}-${field.key}`;
-              const fieldValue = String(values[field.key] ?? "");
+              const rawFieldValue = values[field.key];
+              const fieldValue = typeof rawFieldValue === "string" || typeof rawFieldValue === "boolean"
+                ? String(rawFieldValue)
+                : "";
               const error = fieldErrors[field.key];
 
               return (
@@ -92,7 +119,64 @@ export function MasterDataFormDrawer({
                     {field.label}
                     {field.required ? <span aria-hidden="true"> *</span> : null}
                   </label>
-                  {field.type === "textarea" ? (
+                  {field.type === "product-units" ? (
+                    <div className="product-units-editor" id={inputId}>
+                      <p>{t("Коэффициент показывает количество базовой единицы в одной дополнительной.")}</p>
+                      {productUnits(rawFieldValue).map((unit) => (
+                        <div className="product-unit-row" key={unit.key}>
+                          <input
+                            aria-label={t("Название единицы")}
+                            placeholder={t("Например, пучок")}
+                            value={unit.name}
+                            onChange={(event) => setValues((current) => ({
+                              ...current,
+                              [field.key]: productUnits(current[field.key]).map((item) =>
+                                item.key === unit.key ? { ...item, name: event.target.value } : item
+                              )
+                            }))}
+                          />
+                          <input
+                            aria-label={t("Коэффициент пересчёта")}
+                            inputMode="decimal"
+                            placeholder="0.100"
+                            value={unit.conversionFactor}
+                            onChange={(event) => setValues((current) => ({
+                              ...current,
+                              [field.key]: productUnits(current[field.key]).map((item) =>
+                                item.key === unit.key ? { ...item, conversionFactor: event.target.value } : item
+                              )
+                            }))}
+                          />
+                          <button
+                            type="button"
+                            className="icon-button icon-button--danger"
+                            aria-label={t("Удалить единицу {name}", { name: unit.name || t("без названия") })}
+                            onClick={() => setValues((current) => ({
+                              ...current,
+                              [field.key]: productUnits(current[field.key])
+                                .filter((item) => item.key !== unit.key)
+                            }))}
+                          >
+                            <Trash2 aria-hidden="true" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="button button--secondary product-units-editor__add"
+                        onClick={() => setValues((current) => ({
+                          ...current,
+                          [field.key]: [
+                            ...productUnits(current[field.key]),
+                            { key: crypto.randomUUID(), name: "", conversionFactor: "1" }
+                          ]
+                        }))}
+                      >
+                        <Plus aria-hidden="true" />
+                        {t("Добавить единицу")}
+                      </button>
+                    </div>
+                  ) : field.type === "textarea" ? (
                     <textarea
                       id={inputId}
                       rows={5}

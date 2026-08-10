@@ -38,6 +38,7 @@ const product: CreateProductDto = {
   sku: "SKU-001",
   name: "Widget",
   unit: "pcs",
+  units: [{ name: "box", conversionFactor: "10.000000" }],
   categoryId: "category-1"
 };
 
@@ -223,6 +224,11 @@ const productView: ProductDto = {
   name: "Widget",
   description: null,
   unit: "pcs",
+  units: [{ id: "unit-1", name: "box", conversionFactor: "10.000000" }],
+  lastSalePrice: "15.00",
+  lastSaleUnit: "box",
+  lastPurchasePrice: "10.00",
+  lastPurchaseUnit: "pcs",
   categoryId: "category-1",
   categoryName: "Vegetables",
   isActive: true,

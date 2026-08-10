@@ -54,6 +54,7 @@ export interface ReportFilters {
 
 export interface ReportLookupMaps {
   products: Map<string, string>;
+  productUnits: Map<string, string>;
   warehouses: Map<string, string>;
   counterparties: Map<string, string>;
   accounts: Map<string, string>;
@@ -87,7 +88,8 @@ export const reportDefinitions: readonly ReportDefinition[] = [
     columns: [
       { key: "product", label: "Товар", value: (row, maps) => name(maps.products, field(row, "productId")) },
       { key: "warehouse", label: "Склад", value: (row, maps) => name(maps.warehouses, field(row, "warehouseId")) },
-      { key: "quantity", label: "Количество", numeric: true, value: (row) => field(row, "quantity") }
+      { key: "quantity", label: "Количество", numeric: true, value: (row) => field(row, "quantity") },
+      { key: "units", label: "Единицы", value: (row, maps) => name(maps.productUnits, field(row, "productId")) }
     ]
   },
   {
@@ -110,7 +112,8 @@ export const reportDefinitions: readonly ReportDefinition[] = [
     columns: [
       { key: "product", label: "Товар", value: (row, maps) => name(maps.products, field(row, "productId")) },
       { key: "warehouse", label: "Склад", value: (row, maps) => name(maps.warehouses, field(row, "warehouseId")) },
-      { key: "quantity", label: "Количество", numeric: true, value: (row) => field(row, "quantity") }
+      { key: "quantity", label: "Количество", numeric: true, value: (row) => field(row, "quantity") },
+      { key: "units", label: "Единицы", value: (row, maps) => name(maps.productUnits, field(row, "productId")) }
     ]
   },
   {

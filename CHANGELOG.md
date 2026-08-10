@@ -13,6 +13,8 @@ All notable changes to Quanti are documented in this file.
 - Editable auto-filled document numbers, product SKU values, and master-data codes.
 - Searchable product selection and quick product creation inside document lines.
 - Persistent light, dark, and system interface themes.
+- Sequential draft document numbering, product unit conversions, and remembered sale and purchase prices.
+- API development mode now restarts after backend changes, preventing stale API contracts from breaking product units and price columns.
 - Payment workflows, allocations, money movements, and counterparty debt.
 - Ledger-based stock, sales, cashflow, top-product, and debt reports.
 - PDF document printing with versioned database templates.
