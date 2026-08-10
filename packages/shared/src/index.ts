@@ -8,6 +8,7 @@ export * from "./payments";
 export * from "./printing";
 export * from "./reports";
 export * from "./stock";
+export * from "./transfer";
 
 export interface ReportContracts {
   stockBalanceFilter: import("./reports").StockBalanceReportFilterDto;

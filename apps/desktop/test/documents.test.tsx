@@ -1,6 +1,6 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { DocumentsPage } from "../src/features/documents/DocumentsPage";
 import { ApiError } from "../src/api/errors";
@@ -115,6 +115,8 @@ const lookups = {
 
 describe("documents workspace", () => {
   beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-06-06T10:00:00.000Z"));
     vi.mocked(getDocuments).mockResolvedValue([draft, posted]);
     vi.mocked(getStockBalance).mockResolvedValue({
       productId: "product-1",
@@ -134,6 +136,10 @@ describe("documents workspace", () => {
     vi.mocked(postDocument).mockResolvedValue(posted);
     vi.mocked(unpostDocument).mockResolvedValue(draft);
     vi.mocked(repostDocument).mockResolvedValue(posted);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test("renders and filters draft and posted documents", async () => {

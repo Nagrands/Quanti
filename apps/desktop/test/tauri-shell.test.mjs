@@ -33,6 +33,7 @@ test("desktop shell exports safe native commands and Tauri config", async () => 
   assert.match(shellSource, /"get_shell_info"/);
   assert.match(shellSource, /"pick_import_file"/);
   assert.match(shellSource, /"read_import_preview"/);
+  assert.match(shellSource, /"read_import_file"/);
   assert.match(shellSource, /"save_export_file"/);
   assert.match(shellSource, /"save_export_bytes"/);
   assert.match(shellSource, /window\.__TAURI__/);
@@ -46,6 +47,7 @@ test("desktop shell exports safe native commands and Tauri config", async () => 
   assert.match(windowsConfig, /"type": "embedBootstrapper"/);
   assert.match(rustLib, /ImportApprovals::default/);
   assert.match(rustLib, /pick_import_file/);
+  assert.match(rustLib, /read_import_file/);
   assert.match(rustLib, /save_export_file/);
   assert.match(rustCommands, /State<'_, ImportApprovals>/);
   assert.match(rustCommands, /blocking_pick_file/);

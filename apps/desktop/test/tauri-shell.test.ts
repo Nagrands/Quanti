@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { saveBinaryExport, saveTextExport } from "../src/tauri-shell";
+import { pickJsonImport, saveBinaryExport, saveTextExport } from "../src/tauri-shell";
 
 describe("desktop shell adapter", () => {
   const click = vi.fn();
@@ -56,5 +56,16 @@ describe("desktop shell adapter", () => {
       fileName: "document.pdf",
       contents: [37, 80, 68, 70, 45]
     });
+  });
+
+  test("reads the complete approved JSON file through Tauri", async () => {
+    invoke
+      .mockResolvedValueOnce({ token: "approved-token", fileName: "data.json", size: 42 })
+      .mockResolvedValueOnce({ fileName: "data.json", size: 42, contents: "{\"version\":1}" });
+    window.__TAURI__ = { core: { invoke } };
+
+    await expect(pickJsonImport()).resolves.toEqual({ fileName: "data.json", size: 42, contents: "{\"version\":1}" });
+    expect(invoke).toHaveBeenNthCalledWith(1, "pick_import_file");
+    expect(invoke).toHaveBeenNthCalledWith(2, "read_import_file", { token: "approved-token" });
   });
 });

@@ -1,9 +1,11 @@
 import type { CreateProductDto, DocumentDto, DocumentStatus, DocumentType, ProductDto } from "@quanti/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreHorizontal, Plus, Search } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Plus, Printer, RefreshCcw, Search, Trash2, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useI18n } from "../../i18n";
+import { ActionIconButton } from "../../components/actions/ActionIconButton";
+import { DataTransferControls } from "../transfer/DataTransferControls";
 import { DocumentDrawer } from "./DocumentDrawer";
 import {
   createDocument,
@@ -118,7 +120,10 @@ export function DocumentsPage() {
         <label className="search-field"><Search /><span className="visually-hidden">{t("Поиск документов")}</span><input type="search" placeholder={t("Поиск документов")} value={search} onChange={(event) => setSearch(event.target.value)} /></label>
         <select aria-label={t("Фильтр по статусу")} value={status} onChange={(event) => setStatus(event.target.value as "" | DocumentStatus)}><option value="">{t("Все статусы")}</option><option value="DRAFT">{t("Черновик")}</option><option value="POSTED">{t("Проведён")}</option></select>
         <select aria-label={t("Фильтр по типу")} value={type} onChange={(event) => setType(event.target.value as "" | DocumentType)}><option value="">{t("Все типы")}</option>{Object.entries(documentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-        <button type="button" className="button button--primary" onClick={() => { setSelected(null); setIsDrawerOpen(true); }}><Plus /> {t("Новый документ")}</button>
+        <div className="document-toolbar__actions">
+          <DataTransferControls section="documents" onImported={() => queryClient.invalidateQueries()} />
+          <button type="button" className="button button--primary" onClick={() => { setSelected(null); setIsDrawerOpen(true); }}><Plus /> {t("Новый документ")}</button>
+        </div>
       </div>
       {printError ? <div className="form-alert document-print-alert" role="alert">{printError}</div> : null}
 
@@ -126,16 +131,22 @@ export function DocumentsPage() {
         {documentsQuery.isPending ? <div className="table-state">{t("Загрузка документов…")}</div>
           : documentsQuery.isError ? <div className="table-state table-state--error"><strong>{t("Не удалось загрузить документы.")}</strong><span>{formatApiError(documentsQuery.error)}</span><button className="button button--secondary" onClick={() => void documentsQuery.refetch()}>{t("Повторить")}</button></div>
           : filtered.length === 0 ? <div className="table-state"><strong>{t("Документы не найдены")}</strong><span>{t("Создайте черновик или измените фильтры.")}</span></div>
-          : <div className="data-table-scroll"><table className="data-table documents-table"><thead><tr><th>{t("Номер")}</th><th>{t("Тип")}</th><th>{t("Дата")}</th><th>{t("Позиций")}</th><th>{t("Сумма")}</th><th>{t("Статус")}</th><th>{t("Действия")}</th></tr></thead><tbody>
+          : <div className="data-table-scroll"><table className="data-table documents-table"><thead><tr><th>{t("Номер")}</th><th>{t("Тип")}</th><th>{t("Дата")}</th><th>{t("Позиций")}</th><th>{t("Сумма")}</th><th>{t("Статус")}</th><th className="data-table__actions-heading">{t("Действия")}</th></tr></thead><tbody>
             {filtered.map((document) => <tr key={document.id}>
               <td><button className="table-link" onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>{document.number}</button></td>
               <td>{documentTypeLabels[document.type]}</td><td>{formatDate(document.documentDate)}</td><td>{document.items.length}</td><td>{document.totalAmount}</td>
               <td><span className={`status-label status-label--${document.status.toLowerCase()}`}>{documentStatusLabels[document.status]}</span></td>
-              <td><div className="document-actions">
-                {document.status === "DRAFT" ? <><button onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>{t(document.type === "STOCK_ADJUSTMENT" ? "Открыть" : "Изменить")}</button>{document.type !== "STOCK_ADJUSTMENT" ? <button onClick={() => setPendingAction({ action: "post", document })}>{t("Провести")}</button> : null}<button onClick={() => setPendingAction({ action: "delete", document })}>{t("Удалить")}</button></>
-                  : <><button onClick={() => { setSelected(document); setIsDrawerOpen(true); }}>{t("Открыть")}</button><button onClick={() => setPendingAction({ action: "unpost", document })}>{t("Отменить проведение")}</button><button onClick={() => setPendingAction({ action: "repost", document })}>{t("Перепровести")}</button></>}
-                <button disabled={printMutation.isPending} onClick={() => printMutation.mutate(document.id)}>{t(printMutation.isPending && printMutation.variables === document.id ? "Формирование…" : "Печать")}</button>
-                <MoreHorizontal aria-hidden="true" />
+              <td className="data-table__actions-cell"><div className="document-actions">
+                {document.status === "DRAFT" ? <>
+                  <ActionIconButton label={t(document.type === "STOCK_ADJUSTMENT" ? "Открыть" : "Изменить")} icon={document.type === "STOCK_ADJUSTMENT" ? <Eye aria-hidden="true" /> : <Pencil aria-hidden="true" />} onClick={() => { setSelected(document); setIsDrawerOpen(true); }} />
+                  {document.type !== "STOCK_ADJUSTMENT" ? <ActionIconButton tone="success" label={t("Провести")} icon={<CheckCircle2 aria-hidden="true" />} onClick={() => setPendingAction({ action: "post", document })} /> : null}
+                  <ActionIconButton tone="danger" label={t("Удалить")} icon={<Trash2 aria-hidden="true" />} onClick={() => setPendingAction({ action: "delete", document })} />
+                </> : <>
+                  <ActionIconButton label={t("Открыть")} icon={<Eye aria-hidden="true" />} onClick={() => { setSelected(document); setIsDrawerOpen(true); }} />
+                  <ActionIconButton label={t("Отменить проведение")} icon={<Undo2 aria-hidden="true" />} onClick={() => setPendingAction({ action: "unpost", document })} />
+                  <ActionIconButton label={t("Перепровести")} icon={<RefreshCcw aria-hidden="true" />} onClick={() => setPendingAction({ action: "repost", document })} />
+                </>}
+                <ActionIconButton loading={printMutation.isPending && printMutation.variables === document.id} disabled={printMutation.isPending} label={t(printMutation.isPending && printMutation.variables === document.id ? "Формирование…" : "Печать")} icon={<Printer aria-hidden="true" />} onClick={() => printMutation.mutate(document.id)} />
               </div></td>
             </tr>)}
           </tbody></table></div>}

@@ -1,7 +1,7 @@
 mod shell_commands;
 
 use shell_commands::{
-    get_shell_info, pick_import_file, read_import_preview, save_export_bytes, save_export_file,
+    get_shell_info, pick_import_file, read_import_file, read_import_preview, save_export_bytes, save_export_file,
     ImportApprovals,
 };
 
@@ -14,6 +14,7 @@ pub fn run() {
             get_shell_info,
             pick_import_file,
             read_import_preview,
+            read_import_file,
             save_export_file,
             save_export_bytes
         ])

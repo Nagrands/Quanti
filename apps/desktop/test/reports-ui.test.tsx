@@ -3,9 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { ReportsPage } from "../src/features/reports/ReportsPage";
-import { reportToCsv } from "../src/features/reports/report-export";
+import { reportToCsv, reportToSnapshot } from "../src/features/reports/report-export";
 import * as api from "../src/features/reports/reports-api";
 import { reportDefinitions } from "../src/features/reports/reports-model";
+import * as shell from "../src/tauri-shell";
 import { renderWithAppProviders } from "./render-app";
 
 vi.mock("../src/features/reports/reports-api");
@@ -163,5 +164,31 @@ describe("reports workspace", () => {
     expect(csv).toContain("\"Товар\",\"Склад\",\"Количество\",\"Единицы\"");
     expect(csv).toContain("\"SKU-1 · Basil\",\"MAIN · Main warehouse\",\"8.000\",\"кг, пучок\"");
     expect(csv).toContain("\"SKU-2 · Salt\",\"MAIN · Main warehouse\",\"4.000\",\"кг\"");
+  });
+
+  test("serializes a portable read-only report snapshot", () => {
+    const definition = reportDefinitions.find((item) => item.kind === "stock-turnover")!;
+    const filters = { from: "2026-06-01", to: "2026-06-30", at: "", warehouseId: "", productId: "", accountId: "", counterpartyId: "", limit: "" };
+    const snapshot = reportToSnapshot(definition, filters, [{ productId: "product-1", warehouseId: "warehouse-1", incoming: "12", outgoing: "5" }], {
+      products: new Map([["product-1", "SKU-1 · Widget"]]), productUnits: new Map(), warehouses: new Map([["warehouse-1", "MAIN · Main warehouse"]]), counterparties: new Map(), accounts: new Map()
+    }, "ru");
+    expect(snapshot).toMatchObject({ format: "quanti-transfer", version: 1, section: "report-snapshot" });
+    expect(snapshot.payload.rows[0]).toEqual({ product: "SKU-1 · Widget", warehouse: "MAIN · Main warehouse", incoming: "12", outgoing: "5" });
+  });
+
+  test("imports a report snapshot in read-only mode", async () => {
+    const user = userEvent.setup();
+    const snapshot = {
+      format: "quanti-transfer", version: 1, section: "report-snapshot", exportedAt: "2026-06-15T10:00:00.000Z",
+      payload: { kind: "stock-turnover", title: "Сохранённый оборот", locale: "ru", filters: [], columns: [{ key: "product", label: "Товар" }], rows: [{ product: "Снимок товара" }] }
+    } as const;
+    vi.spyOn(shell, "pickJsonImport").mockResolvedValue({ fileName: "report.json", size: 200, contents: JSON.stringify(snapshot) });
+    renderWithAppProviders(<ReportsPage />, "/reports");
+    await screen.findByRole("cell", { name: "SKU-1 · Widget" });
+    await user.click(screen.getByRole("button", { name: "Импорт снимка" }));
+    expect(await screen.findByText("Сохранённый оборот")).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "Снимок товара" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Закрыть снимок" }));
+    expect(screen.queryByText("Снимок товара")).not.toBeInTheDocument();
   });
 });

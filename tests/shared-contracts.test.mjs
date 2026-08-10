@@ -18,6 +18,7 @@ test("shared contracts export the expected modules", async () => {
   assert.match(indexContent, /export \* from "\.\/documents"/);
   assert.match(indexContent, /export \* from "\.\/payments"/);
   assert.match(indexContent, /export \* from "\.\/reports"/);
+  assert.match(indexContent, /export \* from "\.\/transfer"/);
 });
 
 test("shared contracts define ERP status and workflow DTOs", async () => {

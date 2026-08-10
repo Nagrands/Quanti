@@ -68,6 +68,14 @@ pub struct ImportPreview {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ImportedTextFile {
+    file_name: String,
+    size: u64,
+    contents: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SelectedImportFile {
     token: String,
     file_name: String,
@@ -92,6 +100,7 @@ pub async fn pick_import_file(
         .dialog()
         .file()
         .set_title("Select a file to import into Quanti")
+        .add_filter("Quanti transfer", &["json"])
         .blocking_pick_file()
     else {
         return Ok(None);
@@ -103,6 +112,10 @@ pub async fn pick_import_file(
         return Err("Only files can be imported.".into());
     }
 
+    if !has_allowed_extension(&resolved, &["json"]) {
+        return Err("Only Quanti JSON transfer files can be imported.".into());
+    }
+
     if metadata.len() > MAX_IMPORT_BYTES {
         return Err("Import file is too large for preview.".into());
     }
@@ -112,6 +125,30 @@ pub async fn pick_import_file(
         file_name: file_name(&resolved)?,
         size: metadata.len(),
     }))
+}
+
+#[tauri::command]
+pub fn read_import_file(
+    token: String,
+    approvals: State<'_, ImportApprovals>,
+) -> Result<ImportedTextFile, String> {
+    let resolved = approvals.resolve(&token)?;
+    approvals.consume(&token)?;
+    let metadata = fs::metadata(&resolved).map_err(|error| error.to_string())?;
+    if !metadata.is_file() || !has_allowed_extension(&resolved, &["json"]) {
+        return Err("Only Quanti JSON transfer files can be imported.".into());
+    }
+    if metadata.len() > MAX_IMPORT_BYTES {
+        return Err("Import file is larger than 5 MB.".into());
+    }
+    let bytes = fs::read(&resolved).map_err(|error| error.to_string())?;
+    let contents = String::from_utf8(bytes)
+        .map_err(|_| "Import file must contain valid UTF-8 JSON.".to_string())?;
+    Ok(ImportedTextFile {
+        file_name: file_name(&resolved)?,
+        size: metadata.len(),
+        contents,
+    })
 }
 
 #[tauri::command]

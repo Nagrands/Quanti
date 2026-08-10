@@ -3,6 +3,8 @@ import { ArrowDown, ArrowUp, Ban, Pencil, Plus, RotateCcw, Search } from "lucide
 import { useMemo, useState } from "react";
 
 import { useI18n } from "../../i18n";
+import { ActionIconButton } from "../../components/actions/ActionIconButton";
+import { DataTransferControls } from "../transfer/DataTransferControls";
 import {
   createMasterData,
   deactivateMasterData,
@@ -235,18 +237,21 @@ export function MasterDataPage() {
             </select>
           </label>
         </div>
-        <button
-          type="button"
-          className="button button--primary"
-          onClick={() => {
-            setEditingEntity(null);
-            setFormInitialValues(createMasterDataDefaults(definition, entities));
-            setIsFormOpen(true);
-          }}
-        >
-          <Plus aria-hidden="true" />
-          {t("Создать")}
-        </button>
+        <div className="data-toolbar__actions">
+          <DataTransferControls section="master-data" onImported={() => queryClient.invalidateQueries()} />
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={() => {
+              setEditingEntity(null);
+              setFormInitialValues(createMasterDataDefaults(definition, entities));
+              setIsFormOpen(true);
+            }}
+          >
+            <Plus aria-hidden="true" />
+            {t("Создать")}
+          </button>
+        </div>
       </div>
 
       <div className="data-table-frame">
@@ -333,37 +338,30 @@ export function MasterDataPage() {
                     </td>
                     <td>
                       <div className="row-actions">
-                        <button
-                          type="button"
-                          className="icon-button"
-                          aria-label={t("Изменить {name}", { name: entity.name })}
+                        <ActionIconButton
+                          label={t("Изменить {name}", { name: entity.name })}
+                          icon={<Pencil aria-hidden="true" />}
                           disabled={!entity.isActive}
                           onClick={() => {
                             setEditingEntity(entity);
                             setFormInitialValues(definition.toFormValues(entity));
                             setIsFormOpen(true);
                           }}
-                        >
-                          <Pencil aria-hidden="true" />
-                        </button>
+                        />
                         {entity.isActive ? (
-                          <button
-                            type="button"
-                            className="icon-button icon-button--danger"
-                            aria-label={t("Деактивировать {name}", { name: entity.name })}
+                          <ActionIconButton
+                            tone="danger"
+                            label={t("Деактивировать {name}", { name: entity.name })}
+                            icon={<Ban aria-hidden="true" />}
                             onClick={() => setDeactivatingEntity(entity)}
-                          >
-                            <Ban aria-hidden="true" />
-                          </button>
+                          />
                         ) : (
-                          <button
-                            type="button"
-                            className="icon-button icon-button--success"
-                            aria-label={t("Восстановить {name}", { name: entity.name })}
+                          <ActionIconButton
+                            tone="success"
+                            label={t("Восстановить {name}", { name: entity.name })}
+                            icon={<RotateCcw aria-hidden="true" />}
                             onClick={() => setRestoringEntity(entity)}
-                          >
-                            <RotateCcw aria-hidden="true" />
-                          </button>
+                          />
                         )}
                       </div>
                     </td>

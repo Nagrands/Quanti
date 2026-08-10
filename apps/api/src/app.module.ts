@@ -8,6 +8,7 @@ import { PrintingModule } from "./modules/printing/printing.module";
 import { ProductsModule } from "./modules/products/products.module";
 import { ReportsModule } from "./modules/reports/reports.module";
 import { StockModule } from "./modules/stock/stock.module";
+import { TransferModule } from "./modules/transfer/transfer.module";
 
 export const domainModules = [
   ProductsModule,
@@ -15,7 +16,8 @@ export const domainModules = [
   StockModule,
   PaymentsModule,
   PrintingModule,
-  ReportsModule
+  ReportsModule,
+  TransferModule
 ] as const;
 
 @Module({
