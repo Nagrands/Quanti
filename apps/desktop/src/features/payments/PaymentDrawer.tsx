@@ -2,20 +2,20 @@ import type { AccountDto, CounterpartyDebtDto, CounterpartyDto, DocumentDto, Pay
 import { Plus, Trash2, X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { useI18n } from "../../i18n";
-import { allocatedTotal, createEmptyPayment, emptyAllocation, paymentToForm, type PaymentFormValues } from "./payment-model";
+import { allocatedTotal, createEmptyPayment, createPaymentNumber, emptyAllocation, paymentToForm, type PaymentFormValues } from "./payment-model";
 
 interface Props {
   payment: PaymentDto | null; accounts: AccountDto[]; counterparties: CounterpartyDto[];
-  documents: DocumentDto[]; debts: CounterpartyDebtDto[]; isSaving: boolean;
+  documents: DocumentDto[]; payments: PaymentDto[]; debts: CounterpartyDebtDto[]; isSaving: boolean;
   onClose: () => void; onSave: (values: PaymentFormValues) => Promise<void>;
 }
 
-export function PaymentDrawer({ payment, accounts, counterparties, documents, debts, isSaving, onClose, onSave }: Props) {
+export function PaymentDrawer({ payment, accounts, counterparties, documents, payments, debts, isSaving, onClose, onSave }: Props) {
   const { formatApiError, paymentStatusLabels, t } = useI18n();
   const [values, setValues] = useState<PaymentFormValues>(createEmptyPayment);
   const [error, setError] = useState("");
   const readOnly = payment?.status !== undefined && payment.status !== "DRAFT";
-  useEffect(() => { setValues(payment ? paymentToForm(payment) : createEmptyPayment()); setError(""); }, [payment]);
+  useEffect(() => { setValues(payment ? paymentToForm(payment) : createEmptyPayment(payments)); setError(""); }, [payment]);
   const allocated = allocatedTotal(values);
   const unallocated = Number(values.amount || 0) - allocated;
   const debt = debts.find((item) => item.counterpartyId === values.counterpartyId);
@@ -45,7 +45,17 @@ export function PaymentDrawer({ payment, accounts, counterparties, documents, de
       <div className="document-fields">
         <label>{t("Номер")}<input value={values.number} disabled={readOnly} onChange={(e) => setValues({ ...values, number: e.target.value })} /></label>
         <label>{t("Направление")}<select value={values.direction} disabled={readOnly} onChange={(e) => setValues({ ...values, direction: e.target.value as PaymentFormValues["direction"] })}><option value="INCOMING">{t("Входящий")}</option><option value="OUTGOING">{t("Исходящий")}</option></select></label>
-        <label>{t("Дата платежа")}<input type="date" value={values.paymentDate} disabled={readOnly} onChange={(e) => setValues({ ...values, paymentDate: e.target.value })} /></label>
+        <label>{t("Дата платежа")}<input type="date" value={values.paymentDate} disabled={readOnly} onChange={(e) => {
+          const nextDate = e.target.value;
+          const currentAutoNumber = createPaymentNumber(payments, values.paymentDate);
+          setValues({
+            ...values,
+            paymentDate: nextDate,
+            number: values.number === currentAutoNumber
+              ? createPaymentNumber(payments, nextDate)
+              : values.number
+          });
+        }} /></label>
         <label>{t("Счёт")}<select value={values.accountId} disabled={readOnly} onChange={(e) => setValues({ ...values, accountId: e.target.value })}><option value="">{t("Выберите счёт")}</option>{values.accountId && !selectedAccountAvailable ? <option value={values.accountId}>{t("Счёт недоступен")}</option> : null}{accounts.map((a) => <option key={a.id} value={a.id}>{a.code} · {a.name} ({a.currencyCode})</option>)}</select></label>
         <label className="document-fields__wide">{t("Контрагент")}<select value={values.counterpartyId} disabled={readOnly} onChange={(e) => setValues({ ...values, counterpartyId: e.target.value, allocations: [] })}><option value="">{t("Без контрагента")}</option>{values.counterpartyId && !selectedCounterpartyAvailable ? <option value={values.counterpartyId}>{t("Контрагент недоступен")}</option> : null}{counterparties.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}</select></label>
         <label className="document-fields__wide">{t("Сумма")}<input inputMode="decimal" value={values.amount} disabled={readOnly} onChange={(e) => setValues({ ...values, amount: e.target.value })} /></label>

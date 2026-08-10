@@ -7,10 +7,28 @@ export interface PaymentFormValues {
 }
 
 export const emptyAllocation = (): AllocationForm => ({ key: crypto.randomUUID(), documentId: "", amount: "0" });
-export const createEmptyPayment = (): PaymentFormValues => ({
-  number: "", direction: "INCOMING", paymentDate: new Date().toISOString().slice(0, 10),
-  amount: "0", accountId: "", counterpartyId: "", notes: "", allocations: []
-});
+export function createPaymentNumber(
+  existingPayments: readonly Pick<PaymentDto, "number">[],
+  paymentDate: string
+) {
+  const month = paymentDate.slice(0, 7).replace("-", "");
+  const prefix = `PAY-${month}`;
+  const pattern = new RegExp(`^${prefix}-(\\d{4})$`);
+  const maxSequence = existingPayments.reduce((currentMax, payment) => {
+    const match = pattern.exec(payment.number);
+    return match ? Math.max(currentMax, Number(match[1])) : currentMax;
+  }, 0);
+
+  return `${prefix}-${String(maxSequence + 1).padStart(4, "0")}`;
+}
+
+export const createEmptyPayment = (existingPayments: readonly Pick<PaymentDto, "number">[] = []): PaymentFormValues => {
+  const paymentDate = new Date().toISOString().slice(0, 10);
+  return {
+    number: createPaymentNumber(existingPayments, paymentDate), direction: "INCOMING", paymentDate,
+    amount: "0", accountId: "", counterpartyId: "", notes: "", allocations: []
+  };
+};
 export const paymentToForm = (payment: PaymentDto): PaymentFormValues => ({
   number: payment.number, direction: payment.direction, paymentDate: payment.paymentDate.slice(0, 10),
   amount: payment.amount, accountId: payment.accountId, counterpartyId: payment.counterpartyId ?? "",

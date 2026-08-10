@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { PaymentsPage } from "../src/features/payments/PaymentsPage";
 import * as api from "../src/features/payments/payments-api";
-import { allocatedTotal, toPaymentPayload } from "../src/features/payments/payment-model";
+import { allocatedTotal, createPaymentNumber, toPaymentPayload } from "../src/features/payments/payment-model";
 import { renderWithAppProviders } from "./render-app";
 
 vi.mock("../src/features/payments/payments-api");
@@ -38,7 +38,7 @@ describe("payments workspace", () => {
     const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-1");
     await user.click(screen.getByRole("button", { name: "Новый платёж" }));
     const drawer = screen.getByRole("complementary", { name: "Новый платёж" });
-    await user.type(within(drawer).getByLabelText("Номер"), "PAY-3");
+    expect(within(drawer).getByLabelText("Номер")).toHaveValue(createPaymentNumber([draft, posted], new Date().toISOString().slice(0, 10)));
     await user.selectOptions(within(drawer).getByLabelText("Направление"), "OUTGOING");
     await user.selectOptions(within(drawer).getByLabelText("Счёт"), "a1");
     await user.selectOptions(within(drawer).getByLabelText("Контрагент"), "c1");
@@ -48,6 +48,35 @@ describe("payments workspace", () => {
     const allocated = within(drawer).getByLabelText("Сумма распределения"); await user.clear(allocated); await user.type(allocated, "40");
     await user.click(within(drawer).getByRole("button", { name: "Сохранить черновик" }));
     expect(api.createPayment).toHaveBeenCalledWith(expect.objectContaining({ direction: "OUTGOING", amount: "100.00", allocations: [{ documentId: "d1", amount: "40.00" }] }));
+  });
+
+  test("updates an untouched automatic number when the payment month changes", async () => {
+    const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-1");
+    await user.click(screen.getByRole("button", { name: "Новый платёж" }));
+    const drawer = screen.getByRole("complementary", { name: "Новый платёж" });
+    await user.clear(within(drawer).getByLabelText("Дата платежа"));
+    await user.type(within(drawer).getByLabelText("Дата платежа"), "2026-12-05");
+    expect(within(drawer).getByLabelText("Номер")).toHaveValue("PAY-202612-0001");
+  });
+
+  test("does not replace a manually edited number when the payment month changes", async () => {
+    const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-1");
+    await user.click(screen.getByRole("button", { name: "Новый платёж" }));
+    const drawer = screen.getByRole("complementary", { name: "Новый платёж" });
+    const number = within(drawer).getByLabelText("Номер");
+    await user.clear(number); await user.type(number, "MANUAL-7");
+    await user.clear(within(drawer).getByLabelText("Дата платежа"));
+    await user.type(within(drawer).getByLabelText("Дата платежа"), "2026-12-05");
+    expect(number).toHaveValue("MANUAL-7");
+  });
+
+  test("increments only matching monthly automatic payment numbers", () => {
+    expect(createPaymentNumber([
+      { number: "PAY-202612-0002" },
+      { number: "PAY-202612-0010" },
+      { number: "PAY-202611-0099" },
+      { number: "PAY-202612-CUSTOM" }
+    ], "2026-12-05")).toBe("PAY-202612-0011");
   });
 
   test("rejects allocations above the payment amount", async () => {
