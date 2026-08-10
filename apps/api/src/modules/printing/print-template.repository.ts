@@ -3,7 +3,7 @@ import { Prisma } from "@quanti/db";
 import type { PrintTemplateScope } from "@quanti/shared";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
-import { defaultDocumentTemplate } from "./default-document-template";
+import { defaultDocumentTemplates } from "./default-document-template";
 
 export interface PrintTemplateRecord {
   id: string;
@@ -19,12 +19,11 @@ export class PrintTemplateRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async find(scope: PrintTemplateScope, version?: number): Promise<PrintTemplateRecord> {
-    let template = await this.query(scope, version);
-
-    if (!template && scope === "DOCUMENT") {
+    if (scope === "DOCUMENT") {
       await this.ensureDefaultDocumentTemplate();
-      template = await this.query(scope, version);
     }
+
+    const template = await this.query(scope, version);
 
     if (!template) {
       throw new NotFoundException(`No active ${scope.toLowerCase()} print template was found.`);
@@ -53,24 +52,24 @@ export class PrintTemplateRepository {
   }
 
   private async ensureDefaultDocumentTemplate() {
-    const template = defaultDocumentTemplate;
-
-    await this.prisma.$executeRaw(Prisma.sql`
-      INSERT INTO "PrintTemplate" (
-        "id", "scope", "name", "version", "isActive", "html", "styles", "createdAt", "updatedAt"
-      )
-      VALUES (
-        ${template.id},
-        ${template.scope}::"PrintTemplateScope",
-        ${template.name},
-        ${template.version},
-        true,
-        ${template.html},
-        ${template.styles},
-        NOW(),
-        NOW()
-      )
-      ON CONFLICT ("scope", "version") DO NOTHING
-    `);
+    for (const template of defaultDocumentTemplates) {
+      await this.prisma.$executeRaw(Prisma.sql`
+        INSERT INTO "PrintTemplate" (
+          "id", "scope", "name", "version", "isActive", "html", "styles", "createdAt", "updatedAt"
+        )
+        VALUES (
+          ${template.id},
+          ${template.scope}::"PrintTemplateScope",
+          ${template.name},
+          ${template.version},
+          true,
+          ${template.html},
+          ${template.styles},
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT ("scope", "version") DO NOTHING
+      `);
+    }
   }
 }

@@ -3,6 +3,7 @@ import type { DocumentPrintDataDto } from "@quanti/shared";
 import Handlebars from "handlebars";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
+import { defaultDocumentTemplateV2 } from "./default-document-template";
 import { PdfRenderException } from "./pdf-render.exception";
 import { PDF_RENDERER, type PdfRenderer } from "./pdf-renderer";
 import { PrintTemplateRepository } from "./print-template.repository";
@@ -16,6 +17,9 @@ export class DocumentPrintService {
   ) {
     Handlebars.registerHelper("formatDate", (value: string) =>
       new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(value)));
+    Handlebars.registerHelper("formatDateRu", (value: string) =>
+      new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(value)));
+    Handlebars.registerHelper("eq", (left: unknown, right: unknown) => left === right);
   }
 
   async render(documentId: string, templateVersion?: number) {
@@ -23,7 +27,16 @@ export class DocumentPrintService {
       this.buildData(documentId),
       this.templates.find("DOCUMENT", templateVersion)
     ]);
-    const body = Handlebars.compile(template.html, { strict: true })(data);
+    const printData = template.id === defaultDocumentTemplateV2.id
+      ? {
+          ...data,
+          branding: {
+            ...data.branding,
+            documentTitle: this.documentTitle(data.type, "ru")
+          }
+        }
+      : data;
+    const body = Handlebars.compile(template.html, { strict: true })(printData);
     const html = `<!doctype html><html><head><meta charset="utf-8"><style>${template.styles ?? ""}</style></head><body>${body}</body></html>`;
 
     try {
@@ -86,15 +99,26 @@ export class DocumentPrintService {
     };
   }
 
-  private documentTitle(type: DocumentPrintDataDto["type"]) {
-    return {
-      SALE: "Sales document",
-      PURCHASE: "Purchase document",
-      TRANSFER: "Warehouse transfer",
-      STOCK_ADJUSTMENT: "Stock adjustment",
-      RETURN_IN: "Incoming return",
-      RETURN_OUT: "Outgoing return"
-    }[type];
+  private documentTitle(type: DocumentPrintDataDto["type"], locale: "en" | "ru" = "en") {
+    const titles = locale === "ru"
+      ? {
+          SALE: "Продажа",
+          PURCHASE: "Закупка",
+          TRANSFER: "Перемещение",
+          STOCK_ADJUSTMENT: "Корректировка остатков",
+          RETURN_IN: "Возврат от покупателя",
+          RETURN_OUT: "Возврат поставщику"
+        }
+      : {
+          SALE: "Sales document",
+          PURCHASE: "Purchase document",
+          TRANSFER: "Warehouse transfer",
+          STOCK_ADJUSTMENT: "Stock adjustment",
+          RETURN_IN: "Incoming return",
+          RETURN_OUT: "Outgoing return"
+        };
+
+    return titles[type];
   }
 
   private safeFileName(value: string) {
