@@ -23,6 +23,7 @@ export interface MasterDataColumn {
   key: string;
   label: string;
   render: (entity: MasterDataEntity, t?: Translate) => string;
+  sortValue?: (entity: MasterDataEntity) => string | number;
 }
 
 export interface MasterDataField {
@@ -108,7 +109,8 @@ const updatedColumn: MasterDataColumn = {
   render: (entity) => new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short"
-  }).format(new Date(entity.updatedAt))
+  }).format(new Date(entity.updatedAt)),
+  sortValue: (entity) => new Date(entity.updatedAt).getTime()
 };
 
 export const masterDataDefinitions: readonly MasterDataDefinition[] = [
@@ -122,7 +124,8 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
         key: "product",
         label: "Товар",
         render: (entity, t = (text) => text) =>
-          `${entity.name}\n${value(entity, "sku")} · ${value(entity, "categoryName") || t("Без категории")}`
+          `${entity.name}\n${value(entity, "sku")} · ${value(entity, "categoryName") || t("Без категории")}`,
+        sortValue: (entity) => entity.name
       },
       {
         key: "units",
@@ -183,8 +186,8 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
     singularLabel: "категорию",
     searchPlaceholder: "Поиск категорий",
     columns: [
-      { key: "code", label: "Код", render: (entity) => value(entity, "code") },
-      { key: "name", label: "Наименование", render: (entity) => entity.name },
+      { key: "code", label: "Код", render: (entity) => value(entity, "code"), sortValue: (entity) => value(entity, "code") },
+      { key: "name", label: "Наименование", render: (entity) => entity.name, sortValue: (entity) => entity.name },
       { key: "description", label: "Описание", render: (entity) => value(entity, "description") || "—" },
       updatedColumn
     ],
@@ -203,8 +206,8 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
     singularLabel: "склад",
     searchPlaceholder: "Поиск складов",
     columns: [
-      { key: "code", label: "Код", render: (entity) => value(entity, "code") },
-      { key: "name", label: "Наименование", render: (entity) => entity.name },
+      { key: "code", label: "Код", render: (entity) => value(entity, "code"), sortValue: (entity) => value(entity, "code") },
+      { key: "name", label: "Наименование", render: (entity) => entity.name, sortValue: (entity) => entity.name },
       updatedColumn
     ],
     fields: [
@@ -221,8 +224,8 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
     singularLabel: "контрагента",
     searchPlaceholder: "Поиск контрагентов",
     columns: [
-      { key: "code", label: "Код", render: (entity) => value(entity, "code") },
-      { key: "name", label: "Наименование", render: (entity) => entity.name },
+      { key: "code", label: "Код", render: (entity) => value(entity, "code"), sortValue: (entity) => value(entity, "code") },
+      { key: "name", label: "Наименование", render: (entity) => entity.name, sortValue: (entity) => entity.name },
       { key: "type", label: "Тип", render: (entity) => ({ CUSTOMER: "Покупатель", SUPPLIER: "Поставщик", BOTH: "Покупатель и поставщик", INTERNAL: "Внутренний" })[value(entity, "type")] ?? value(entity, "type") },
       { key: "taxId", label: "ИНН", render: (entity) => value(entity, "taxId") || "—" },
       updatedColumn
@@ -254,8 +257,8 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
     singularLabel: "счёт",
     searchPlaceholder: "Поиск счетов",
     columns: [
-      { key: "code", label: "Код", render: (entity) => value(entity, "code") },
-      { key: "name", label: "Наименование", render: (entity) => entity.name },
+      { key: "code", label: "Код", render: (entity) => value(entity, "code"), sortValue: (entity) => value(entity, "code") },
+      { key: "name", label: "Наименование", render: (entity) => entity.name, sortValue: (entity) => entity.name },
       { key: "type", label: "Тип", render: (entity) => value(entity, "type") === "CASH" ? "Наличные" : "Банк" },
       { key: "currencyCode", label: "Валюта", render: (entity) => value(entity, "currencyCode") },
       updatedColumn

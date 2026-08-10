@@ -46,6 +46,22 @@ const archivedProduct = {
   isActive: false
 };
 
+const secondProduct = {
+  ...product,
+  id: "product-2",
+  sku: "PRD-010",
+  name: "Apple lamp",
+  updatedAt: "2026-06-03T10:00:00.000Z"
+};
+
+const thirdProduct = {
+  ...product,
+  id: "product-3",
+  sku: "PRD-002",
+  name: "Cable lamp",
+  updatedAt: "2026-06-02T10:00:00.000Z"
+};
+
 const category = {
   id: "category-1",
   code: "LIGHT",
@@ -55,6 +71,13 @@ const category = {
   createdAt: "2026-06-01T10:00:00.000Z",
   updatedAt: "2026-06-01T10:00:00.000Z"
 };
+
+function firstCellValues() {
+  return within(screen.getByRole("table"))
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => within(row).getAllByRole("cell")[0].textContent);
+}
 
 describe("master data workspace", () => {
   beforeEach(() => {
@@ -193,6 +216,87 @@ describe("master data workspace", () => {
     }
   });
 
+  test("sorts products by name and update date in both directions", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getMasterData).mockImplementation(async (resource) =>
+      resource === "product-categories" ? [category] : [product, secondProduct, thirdProduct]
+    );
+    renderWithAppProviders(<MasterDataPage />, "/products");
+    await screen.findByText(/PRD-001/);
+
+    expect(firstCellValues()).toEqual([
+      expect.stringContaining("Desk lamp"),
+      expect.stringContaining("Apple lamp"),
+      expect.stringContaining("Cable lamp")
+    ]);
+
+    const productSort = screen.getByRole("button", { name: "Сортировать Товар по возрастанию" });
+    await user.click(productSort);
+    expect(screen.getByRole("columnheader", { name: /Товар/ })).toHaveAttribute("aria-sort", "ascending");
+    expect(firstCellValues()).toEqual([
+      expect.stringContaining("Apple lamp"),
+      expect.stringContaining("Cable lamp"),
+      expect.stringContaining("Desk lamp")
+    ]);
+
+    await user.click(screen.getByRole("button", { name: "Сортировать Товар по убыванию" }));
+    expect(firstCellValues()).toEqual([
+      expect.stringContaining("Desk lamp"),
+      expect.stringContaining("Cable lamp"),
+      expect.stringContaining("Apple lamp")
+    ]);
+
+    await user.click(screen.getByRole("button", { name: "Сортировать Изменено по возрастанию" }));
+    expect(firstCellValues()).toEqual([
+      expect.stringContaining("Desk lamp"),
+      expect.stringContaining("Cable lamp"),
+      expect.stringContaining("Apple lamp")
+    ]);
+    await user.click(screen.getByRole("button", { name: "Сортировать Изменено по убыванию" }));
+    expect(firstCellValues()).toEqual([
+      expect.stringContaining("Apple lamp"),
+      expect.stringContaining("Cable lamp"),
+      expect.stringContaining("Desk lamp")
+    ]);
+  });
+
+  test("uses natural code order with filters and remembers sorting per resource", async () => {
+    const user = userEvent.setup();
+    const warehouses = [
+      { ...category, id: "warehouse-10", code: "WH-10", name: "Zulu" },
+      { ...category, id: "warehouse-2", code: "WH-2", name: "Alpha" },
+      { ...category, id: "warehouse-1", code: "WH-1", name: "Beta" }
+    ];
+    vi.mocked(getMasterData).mockImplementation(async (resource) => {
+      if (resource === "product-categories") return [category];
+      if (resource === "warehouses") return warehouses;
+      return [product, secondProduct, archivedProduct];
+    });
+    renderWithAppProviders(<MasterDataPage />, "/products");
+    await screen.findByText(/PRD-001/);
+
+    await user.click(screen.getByRole("button", { name: "Сортировать Товар по возрастанию" }));
+    await user.type(screen.getByPlaceholderText("Поиск товаров"), "lamp");
+    expect(firstCellValues()).toEqual([
+      expect.stringContaining("Apple lamp"),
+      expect.stringContaining("Desk lamp")
+    ]);
+
+    await user.click(screen.getByRole("button", { name: "Склады" }));
+    await screen.findByText("WH-10");
+    await user.click(screen.getByRole("button", { name: "Сортировать Код по возрастанию" }));
+    expect(firstCellValues()).toEqual(["WH-1", "WH-2", "WH-10"]);
+    await user.click(screen.getByRole("button", { name: "Сортировать Код по убыванию" }));
+    expect(firstCellValues()).toEqual(["WH-10", "WH-2", "WH-1"]);
+
+    await user.click(screen.getByRole("button", { name: "Товары" }));
+    expect(screen.getByRole("columnheader", { name: /Товар/ })).toHaveAttribute("aria-sort", "ascending");
+    expect(firstCellValues()).toEqual([
+      expect.stringContaining("Apple lamp"),
+      expect.stringContaining("Desk lamp")
+    ]);
+  });
+
   test("localizes the master-data filters in English", async () => {
     window.localStorage.setItem("quanti.locale", "en");
     renderWithAppProviders(<MasterDataPage />, "/products");
@@ -202,5 +306,8 @@ describe("master data workspace", () => {
     expect(screen.getByLabelText("Activity filter")).toHaveValue("active");
     const summary = screen.getByLabelText("Master data summary");
     expect(within(summary).getByText("Active")).toBeInTheDocument();
+    const sortButton = screen.getByRole("button", { name: "Sort Product ascending" });
+    await userEvent.click(sortButton);
+    expect(screen.getByRole("columnheader", { name: /Product/ })).toHaveAttribute("aria-sort", "ascending");
   });
 });

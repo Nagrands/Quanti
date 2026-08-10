@@ -258,6 +258,8 @@ const english: Record<string, string> = {
   "шт, кг, л": "pcs, kg, l",
   "Описание": "Description",
   "Изменено": "Updated",
+  "Сортировать {column} по возрастанию": "Sort {column} ascending",
+  "Сортировать {column} по убыванию": "Sort {column} descending",
   "Код": "Code",
   "ИНН": "Tax ID",
   "Валюта": "Currency",

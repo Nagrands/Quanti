@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, Pencil, Plus, RotateCcw, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Ban, Pencil, Plus, RotateCcw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useI18n } from "../../i18n";
@@ -20,6 +20,11 @@ import {
 } from "./master-data";
 
 type StatusFilter = "active" | "archived" | "all";
+type SortDirection = "ascending" | "descending";
+interface SortState {
+  columnKey: string;
+  direction: SortDirection;
+}
 
 export function MasterDataPage() {
   const { formatApiError, locale, t } = useI18n();
@@ -27,6 +32,7 @@ export function MasterDataPage() {
   const [resource, setResource] = useState<MasterDataResource>("products");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [sortByResource, setSortByResource] = useState<Partial<Record<MasterDataResource, SortState>>>({});
   const [editingEntity, setEditingEntity] = useState<MasterDataEntity | null>(null);
   const [formInitialValues, setFormInitialValues] = useState<FormValues>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -92,9 +98,9 @@ export function MasterDataPage() {
   const activeCount = entities.filter((entity) => entity.isActive).length;
   const archivedCount = entities.length - activeCount;
 
-  const filteredEntities = useMemo(() => {
+  const visibleEntities = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase();
-    return entities.filter((entity) => {
+    const filtered = entities.filter((entity) => {
       const matchesStatus = statusFilter === "all"
         || (statusFilter === "active" ? entity.isActive : !entity.isActive);
       const matchesSearch = !normalizedSearch || definition.columns.some((column) =>
@@ -103,7 +109,41 @@ export function MasterDataPage() {
 
       return matchesStatus && matchesSearch;
     });
-  }, [definition, entities, search, statusFilter]);
+
+    const sort = sortByResource[resource];
+    const sortColumn = definition.columns.find((column) => column.key === sort?.columnKey);
+    if (!sort || !sortColumn?.sortValue) {
+      return filtered;
+    }
+
+    const collator = new Intl.Collator(locale, { numeric: true, sensitivity: "base" });
+    return filtered
+      .map((entity, index) => ({ entity, index }))
+      .sort((left, right) => {
+        const leftValue = sortColumn.sortValue!(left.entity);
+        const rightValue = sortColumn.sortValue!(right.entity);
+        const comparison = typeof leftValue === "number" && typeof rightValue === "number"
+          ? leftValue - rightValue
+          : collator.compare(String(leftValue), String(rightValue));
+        return (sort.direction === "ascending" ? comparison : -comparison) || left.index - right.index;
+      })
+      .map(({ entity }) => entity);
+  }, [definition, entities, locale, resource, search, sortByResource, statusFilter]);
+
+  function toggleSort(columnKey: string) {
+    setSortByResource((current) => {
+      const currentSort = current[resource];
+      return {
+        ...current,
+        [resource]: {
+          columnKey,
+          direction: currentSort?.columnKey === columnKey && currentSort.direction === "ascending"
+            ? "descending"
+            : "ascending"
+        }
+      };
+    });
+  }
 
   function selectResource(nextResource: MasterDataResource) {
     setResource(nextResource);
@@ -166,7 +206,7 @@ export function MasterDataPage() {
         </div>
         <div className="summary-card">
           <span>{t("Показано")}</span>
-          <strong>{filteredEntities.length}</strong>
+          <strong>{visibleEntities.length}</strong>
         </div>
       </div>
 
@@ -220,7 +260,7 @@ export function MasterDataPage() {
               {t("Повторить")}
             </button>
           </div>
-        ) : filteredEntities.length === 0 ? (
+        ) : visibleEntities.length === 0 ? (
           <div className="table-state">
             <strong>{t(emptyTitle)}</strong>
             <span>{t(emptyDescription)}</span>
@@ -230,13 +270,44 @@ export function MasterDataPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  {definition.columns.map((column) => <th key={column.key}>{column.label}</th>)}
+                  {definition.columns.map((column) => {
+                    const sort = sortByResource[resource];
+                    const isActive = sort?.columnKey === column.key;
+                    const nextDirection = isActive && sort.direction === "ascending" ? "descending" : "ascending";
+                    return (
+                      <th
+                        aria-sort={column.sortValue && isActive ? sort.direction : undefined}
+                        key={column.key}
+                      >
+                        {column.sortValue ? (
+                          <button
+                            type="button"
+                            className="data-table__sort-button"
+                            aria-label={t(
+                              nextDirection === "ascending"
+                                ? "Сортировать {column} по возрастанию"
+                                : "Сортировать {column} по убыванию",
+                              { column: column.label }
+                            )}
+                            onClick={() => toggleSort(column.key)}
+                          >
+                            <span>{column.label}</span>
+                            {isActive ? (
+                              sort.direction === "ascending"
+                                ? <ArrowUp aria-hidden="true" />
+                                : <ArrowDown aria-hidden="true" />
+                            ) : null}
+                          </button>
+                        ) : column.label}
+                      </th>
+                    );
+                  })}
                   <th>{t("Статус")}</th>
                   <th className="data-table__actions-heading">{t("Действия")}</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredEntities.map((entity) => (
+                {visibleEntities.map((entity) => (
                   <tr key={entity.id} className={entity.isActive ? undefined : "data-table__row--archived"}>
                     {definition.columns.map((column) => (
                       <td
