@@ -1,4 +1,4 @@
-import type { CreateProductDto, DocumentDto, DocumentStatus, DocumentType, ProductDto } from "@quanti/shared";
+import type { CreateProductDto, DocumentDto, DocumentStatus, DocumentType, ProductDto, UpdateProductDto } from "@quanti/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ClipboardPaste, Eye, Pencil, Plus, Printer, RefreshCcw, Search, Trash2, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -19,6 +19,7 @@ import {
   repostDocument,
   unpostDocument,
   updateDocument,
+  updateProduct,
   updateProductAliases
 } from "./documents-api";
 import { createImportedPurchase, type DocumentFormValues, toDocumentPayload } from "./document-model";
@@ -66,6 +67,17 @@ export function DocumentsPage() {
         (current) => current
           ? { ...current, products: [...current.products, product] }
           : { products: [product], categories: [], warehouses: [], counterparties: [] }
+      );
+    }
+  });
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateProductDto }) => updateProduct(id, payload),
+    onSuccess: (product) => {
+      queryClient.setQueryData<Awaited<ReturnType<typeof getDocumentLookups>>>(
+        ["document-lookups"],
+        (current) => current
+          ? { ...current, products: current.products.map((candidate) => candidate.id === product.id ? product : candidate) }
+          : current
       );
     }
   });
@@ -163,7 +175,7 @@ export function DocumentsPage() {
           </tbody></table></div>}
       </div>
 
-      {isDrawerOpen ? <DocumentDrawer document={selected} initialValues={importedValues} products={lookupsQuery.data?.products ?? []} categories={lookupsQuery.data?.categories ?? []} warehouses={lookupsQuery.data?.warehouses ?? []} counterparties={lookupsQuery.data?.counterparties ?? []} documents={documentsQuery.data ?? []} isSaving={saveMutation.isPending} onClose={() => { setIsDrawerOpen(false); setSelected(null); setImportedValues(null); }} onSave={(values) => saveMutation.mutateAsync({ values, document: selected }).then(() => undefined)} onCreateProduct={(payload) => createProductMutation.mutateAsync(payload) as Promise<ProductDto>} /> : null}
+      {isDrawerOpen ? <DocumentDrawer document={selected} initialValues={importedValues} products={lookupsQuery.data?.products ?? []} categories={lookupsQuery.data?.categories ?? []} warehouses={lookupsQuery.data?.warehouses ?? []} counterparties={lookupsQuery.data?.counterparties ?? []} documents={documentsQuery.data ?? []} isSaving={saveMutation.isPending} isUpdatingProduct={updateProductMutation.isPending} onClose={() => { setIsDrawerOpen(false); setSelected(null); setImportedValues(null); }} onSave={(values) => saveMutation.mutateAsync({ values, document: selected }).then(() => undefined)} onCreateProduct={(payload) => createProductMutation.mutateAsync(payload) as Promise<ProductDto>} onUpdateProduct={(id, payload) => updateProductMutation.mutateAsync({ id, payload })} /> : null}
       {isPurchaseImportOpen ? <PurchaseListImportDialog
         products={lookupsQuery.data?.products ?? []}
         categories={lookupsQuery.data?.categories ?? []}

@@ -1,5 +1,5 @@
 import type { ProductDto } from "@quanti/shared";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Pencil, Search } from "lucide-react";
 import { useDeferredValue, useEffect, useId, useMemo, useState } from "react";
 
 import { useI18n } from "../../i18n";
@@ -10,6 +10,7 @@ interface ProductComboboxProps {
   disabled?: boolean;
   onChange: (productId: string) => void;
   onCreate: () => void;
+  onEdit: (product: ProductDto) => void;
 }
 
 function productLabel(product: ProductDto) {
@@ -21,7 +22,8 @@ export function ProductCombobox({
   products,
   disabled = false,
   onChange,
-  onCreate
+  onCreate,
+  onEdit
 }: ProductComboboxProps) {
   const { t } = useI18n();
   const inputId = useId();
@@ -115,29 +117,50 @@ export function ProductCombobox({
         }}
       />
       <ChevronDown className="product-combobox__chevron" aria-hidden="true" />
+      {selectedProduct && !disabled ? (
+        <button
+          type="button"
+          className="product-combobox__edit-selected"
+          aria-label={t("Изменить товар {name}", { name: selectedProduct.name })}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => onEdit(selectedProduct)}
+        >
+          <Pencil aria-hidden="true" />
+        </button>
+      ) : null}
 
       {isOpen ? (
         <div className="product-combobox__menu">
           <div id={listboxId} role="listbox" aria-label={t("Результаты поиска товаров")}>
             {filteredProducts.length > 0 ? filteredProducts.map((product, index) => (
-              <button
-                id={`${inputId}-option-${product.id}`}
-                key={product.id}
-                type="button"
-                role="option"
-                aria-label={productLabel(product)}
-                aria-selected={product.id === value}
-                className={index === activeIndex ? "product-combobox__option product-combobox__option--active" : "product-combobox__option"}
-                onMouseDown={(event) => event.preventDefault()}
-                onMouseEnter={() => setActiveIndex(index)}
-                onClick={() => selectProduct(product)}
-              >
-                <span>
-                  <strong>{product.name}</strong>
-                  <small>{product.sku}{product.categoryName ? ` · ${product.categoryName}` : ""}</small>
-                </span>
-                {product.id === value ? <Check aria-hidden="true" /> : null}
-              </button>
+              <div className="product-combobox__entry" role="presentation" key={product.id}>
+                <button
+                  id={`${inputId}-option-${product.id}`}
+                  type="button"
+                  role="option"
+                  aria-label={productLabel(product)}
+                  aria-selected={product.id === value}
+                  className={index === activeIndex ? "product-combobox__option product-combobox__option--active" : "product-combobox__option"}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => selectProduct(product)}
+                >
+                  <span>
+                    <strong>{product.name}</strong>
+                    <small>{product.sku}{product.categoryName ? ` · ${product.categoryName}` : ""}</small>
+                  </span>
+                  {product.id === value ? <Check aria-hidden="true" /> : null}
+                </button>
+                <button
+                  type="button"
+                  className="product-combobox__edit-option"
+                  aria-label={t("Изменить товар {name}", { name: product.name })}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => onEdit(product)}
+                >
+                  <Pencil aria-hidden="true" />
+                </button>
+              </div>
             )) : (
               <div className="product-combobox__empty" role="status">{t("Товары не найдены")}</div>
             )}

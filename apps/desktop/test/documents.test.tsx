@@ -17,6 +17,7 @@ import {
   repostDocument,
   unpostDocument,
   updateDocument,
+  updateProduct,
   updateProductAliases
 } from "../src/features/documents/documents-api";
 import { calculateAmount, sortDocumentLines, toDocumentPayload } from "../src/features/documents/document-model";
@@ -29,6 +30,7 @@ vi.mock("../src/features/documents/documents-api", () => ({
   createDocument: vi.fn(),
   createProduct: vi.fn(),
   updateDocument: vi.fn(),
+  updateProduct: vi.fn(),
   updateProductAliases: vi.fn(),
   deleteDocument: vi.fn(),
   printDocument: vi.fn(),
@@ -126,6 +128,13 @@ describe("documents workspace", () => {
     vi.mocked(getDocumentLookups).mockResolvedValue(lookups);
     vi.mocked(createDocument).mockResolvedValue(draft);
     vi.mocked(createProduct).mockResolvedValue(lookups.products[0]);
+    vi.mocked(updateProduct).mockImplementation(async (id, payload) => ({
+      ...lookups.products.find((product) => product.id === id)!,
+      ...payload,
+      categoryName: payload.categoryId === "category-1" ? "Vegetables" : null,
+      units: (payload.units ?? []).map((unit, index) => ({ id: `updated-unit-${index}`, ...unit })),
+      updatedAt: "2026-06-06T11:00:00.000Z"
+    }));
     vi.mocked(updateProductAliases).mockImplementation(async (id, aliases) => ({
       ...lookups.products.find((product) => product.id === id)!, aliases
     }));
@@ -381,6 +390,76 @@ describe("documents workspace", () => {
 
     expect(product).toHaveValue("VEG-2 · Carrot");
     expect(product).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("opens product editing from search results without selecting or losing the document draft", async () => {
+    const user = userEvent.setup();
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
+
+    const drawer = screen.getByRole("dialog", { name: "Новый документ" });
+    const productInput = within(drawer).getByRole("combobox", { name: "Товар" });
+    const number = within(drawer).getByLabelText("Номер");
+    await user.clear(number);
+    await user.type(number, "CUSTOM-DRAFT");
+    await user.click(productInput);
+    await user.click(within(drawer).getByRole("button", { name: "Изменить товар Carrot" }));
+
+    const editor = screen.getByRole("dialog", { name: "Изменение записи" });
+    expect(within(editor).getByLabelText("Наименование *")).toHaveValue("Carrot");
+    expect(productInput).toHaveValue("");
+    await user.click(within(editor).getByRole("button", { name: "Отмена" }));
+    expect(within(drawer).getByLabelText("Номер")).toHaveValue("CUSTOM-DRAFT");
+    expect(productInput).toHaveValue("");
+  });
+
+  test("edits a selected product and resets a removed unit to the updated base unit", async () => {
+    const user = userEvent.setup();
+    const updatedCarrot = {
+      ...lookups.products[1],
+      name: "Carrot updated",
+      units: [],
+      salePrice: "5.00",
+      updatedAt: "2026-06-06T11:00:00.000Z"
+    };
+    vi.mocked(updateProduct).mockResolvedValue(updatedCarrot);
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+    await user.click(screen.getByRole("button", { name: "Новый документ" }));
+
+    const drawer = screen.getByRole("dialog", { name: "Новый документ" });
+    const productInput = within(drawer).getByRole("combobox", { name: "Товар" });
+    await user.click(productInput);
+    await user.click(within(drawer).getByRole("option", { name: "VEG-2 · Carrot" }));
+    await user.selectOptions(within(drawer).getByLabelText("Единица"), "bunch");
+    expect(within(drawer).getByLabelText("Цена")).toHaveValue("0.45");
+
+    await user.click(within(drawer).getByRole("button", { name: "Изменить товар Carrot" }));
+    const editor = screen.getByRole("dialog", { name: "Изменение записи" });
+    const name = within(editor).getByLabelText("Наименование *");
+    await user.clear(name);
+    await user.type(name, "Carrot updated");
+    await user.click(within(editor).getByRole("button", { name: "Удалить единицу bunch" }));
+    await user.click(within(editor).getByRole("button", { name: "Сохранить" }));
+
+    expect(updateProduct).toHaveBeenCalledWith("product-2", expect.objectContaining({
+      name: "Carrot updated",
+      units: []
+    }));
+    expect(await within(drawer).findByRole("combobox", { name: "Товар" })).toHaveValue("VEG-2 · Carrot updated");
+    expect(within(drawer).getByLabelText("Единица")).toHaveValue("kg");
+    expect(within(drawer).getByLabelText("Цена")).toHaveValue("5.00");
+  });
+
+  test("does not expose product editing in a read-only document", async () => {
+    const user = userEvent.setup();
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("PO-001");
+    await user.click(screen.getByRole("button", { name: "Открыть" }));
+
+    const drawer = screen.getByRole("dialog", { name: "Документ" });
+    expect(within(drawer).queryByRole("button", { name: "Изменить товар Widget" })).not.toBeInTheDocument();
   });
 
   test("shows an empty product search and creates a product for the current line", async () => {

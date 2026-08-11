@@ -5,6 +5,7 @@ import type {
   DocumentDto,
   ProductCategoryDto,
   ProductDto,
+  UpdateProductDto,
   StockBalanceResultDto,
   UpdateDraftDocumentPatchDto,
   WarehouseDto
@@ -35,6 +36,13 @@ export const getDocumentLookups = async () => {
 export const createProduct = (payload: CreateProductDto) =>
   apiClient.request<ProductDto>("/products", {
     method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload)
+  });
+
+export const updateProduct = (id: string, payload: UpdateProductDto) =>
+  apiClient.request<ProductDto>(`/products/${id}`, {
+    method: "PATCH",
     headers: jsonHeaders,
     body: JSON.stringify(payload)
   });

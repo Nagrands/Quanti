@@ -101,6 +101,7 @@ const english: Record<string, string> = {
   "Отмена": "Cancel",
   "Повторить": "Retry",
   "Изменить": "Edit",
+  "Изменить товар {name}": "Edit product {name}",
   "Открыть": "View",
   "Удалить": "Delete",
   "Провести": "Post",

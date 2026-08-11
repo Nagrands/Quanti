@@ -4,6 +4,7 @@ import type {
   DocumentDto,
   ProductCategoryDto,
   ProductDto,
+  UpdateProductDto,
   WarehouseDto
 } from "@quanti/shared";
 import { useQueries } from "@tanstack/react-query";
@@ -12,6 +13,8 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 import { FormModal } from "../../components/forms/FormModal";
 import { useI18n } from "../../i18n";
+import { MasterDataFormDrawer } from "../master-data/MasterDataFormDrawer";
+import { getLocalizedMasterDataDefinitions } from "../master-data/master-data";
 import {
   addDocumentLine,
   calculateAmount,
@@ -40,9 +43,11 @@ interface DocumentDrawerProps {
   documents: DocumentDto[];
   initialValues?: DocumentFormValues | null;
   isSaving: boolean;
+  isUpdatingProduct: boolean;
   onClose: () => void;
   onSave: (values: DocumentFormValues) => Promise<void>;
   onCreateProduct: (payload: CreateProductDto) => Promise<ProductDto>;
+  onUpdateProduct: (id: string, payload: UpdateProductDto) => Promise<ProductDto>;
 }
 
 export function DocumentDrawer({
@@ -54,17 +59,23 @@ export function DocumentDrawer({
   documents,
   initialValues = null,
   isSaving,
+  isUpdatingProduct,
   onClose,
   onSave,
-  onCreateProduct
+  onCreateProduct,
+  onUpdateProduct
 }: DocumentDrawerProps) {
-  const { documentStatusLabels, documentTypeLabels, formatApiError, t } = useI18n();
+  const { documentStatusLabels, documentTypeLabels, formatApiError, locale, t } = useI18n();
   const [values, setValues] = useState<DocumentFormValues>(createEmptyDocument);
   const [error, setError] = useState("");
   const [quickProductLineKey, setQuickProductLineKey] = useState<string | null>(null);
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductDto | null>(null);
   const [sort, setSort] = useState<{ key: DocumentLineSortKey; direction: SortDirection } | null>(null);
   const isReadOnly = document?.status === "POSTED" || document?.type === "STOCK_ADJUSTMENT";
+  const productDefinition = useMemo(() => getLocalizedMasterDataDefinitions(t, locale, {
+    "product-categories": categories.map((category) => ({ label: category.name, value: category.id }))
+  }).find((definition) => definition.resource === "products")!, [categories, locale, t]);
   const requiredStockChecks = useMemo(() => getRequiredStockChecks(values), [values]);
   const stockBalanceQueries = useQueries({
     queries: requiredStockChecks.map((check) => ({
@@ -84,6 +95,7 @@ export function DocumentDrawer({
     setValues(document ? documentToForm(document) : initialValues ?? createEmptyDocument(createDocumentNumber("SALE", documents)));
     setError("");
     setQuickProductLineKey(null);
+    setEditingProduct(null);
     setSort(null);
   }, [document, documents, initialValues]);
 
@@ -121,6 +133,30 @@ export function DocumentDrawer({
         unitFactor: unit === product?.unit ? "1" : alternative?.conversionFactor ?? "1",
         price: product ? productUnitPrice(product, current.type, unit) : "0"
       } : item)
+    }));
+  }
+
+  function reconcileUpdatedProduct(product: ProductDto) {
+    setSort(null);
+    setValues((current) => ({
+      ...current,
+      items: current.items.map((item) => {
+        if (item.productId !== product.id) return item;
+        const alternative = product.units.find((unit) => unit.name === item.unit);
+        const isValidUnit = item.unit === product.unit || Boolean(alternative);
+        if (!isValidUnit) {
+          return {
+            ...item,
+            unit: product.unit,
+            unitFactor: "1",
+            price: productUnitPrice(product, current.type, product.unit)
+          };
+        }
+        return {
+          ...item,
+          unitFactor: item.unit === product.unit ? "1" : alternative?.conversionFactor ?? "1"
+        };
+      })
     }));
   }
 
@@ -279,6 +315,7 @@ export function DocumentDrawer({
                       disabled={isReadOnly}
                       onChange={(productId) => selectProduct(item.key, productId)}
                       onCreate={() => setQuickProductLineKey(item.key)}
+                      onEdit={setEditingProduct}
                     />
                     <select
                       aria-label={t("Единица")}
@@ -326,6 +363,22 @@ export function DocumentDrawer({
             } finally {
               setIsCreatingProduct(false);
             }
+          }}
+        />
+      ) : null}
+      {editingProduct ? (
+        <MasterDataFormDrawer
+          definition={productDefinition}
+          entity={editingProduct}
+          initialValues={productDefinition.toFormValues(editingProduct)}
+          isSaving={isUpdatingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSave={async (formValues) => {
+            const updatedProduct = await onUpdateProduct(
+              editingProduct.id,
+              productDefinition.toPayload(formValues) as UpdateProductDto
+            );
+            reconcileUpdatedProduct(updatedProduct);
           }}
         />
       ) : null}

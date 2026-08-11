@@ -399,6 +399,10 @@
   padding-left: 34px;
 }
 
+.product-combobox:has(.product-combobox__edit-selected) > input {
+  padding-right: 66px;
+}
+
 .product-combobox__search,
 .product-combobox__chevron {
   position: absolute;
@@ -416,6 +420,38 @@
 
 .product-combobox__chevron {
   right: 10px;
+}
+
+.product-combobox__edit-selected {
+  position: absolute;
+  z-index: 2;
+  top: 5px;
+  right: 28px;
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: vars.$radius-small;
+  color: vars.$color-accent-600;
+  background: transparent;
+  cursor: pointer;
+}
+
+.product-combobox__edit-selected:hover,
+.product-combobox__edit-selected:focus-visible {
+  background: vars.$color-surface-hover;
+}
+
+.product-combobox__edit-selected:focus-visible,
+.product-combobox__edit-option:focus-visible {
+  outline: 2px solid vars.$color-accent-600;
+  outline-offset: -2px;
+}
+
+.product-combobox__edit-selected svg,
+.product-combobox__edit-option svg {
+  width: 15px;
+  height: 15px;
 }
 
 .product-combobox__menu {
@@ -436,6 +472,11 @@
   overflow-y: auto;
 }
 
+.product-combobox__entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+}
+
 .product-combobox__option,
 .product-combobox__create {
   display: flex;
@@ -449,6 +490,19 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
+}
+
+.product-combobox__edit-option {
+  display: inline-grid;
+  min-height: 100%;
+  place-items: center;
+  color: vars.$color-accent-600;
+  background: transparent;
+  cursor: pointer;
+}
+
+.product-combobox__edit-option:hover {
+  background: vars.$color-surface-hover;
 }
 
 .product-combobox__option span {
