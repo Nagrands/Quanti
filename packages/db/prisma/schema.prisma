@@ -82,6 +82,8 @@ model Product {
   name           String
   description    String?
   unit           String
+  purchasePrice  Decimal?        @db.Decimal(18, 2)
+  salePrice      Decimal?        @db.Decimal(18, 2)
   categoryId     String?
   isActive       Boolean         @default(true)
   createdAt      DateTime        @default(now())

@@ -37,6 +37,8 @@ function createPrismaMock() {
     name: "Widget",
     description: null,
     unit: "pcs",
+    purchasePrice: new Prisma.Decimal("18.00"),
+    salePrice: new Prisma.Decimal("25.00"),
     units: [{ id: "unit-1", productId: "product-1", name: "box", conversionFactor: new Prisma.Decimal(10), createdAt: new Date("2026-04-14T00:00:00.000Z"), updatedAt: new Date("2026-04-14T00:00:00.000Z") }],
     categoryId: "category-1",
     isActive: true,
@@ -209,7 +211,7 @@ test("master data services map CRUD records into shared DTOs", async () => {
   assert.equal((await productCategoriesService.findAll())[0]?.code, "VEG");
   assert.equal((await productsService.findAll())[0]?.sku, "SKU-001");
   assert.equal((await productsService.findAll())[0]?.categoryName, "Vegetables");
-  assert.equal((await productsService.findAll())[0]?.lastSalePrice, "25");
+  assert.equal((await productsService.findAll())[0]?.salePrice, "25");
   assert.equal((await productsService.findAll())[0]?.units[0]?.name, "box");
   assert.equal((await warehousesService.findAll())[0]?.code, "MAIN");
   assert.equal((await counterpartiesService.findAll())[0]?.code, "C-001");
@@ -325,6 +327,8 @@ test("products service replaces additional units transactionally", async () => {
     name: "Dill",
     description: null,
     unit: "kg",
+    purchasePrice: null,
+    salePrice: null,
     categoryId: null,
     isActive: true,
     createdAt: new Date("2026-06-24T00:00:00.000Z"),

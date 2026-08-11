@@ -16,7 +16,7 @@ export class ProductsService {
       orderBy: { createdAt: "asc" }
     });
 
-    return Promise.all(products.map((product) => this.toProductWithPrices(product)));
+    return products.map(toProductDto);
   }
 
   async findOne(id: string): Promise<ProductDto> {
@@ -32,7 +32,7 @@ export class ProductsService {
       throw new NotFoundException(`Product ${id} was not found.`);
     }
 
-    return this.toProductWithPrices(product);
+    return toProductDto(product);
   }
 
   async create(payload: CreateProductDto): Promise<ProductDto> {
@@ -42,6 +42,8 @@ export class ProductsService {
         name: payload.name,
         description: payload.description ?? null,
         unit: payload.unit,
+        purchasePrice: this.optionalPrice(payload.purchasePrice),
+        salePrice: this.optionalPrice(payload.salePrice),
         categoryId: payload.categoryId ?? null,
         units: {
           create: this.unitData(payload.unit, payload.units ?? [])
@@ -50,7 +52,7 @@ export class ProductsService {
       include: { category: true, units: { orderBy: { createdAt: "asc" } } }
     });
 
-    return this.toProductWithPrices(product);
+    return toProductDto(product);
   }
 
   async update(id: string, payload: UpdateProductDto): Promise<ProductDto> {
@@ -63,6 +65,8 @@ export class ProductsService {
           ...(payload.name === undefined ? {} : { name: payload.name }),
           ...(payload.description === undefined ? {} : { description: payload.description }),
           ...(payload.unit === undefined ? {} : { unit: payload.unit }),
+          ...(payload.purchasePrice === undefined ? {} : { purchasePrice: this.optionalPrice(payload.purchasePrice) }),
+          ...(payload.salePrice === undefined ? {} : { salePrice: this.optionalPrice(payload.salePrice) }),
           ...(payload.categoryId === undefined ? {} : { categoryId: payload.categoryId }),
           ...(payload.isActive === undefined ? {} : { isActive: payload.isActive })
         }
@@ -102,7 +106,7 @@ export class ProductsService {
       data: { isActive: true },
       include: { category: true, units: { orderBy: { createdAt: "asc" } } }
     });
-    return this.toProductWithPrices(restoredProduct);
+    return toProductDto(restoredProduct);
   }
 
   private unitData(baseUnit: string, units: NonNullable<CreateProductDto["units"]>) {
@@ -130,33 +134,7 @@ export class ProductsService {
     return mapped;
   }
 
-  private async toProductWithPrices(
-    product: Parameters<typeof toProductDto>[0]
-  ): Promise<ProductDto> {
-    const [sale, purchase] = await Promise.all([
-      this.prisma.documentItem.findFirst({
-        where: {
-          productId: product.id,
-          document: { type: { in: ["SALE", "RETURN_IN"] } }
-        },
-        orderBy: { updatedAt: "desc" },
-        select: { price: true, unit: true }
-      }),
-      this.prisma.documentItem.findFirst({
-        where: {
-          productId: product.id,
-          document: { type: { in: ["PURCHASE", "RETURN_OUT"] } }
-        },
-        orderBy: { updatedAt: "desc" },
-        select: { price: true, unit: true }
-      })
-    ]);
-
-    return toProductDto(product, {
-      lastSalePrice: sale?.price.toString() ?? null,
-      lastSaleUnit: sale?.unit ?? null,
-      lastPurchasePrice: purchase?.price.toString() ?? null,
-      lastPurchaseUnit: purchase?.unit ?? null
-    });
+  private optionalPrice(value: string | null | undefined) {
+    return value == null ? null : new Prisma.Decimal(value);
   }
 }

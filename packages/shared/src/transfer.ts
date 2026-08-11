@@ -24,6 +24,8 @@ export interface TransferProduct {
   name: string;
   description: string | null;
   unit: string;
+  purchasePrice?: string | null;
+  salePrice?: string | null;
   units: Array<{ name: string; conversionFactor: string }>;
   categoryCode: string | null;
   isActive: boolean;

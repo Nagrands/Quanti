@@ -29,7 +29,7 @@ export interface MasterDataColumn {
 export interface MasterDataField {
   key: string;
   label: string;
-  type?: "text" | "textarea" | "select" | "product-units";
+  type?: "text" | "textarea" | "select" | "price" | "product-units";
   required?: boolean;
   options?: readonly { label: string; value: string }[];
   placeholder?: string;
@@ -139,15 +139,11 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
       },
       {
         key: "prices",
-        label: "Последние цены",
+        label: "Цены",
         render: (entity, t = (text) => text) => {
           const product = productEntity(entity);
-          const purchase = product?.lastPurchasePrice
-            ? `${product.lastPurchasePrice} / ${product.lastPurchaseUnit ?? value(entity, "unit")}`
-            : "—";
-          const sale = product?.lastSalePrice
-            ? `${product.lastSalePrice} / ${product.lastSaleUnit ?? value(entity, "unit")}`
-            : "—";
+          const purchase = product?.purchasePrice ?? "—";
+          const sale = product?.salePrice ?? "—";
           return `${t("Закупка")}: ${purchase}\n${t("Продажа")}: ${sale}`;
         }
       },
@@ -158,12 +154,14 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
       { key: "name", label: "Наименование", required: true },
       { key: "categoryId", label: "Категория", type: "select" },
       { key: "unit", label: "Базовая единица", required: true, placeholder: "шт, кг, л" },
+      { key: "purchasePrice", label: "Цена закупки", type: "price" },
+      { key: "salePrice", label: "Цена продажи", type: "price" },
       { key: "units", label: "Дополнительные единицы", type: "product-units" },
       { key: "description", label: "Описание", type: "textarea" }
     ],
-    createDefaults: { sku: "", name: "", categoryId: "", unit: "", units: [], description: "" },
+    createDefaults: { sku: "", name: "", categoryId: "", unit: "", purchasePrice: "", salePrice: "", units: [], description: "" },
     toFormValues: (entity) => ({
-      ...commonFormValues(entity, ["sku", "name", "categoryId", "unit", "description"]),
+      ...commonFormValues(entity, ["sku", "name", "categoryId", "unit", "purchasePrice", "salePrice", "description"]),
       units: productUnits(entity).map((unit) => ({
         key: unit.id,
         name: unit.name,
@@ -171,7 +169,7 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
       }))
     }),
     toPayload: (values) => ({
-      ...trimPayload(values, ["categoryId", "description"]),
+      ...trimPayload(values, ["categoryId", "purchasePrice", "salePrice", "description"]),
       units: Array.isArray(values.units)
         ? values.units.map((unit) => ({
             name: unit.name.trim(),

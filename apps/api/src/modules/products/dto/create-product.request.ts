@@ -2,6 +2,8 @@ import type { CreateProductDto } from "@quanti/shared";
 import { Type } from "class-transformer";
 import { IsArray, IsOptional, IsString, Matches, ValidateNested } from "class-validator";
 
+const pricePattern = /^\d+(\.\d{1,2})?$/;
+
 export class ProductUnitRequest {
   @IsString()
   name!: string;
@@ -24,6 +26,16 @@ export class CreateProductRequest implements CreateProductDto {
 
   @IsString()
   unit!: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(pricePattern)
+  purchasePrice?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @Matches(pricePattern)
+  salePrice?: string | null;
 
   @IsOptional()
   @IsArray()

@@ -66,6 +66,40 @@ test("master-data import applies update or skip choices in one transaction", asy
   assert.deepEqual(updates, ["UPDATE"]);
 });
 
+test("master-data import preserves product reference prices", async () => {
+  let productData: Record<string, unknown> | undefined;
+  const tx = {
+    productCategory: { findUnique: async () => null, upsert: async () => undefined },
+    warehouse: { findUnique: async () => null, upsert: async () => undefined },
+    counterparty: { findUnique: async () => null, upsert: async () => undefined },
+    account: { findUnique: async () => null, upsert: async () => undefined },
+    product: {
+      findUnique: async () => null,
+      upsert: async ({ create }: { create: Record<string, unknown> }) => {
+        productData = create;
+        return { id: "product-1" };
+      }
+    },
+    productUnit: { deleteMany: async () => undefined, createMany: async () => undefined }
+  };
+  const prisma = {
+    ...prismaForPreview(),
+    $transaction: async (callback: (client: typeof tx) => Promise<void>) => callback(tx)
+  };
+  const service = new TransferService(prisma as never);
+  const transferPackage = createTransferPackage("master-data", {
+    ...emptyMasterData,
+    products: [{
+      sku: "SKU-1", name: "Widget", description: null, unit: "pcs", units: [],
+      purchasePrice: "8.50", salePrice: "12.00", categoryCode: null, isActive: true
+    }]
+  });
+
+  await service.apply(transferPackage, {});
+  assert.equal(String(productData?.purchasePrice), "8.5");
+  assert.equal(String(productData?.salePrice), "12");
+});
+
 test("invalid transfer package is rejected before opening a transaction", async () => {
   let transactions = 0;
   const prisma = { ...prismaForPreview(), $transaction: async () => { transactions += 1; } };

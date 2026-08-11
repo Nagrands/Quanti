@@ -36,12 +36,12 @@ test("shared contracts define ERP status and workflow DTOs", async () => {
   assert.match(paymentsContent, /export interface CounterpartyDebtDto/);
 });
 
-test("shared product contracts expose units and remembered prices", async () => {
+test("shared product contracts expose units and reference prices", async () => {
   const masterDataContent = await readFile(masterDataPath, "utf8");
   const documentsContent = await readFile(documentsPath, "utf8");
 
   assert.match(masterDataContent, /export interface ProductUnitDto/);
-  assert.match(masterDataContent, /lastSalePrice: DecimalString \| null/);
-  assert.match(masterDataContent, /lastPurchasePrice: DecimalString \| null/);
+  assert.match(masterDataContent, /salePrice: DecimalString \| null/);
+  assert.match(masterDataContent, /purchasePrice: DecimalString \| null/);
   assert.match(documentsContent, /unitFactor: DecimalString/);
 });

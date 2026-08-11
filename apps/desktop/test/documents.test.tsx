@@ -80,10 +80,8 @@ const lookups = {
       description: null,
       unit: "pcs",
       units: [],
-      lastSalePrice: "10.00",
-      lastSaleUnit: "pcs",
-      lastPurchasePrice: "7.50",
-      lastPurchaseUnit: "pcs",
+      salePrice: "10.00",
+      purchasePrice: "7.50",
       categoryId: null,
       categoryName: null,
       isActive: true,
@@ -97,10 +95,8 @@ const lookups = {
       description: null,
       unit: "kg",
       units: [{ id: "unit-bunch", name: "bunch", conversionFactor: "0.100000" }],
-      lastSalePrice: "4.50",
-      lastSaleUnit: "bunch",
-      lastPurchasePrice: "30.00",
-      lastPurchaseUnit: "kg",
+      salePrice: "4.50",
+      purchasePrice: "30.00",
       categoryId: "category-1",
       categoryName: "Vegetables",
       isActive: true,
@@ -215,7 +211,7 @@ describe("documents workspace", () => {
     expect(within(drawer).getByLabelText("Номер")).toHaveValue("PUR-202606-0002");
   });
 
-  test("uses the remembered price and selected unit conversion", async () => {
+  test("uses the reference price and recalculates it for the selected unit", async () => {
     const user = userEvent.setup();
     renderWithAppProviders(<DocumentsPage />, "/documents");
     await screen.findByText("SO-001");
@@ -226,10 +222,17 @@ describe("documents workspace", () => {
     await user.click(product);
     await user.click(within(drawer).getByRole("option", { name: "VEG-2 · Carrot" }));
 
-    expect(within(drawer).getByLabelText("Единица")).toHaveValue("bunch");
-    expect(within(drawer).getByLabelText("Цена")).toHaveValue("4.50");
-    await user.selectOptions(within(drawer).getByLabelText("Единица"), "kg");
     expect(within(drawer).getByLabelText("Единица")).toHaveValue("kg");
+    expect(within(drawer).getByLabelText("Цена")).toHaveValue("4.50");
+    await user.selectOptions(within(drawer).getByLabelText("Единица"), "bunch");
+    expect(within(drawer).getByLabelText("Цена")).toHaveValue("0.45");
+
+    await user.selectOptions(within(drawer).getByLabelText("Тип"), "PURCHASE");
+    expect(within(drawer).getByLabelText("Цена")).toHaveValue("3.00");
+    await user.clear(within(drawer).getByLabelText("Цена"));
+    await user.type(within(drawer).getByLabelText("Цена"), "99");
+    await user.selectOptions(within(drawer).getByLabelText("Тип"), "RETURN_IN");
+    expect(within(drawer).getByLabelText("Цена")).toHaveValue("0.45");
   });
 
   test("warns about insufficient stock while editing a sale draft", async () => {
@@ -338,10 +341,8 @@ describe("documents workspace", () => {
       description: null,
       unit: "kg",
       units: [],
-      lastSalePrice: null,
-      lastSaleUnit: null,
-      lastPurchasePrice: null,
-      lastPurchaseUnit: null,
+      salePrice: "12.00",
+      purchasePrice: "8.00",
       categoryId: "category-1",
       categoryName: "Vegetables",
       isActive: true,
@@ -363,6 +364,8 @@ describe("documents workspace", () => {
     expect(within(dialog).getByLabelText("SKU")).toHaveValue("PRD-0001");
     await user.type(within(dialog).getByLabelText("Наименование"), "Tomato");
     await user.type(within(dialog).getByLabelText("Единица"), "kg");
+    await user.type(within(dialog).getByLabelText("Цена закупки"), "8.00");
+    await user.type(within(dialog).getByLabelText("Цена продажи"), "12.00");
     await user.selectOptions(within(dialog).getByLabelText("Категория"), "category-1");
     await user.click(within(dialog).getByRole("button", { name: "Создать и выбрать" }));
 
@@ -370,11 +373,14 @@ describe("documents workspace", () => {
       sku: "PRD-0001",
       name: "Tomato",
       unit: "kg",
+      purchasePrice: "8.00",
+      salePrice: "12.00",
       categoryId: "category-1",
       description: null
     });
     expect(await within(drawer).findByRole("combobox", { name: "Товар" })).toHaveValue("PRD-0001 · Tomato");
     expect(within(drawer).getByLabelText("Единица")).toHaveValue("kg");
+    expect(within(drawer).getByLabelText("Цена")).toHaveValue("12.00");
     expect(screen.queryByRole("dialog", { name: "Новый товар" })).not.toBeInTheDocument();
   });
 

@@ -24,6 +24,8 @@ export function QuickProductDialog({
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [purchasePrice, setPurchasePrice] = useState("");
+  const [salePrice, setSalePrice] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
 
@@ -33,6 +35,10 @@ export function QuickProductDialog({
       setError(t("Заполните SKU, наименование и единицу измерения."));
       return;
     }
+    if ([purchasePrice, salePrice].some((price) => price && !/^\d+(\.\d{1,2})?$/.test(price))) {
+      setError(t("Цена должна быть неотрицательным числом максимум с двумя знаками после точки."));
+      return;
+    }
 
     try {
       setError("");
@@ -40,6 +46,8 @@ export function QuickProductDialog({
         sku: sku.trim(),
         name: name.trim(),
         unit: unit.trim(),
+        purchasePrice: purchasePrice || null,
+        salePrice: salePrice || null,
         categoryId: categoryId || null,
         description: description.trim() || null
       });
@@ -62,6 +70,8 @@ export function QuickProductDialog({
           <label>{t("SKU")}<input value={sku} onChange={(event) => setSku(event.target.value)} autoFocus /></label>
           <label>{t("Наименование")}<input value={name} onChange={(event) => setName(event.target.value)} /></label>
           <label>{t("Единица")}<input placeholder={t("шт, кг, л")} value={unit} onChange={(event) => setUnit(event.target.value)} /></label>
+          <label>{t("Цена закупки")}<input inputMode="decimal" value={purchasePrice} onChange={(event) => setPurchasePrice(event.target.value)} /></label>
+          <label>{t("Цена продажи")}<input inputMode="decimal" value={salePrice} onChange={(event) => setSalePrice(event.target.value)} /></label>
           <label>{t("Категория")}<select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
             <option value="">{t("Без категории")}</option>
             {categories.map((category) => <option key={category.id} value={category.id}>{category.code} · {category.name}</option>)}

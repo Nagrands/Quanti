@@ -19,7 +19,7 @@ import {
   createEmptyDocument,
   documentToForm,
   type DocumentFormValues,
-  rememberedProductSelection,
+  productUnitPrice,
   supportedDocumentTypes
 } from "./document-model";
 import { getRequiredStockChecks, getStockWarnings } from "./document-preview";
@@ -88,16 +88,14 @@ export function DocumentDrawer({
 
   function selectProduct(key: string, productId: string, productOverride?: ProductDto) {
     const product = productOverride ?? products.find((item) => item.id === productId);
-    const remembered = product ? rememberedProductSelection(product, values.type) : null;
-    const alternative = product?.units?.find((unit) => unit.name === remembered?.unit);
     setValues((current) => ({
       ...current,
       items: current.items.map((item) => item.key === key ? {
         ...item,
         productId,
-        unit: remembered?.unit ?? "",
-        unitFactor: remembered?.unit === product?.unit ? "1" : alternative?.conversionFactor ?? "1",
-        price: remembered?.price ?? "0"
+        unit: product?.unit ?? "",
+        unitFactor: "1",
+        price: product ? productUnitPrice(product, current.type, product.unit) : "0"
       } : item)
     }));
   }
@@ -109,7 +107,8 @@ export function DocumentDrawer({
       items: current.items.map((item) => item.key === key ? {
         ...item,
         unit,
-        unitFactor: unit === product?.unit ? "1" : alternative?.conversionFactor ?? "1"
+        unitFactor: unit === product?.unit ? "1" : alternative?.conversionFactor ?? "1",
+        price: product ? productUnitPrice(product, current.type, unit) : "0"
       } : item)
     }));
   }
@@ -209,6 +208,10 @@ export function DocumentDrawer({
                 setValues({
                   ...values,
                   type: nextType,
+                  items: values.items.map((item) => {
+                    const product = products.find((candidate) => candidate.id === item.productId);
+                    return product ? { ...item, price: productUnitPrice(product, nextType, item.unit) } : item;
+                  }),
                   number: values.number === currentAutoNumber || values.number.trim() === ""
                     ? createDocumentNumber(nextType, documents)
                     : values.number

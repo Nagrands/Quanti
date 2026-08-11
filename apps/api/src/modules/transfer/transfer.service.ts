@@ -147,6 +147,8 @@ export class TransferService {
         name: product.name,
         description: product.description,
         unit: product.unit,
+        purchasePrice: product.purchasePrice?.toString() ?? null,
+        salePrice: product.salePrice?.toString() ?? null,
         units: product.units.map((unit) => ({ name: unit.name, conversionFactor: unit.conversionFactor.toString() })),
         categoryCode: product.category?.code ?? null,
         isActive: product.isActive
@@ -310,6 +312,8 @@ export class TransferService {
       if (existing && this.shouldSkip("product", item.sku, resolutions, result)) continue;
       const data = {
         sku: item.sku, name: item.name, description: item.description, unit: item.unit,
+        purchasePrice: this.referencePrice(item.purchasePrice),
+        salePrice: this.referencePrice(item.salePrice),
         categoryId: category?.id ?? null, isActive: item.isActive
       };
       const product = await tx.product.upsert({ where: { sku: item.sku }, create: data, update: data });
@@ -541,6 +545,14 @@ export class TransferService {
 
   private decimal(value: string) {
     try { return new Prisma.Decimal(value); } catch { throw new BadRequestException(`Invalid decimal value: ${value}.`); }
+  }
+
+  private referencePrice(value: string | null | undefined) {
+    if (value == null) return null;
+    if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+      throw new BadRequestException(`Invalid product reference price: ${value}.`);
+    }
+    return this.decimal(value);
   }
 
   private isImportableSection(section: string): section is ImportableSection {

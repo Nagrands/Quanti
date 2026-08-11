@@ -53,6 +53,26 @@ test("api validation pipe returns bad-request errors for invalid product payload
   );
 });
 
+test("product reference prices accept null or two decimals and reject invalid values", async () => {
+  const pipe = new ApiValidationPipe();
+  const metadata = { type: "body" as const, metatype: CreateProductRequest };
+
+  await assert.doesNotReject(() => pipe.transform({
+    sku: "SKU-1",
+    name: "Widget",
+    unit: "pcs",
+    purchasePrice: null,
+    salePrice: "12.50"
+  }, metadata));
+
+  for (const salePrice of ["-1", "1.234", "free"]) {
+    await assert.rejects(
+      () => pipe.transform({ sku: "SKU-1", name: "Widget", unit: "pcs", salePrice }, metadata),
+      BadRequestException
+    );
+  }
+});
+
 test("api exception filter maps validation errors into stable response shape", () => {
   const filter = new ApiExceptionFilter();
   const { response, responseState } = createResponseMock();

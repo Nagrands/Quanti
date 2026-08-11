@@ -148,20 +148,21 @@ export function addDocumentLine(items: DocumentLineForm[]) {
   return [...items, emptyLine()];
 }
 
-export function rememberedProductSelection(product: ProductDto, type: DocumentType) {
+export function referencePrice(product: ProductDto, type: DocumentType) {
   if (type === "SALE" || type === "RETURN_IN") {
-    return {
-      price: product.lastSalePrice ?? "0",
-      unit: product.lastSaleUnit ?? product.unit
-    };
+    return product.salePrice ?? "0";
   }
 
   if (type === "PURCHASE" || type === "RETURN_OUT") {
-    return {
-      price: product.lastPurchasePrice ?? "0",
-      unit: product.lastPurchaseUnit ?? product.unit
-    };
+    return product.purchasePrice ?? "0";
   }
 
-  return { price: "0", unit: product.unit };
+  return "0";
+}
+
+export function productUnitPrice(product: ProductDto, type: DocumentType, unit: string) {
+  const factor = unit === product.unit
+    ? 1
+    : Number(product.units.find((candidate) => candidate.name === unit)?.conversionFactor ?? 1);
+  return (Number(referencePrice(product, type)) * factor).toFixed(2);
 }

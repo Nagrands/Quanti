@@ -74,6 +74,13 @@ export function MasterDataFormDrawer({
       } else if (duplicateUnits) {
         errors.units = t("Названия единиц не должны повторяться или совпадать с базовой единицей.");
       }
+
+      for (const key of ["purchasePrice", "salePrice"] as const) {
+        const price = String(values[key] ?? "").trim();
+        if (price && !/^\d+(\.\d{1,2})?$/.test(price)) {
+          errors[key] = t("Цена должна быть неотрицательным числом максимум с двумя знаками после точки.");
+        }
+      }
     }
 
     setFieldErrors(errors);
@@ -205,6 +212,7 @@ export function MasterDataFormDrawer({
                     <input
                       id={inputId}
                       value={fieldValue}
+                      inputMode={field.type === "price" ? "decimal" : undefined}
                       placeholder={field.placeholder}
                       aria-invalid={Boolean(error)}
                       onChange={(event) => setValues((current) => ({

@@ -26,10 +26,8 @@ const product = {
   name: "Desk lamp",
   unit: "pcs",
   units: [{ id: "unit-pack", name: "pack", conversionFactor: "10.000000" }],
-  lastSalePrice: "25.00",
-  lastSaleUnit: "pack",
-  lastPurchasePrice: "18.00",
-  lastPurchaseUnit: "pack",
+  salePrice: "25.00",
+  purchasePrice: "18.00",
   description: "Adjustable lamp",
   categoryId: "category-1",
   categoryName: "Lighting",
@@ -151,21 +149,27 @@ describe("master data workspace", () => {
       name: "Mouse",
       categoryId: "category-1",
       unit: "pcs",
+      purchasePrice: null,
+      salePrice: null,
       units: [{ name: "pack", conversionFactor: "10" }],
       description: null
     });
   });
 
-  test("shows remembered prices and edits additional product units", async () => {
+  test("shows reference prices and edits prices and additional product units", async () => {
     const user = userEvent.setup();
     renderWithAppProviders(<MasterDataPage />, "/products");
 
-    expect(await screen.findByText(/Продажа: 25.00 \/ pack/)).toBeInTheDocument();
-    expect(screen.getByText(/Закупка: 18.00 \/ pack/)).toBeInTheDocument();
+    expect(await screen.findByText(/Продажа: 25.00/)).toBeInTheDocument();
+    expect(screen.getByText(/Закупка: 18.00/)).toBeInTheDocument();
     expect(screen.getByText(/pack × 10.000000/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Изменить Desk lamp" }));
     const drawer = screen.getByRole("complementary", { name: "Изменение записи" });
+    expect(within(drawer).getByLabelText("Цена закупки")).toHaveValue("18.00");
+    const salePrice = within(drawer).getByLabelText("Цена продажи");
+    await user.clear(salePrice);
+    await user.type(salePrice, "27.50");
     expect(within(drawer).getByLabelText("Название единицы")).toHaveValue("pack");
     const factor = within(drawer).getByLabelText("Коэффициент пересчёта");
     await user.clear(factor);
@@ -176,6 +180,7 @@ describe("master data workspace", () => {
       "products",
       "product-1",
       expect.objectContaining({
+        salePrice: "27.50",
         units: [{ name: "pack", conversionFactor: "12" }]
       })
     );

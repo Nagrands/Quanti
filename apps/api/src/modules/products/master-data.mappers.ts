@@ -8,17 +8,7 @@ type ProductRecord = Product & {
   units?: ProductUnit[];
 };
 
-interface ProductPriceSnapshot {
-  lastSalePrice?: string | null;
-  lastSaleUnit?: string | null;
-  lastPurchasePrice?: string | null;
-  lastPurchaseUnit?: string | null;
-}
-
-export function toProductDto(
-  record: ProductRecord,
-  prices: ProductPriceSnapshot = {}
-): ProductDto {
+export function toProductDto(record: ProductRecord): ProductDto {
   return {
     id: record.id,
     sku: record.sku,
@@ -30,10 +20,8 @@ export function toProductDto(
       name: unit.name,
       conversionFactor: unit.conversionFactor.toString()
     })),
-    lastSalePrice: prices.lastSalePrice ?? null,
-    lastSaleUnit: prices.lastSaleUnit ?? null,
-    lastPurchasePrice: prices.lastPurchasePrice ?? null,
-    lastPurchaseUnit: prices.lastPurchaseUnit ?? null,
+    purchasePrice: record.purchasePrice?.toString() ?? null,
+    salePrice: record.salePrice?.toString() ?? null,
     categoryId: record.categoryId,
     categoryName: record.category?.name ?? null,
     isActive: record.isActive,
