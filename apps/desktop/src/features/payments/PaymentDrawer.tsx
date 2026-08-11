@@ -1,6 +1,7 @@
 import type { AccountDto, CounterpartyDebtDto, CounterpartyDto, DocumentDto, PaymentDto } from "@quanti/shared";
 import { Plus, Trash2, X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
+import { FormModal } from "../../components/forms/FormModal";
 import { useI18n } from "../../i18n";
 import { allocatedTotal, createEmptyPayment, createPaymentNumber, emptyAllocation, paymentToForm, type PaymentFormValues } from "./payment-model";
 
@@ -25,21 +26,21 @@ export function PaymentDrawer({ payment, accounts, counterparties, documents, pa
   const selectedAccountAvailable = accounts.some((account) => account.id === values.accountId);
   const selectedCounterpartyAvailable = counterparties.some((counterparty) => counterparty.id === values.counterpartyId);
 
-  async function submit(event: FormEvent) {
+  async function submit(event: FormEvent, requestClose: () => void) {
     event.preventDefault();
     const duplicateDocuments = new Set(values.allocations.map((item) => item.documentId)).size !== values.allocations.length;
     const invalidAllocations = values.allocations.some((item) => !item.documentId || !/^\d+(\.\d{1,2})?$/.test(item.amount) || Number(item.amount) <= 0);
     if (!values.number.trim() || !values.paymentDate || !values.accountId || !/^\d+(\.\d{1,2})?$/.test(values.amount) || Number(values.amount) <= 0) setError(t("Заполните обязательные поля и укажите положительную сумму платежа."));
     else if (invalidAllocations || duplicateDocuments) setError(t("Для распределения выберите уникальные документы и положительные суммы."));
     else if (allocated > Number(values.amount)) setError(t("Распределённая сумма не может превышать сумму платежа."));
-    else try { setError(""); await onSave(values); } catch (saveError) { setError(formatApiError(saveError)); }
+    else try { setError(""); await onSave(values); requestClose(); } catch (saveError) { setError(formatApiError(saveError)); }
   }
   function updateAllocation(key: string, field: "documentId" | "amount", value: string) {
     setValues((current) => ({ ...current, allocations: current.allocations.map((item) => item.key === key ? { ...item, [field]: value } : item) }));
   }
-  return <div className="drawer-backdrop"><aside className="payment-drawer" aria-label={t(payment ? "Платёж" : "Новый платёж")}>
-    <header className="document-drawer__header"><div><h2>{t("Платёж")}</h2><p>{payment ? `${t("Номер")}: ${payment.number}` : t("Новый черновик")}</p></div>{payment ? <span className={`status-label status-label--${payment.status.toLowerCase()}`}>{paymentStatusLabels[payment.status]}</span> : null}<button className="icon-button" aria-label={t("Закрыть платёж")} onClick={onClose}><X /></button></header>
-    <form className="payment-form" onSubmit={submit}><div className="payment-form__body">
+  return <FormModal ariaLabel={t(payment ? "Платёж" : "Новый платёж")} onClose={onClose} size="wide">{(requestClose) => <div className="payment-drawer">
+    <header className="document-drawer__header"><div><h2>{t("Платёж")}</h2><p>{payment ? `${t("Номер")}: ${payment.number}` : t("Новый черновик")}</p></div>{payment ? <span className={`status-label status-label--${payment.status.toLowerCase()}`}>{paymentStatusLabels[payment.status]}</span> : null}<button className="icon-button" aria-label={t("Закрыть платёж")} onClick={requestClose}><X /></button></header>
+    <form className="payment-form" onSubmit={(event) => submit(event, requestClose)}><div className="payment-form__body">
       {error ? <div className="form-alert" role="alert">{error}</div> : null}
       {debt ? <p className="debt-context">{t("Задолженность контрагента: {debt} (документы: {documents}, оплачено: {paid})", { debt: debt.debtTotal, documents: debt.documentTotal, paid: debt.paidTotal })}</p> : null}
       <div className="document-fields">
@@ -70,6 +71,6 @@ export function PaymentDrawer({ payment, accounts, counterparties, documents, pa
         </div>; })}
       </div>{!readOnly ? <button type="button" className="button button--secondary" disabled={values.allocations.length >= 100 || availableDocuments.length === 0} onClick={() => setValues({ ...values, allocations: [...values.allocations, emptyAllocation()] })}><Plus /> {t("Добавить распределение")}</button> : null}</section>
       <div className="payment-summary"><div><span>{t("Сумма платежа")}</span><strong>{(Number(values.amount) || 0).toFixed(2)}</strong></div><div><span>{t("Распределено")}</span><strong>{allocated.toFixed(2)}</strong></div><div><span>{t("Не распределено")}</span><strong className={unallocated < 0 ? "negative" : ""}>{unallocated.toFixed(2)}</strong></div></div>
-    </div><footer className="form-drawer__footer"><button type="button" className="button button--secondary" onClick={onClose}>{t("Отмена")}</button>{!readOnly ? <button className="button button--primary" disabled={isSaving}>{t(isSaving ? "Сохранение…" : "Сохранить черновик")}</button> : null}</footer></form>
-  </aside></div>;
+    </div><footer className="form-drawer__footer"><button type="button" className="button button--secondary" onClick={requestClose}>{t("Отмена")}</button>{!readOnly ? <button className="button button--primary" disabled={isSaving}>{t(isSaving ? "Сохранение…" : "Сохранить черновик")}</button> : null}</footer></form>
+  </div>}</FormModal>;
 }

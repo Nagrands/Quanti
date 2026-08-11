@@ -31,13 +31,13 @@ describe("payments workspace", () => {
     await user.selectOptions(screen.getByLabelText("Фильтр по статусу платежа"), "POSTED");
     expect(screen.queryByText("PAY-1")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Открыть" }));
-    expect(within(screen.getByRole("complementary", { name: "Платёж" })).queryByRole("button", { name: "Сохранить черновик" })).not.toBeInTheDocument();
+    expect(within(screen.getByRole("dialog", { name: "Платёж" })).queryByRole("button", { name: "Сохранить черновик" })).not.toBeInTheDocument();
   });
 
   test("creates an outgoing partial payment allocation", async () => {
     const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-1");
     await user.click(screen.getByRole("button", { name: "Новый платёж" }));
-    const drawer = screen.getByRole("complementary", { name: "Новый платёж" });
+    const drawer = screen.getByRole("dialog", { name: "Новый платёж" });
     expect(within(drawer).getByLabelText("Номер")).toHaveValue(createPaymentNumber([draft, posted], new Date().toISOString().slice(0, 10)));
     await user.selectOptions(within(drawer).getByLabelText("Направление"), "OUTGOING");
     await user.selectOptions(within(drawer).getByLabelText("Счёт"), "a1");
@@ -53,7 +53,7 @@ describe("payments workspace", () => {
   test("updates an untouched automatic number when the payment month changes", async () => {
     const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-1");
     await user.click(screen.getByRole("button", { name: "Новый платёж" }));
-    const drawer = screen.getByRole("complementary", { name: "Новый платёж" });
+    const drawer = screen.getByRole("dialog", { name: "Новый платёж" });
     await user.clear(within(drawer).getByLabelText("Дата платежа"));
     await user.type(within(drawer).getByLabelText("Дата платежа"), "2026-12-05");
     expect(within(drawer).getByLabelText("Номер")).toHaveValue("PAY-202612-0001");
@@ -62,7 +62,7 @@ describe("payments workspace", () => {
   test("does not replace a manually edited number when the payment month changes", async () => {
     const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-1");
     await user.click(screen.getByRole("button", { name: "Новый платёж" }));
-    const drawer = screen.getByRole("complementary", { name: "Новый платёж" });
+    const drawer = screen.getByRole("dialog", { name: "Новый платёж" });
     const number = within(drawer).getByLabelText("Номер");
     await user.clear(number); await user.type(number, "MANUAL-7");
     await user.clear(within(drawer).getByLabelText("Дата платежа"));
@@ -82,7 +82,7 @@ describe("payments workspace", () => {
   test("rejects allocations above the payment amount", async () => {
     const user = userEvent.setup(); renderWithAppProviders(<PaymentsPage />, "/payments"); await screen.findByText("PAY-1");
     await user.click(screen.getByRole("button", { name: "Изменить" }));
-    const drawer = screen.getByRole("complementary", { name: "Платёж" });
+    const drawer = screen.getByRole("dialog", { name: "Платёж" });
     const allocated = within(drawer).getByLabelText("Сумма распределения");
     await user.clear(allocated); await user.type(allocated, "101");
     await user.click(within(drawer).getByRole("button", { name: "Сохранить черновик" }));

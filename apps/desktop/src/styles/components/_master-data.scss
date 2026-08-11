@@ -407,15 +407,58 @@
   background: vars.$color-overlay;
 }
 
-.form-drawer {
-  position: absolute;
-  inset: 0 0 0 auto;
+.form-modal-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  overflow: auto;
+  place-items: center;
+  padding: 28px;
+  background: vars.$color-overlay;
+  animation: form-modal-backdrop-in 180ms ease-out both;
+}
+
+.form-modal {
   display: flex;
-  width: min(460px, 100%);
+  width: min(100%, 460px);
+  max-height: calc(100dvh - 56px);
+  overflow: hidden;
   flex-direction: column;
-  border-left: 1px solid vars.$color-border;
+  border: 1px solid vars.$color-border;
+  border-radius: vars.$radius-medium;
+  outline: 0;
   background: vars.$color-surface;
-  box-shadow: vars.$shadow-drawer;
+  box-shadow: vars.$shadow-dialog;
+  animation: form-modal-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.form-modal--wide { width: min(100%, 760px); }
+.form-modal--large { width: min(100%, 980px); }
+
+.form-modal-backdrop--closing {
+  animation: form-modal-backdrop-out 180ms ease-in both;
+}
+
+.form-modal--closing {
+  pointer-events: none;
+  animation: form-modal-out 180ms ease-in both;
+}
+
+@keyframes form-modal-backdrop-in { from { background: transparent; } }
+@keyframes form-modal-backdrop-out { to { background: transparent; } }
+@keyframes form-modal-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.975); }
+}
+@keyframes form-modal-out {
+  to { opacity: 0; transform: translateY(12px) scale(0.985); }
+}
+
+.form-drawer {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .form-drawer__header {
@@ -478,6 +521,7 @@
   outline: 0;
   color: vars.$color-text;
   background: vars.$color-control;
+  transition: border-color vars.$transition-fast, background-color vars.$transition-fast, box-shadow vars.$transition-fast;
 }
 
 .form-field textarea {
@@ -498,6 +542,11 @@
 .form-field__error {
   color: vars.$color-danger;
   font-size: 0.75rem;
+  animation: form-error-in vars.$transition-fast both;
+}
+
+@keyframes form-error-in {
+  from { opacity: 0; transform: translateY(-4px); }
 }
 
 .product-units-editor {
@@ -537,6 +586,7 @@
   background: vars.$color-danger-surface;
   font-size: 0.8125rem;
   line-height: 1.45;
+  animation: form-error-in vars.$transition-fast both;
 }
 
 .form-alert--detailed {
@@ -613,6 +663,32 @@
 
   .form-drawer {
     width: 100%;
-    border-left: 0;
   }
+
+  .form-modal-backdrop { padding: 10px; }
+
+  .form-modal {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+  }
+
+  .form-drawer__header,
+  .document-drawer__header { padding: 18px; }
+
+  .entity-form__fields,
+  .document-form__body,
+  .payment-form__body { padding: 18px; }
+
+  .form-drawer__footer,
+  .document-drawer__footer {
+    flex-wrap: wrap;
+    padding: 16px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-modal-backdrop,
+  .form-modal,
+  .form-field__error,
+  .form-alert { animation-duration: 0.01ms !important; }
 }

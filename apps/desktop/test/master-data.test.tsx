@@ -127,7 +127,7 @@ describe("master data workspace", () => {
     await screen.findByText(/PRD-001/);
 
     await user.click(screen.getByRole("button", { name: "Создать" }));
-    const drawer = screen.getByRole("complementary", { name: "Новая запись" });
+    const drawer = screen.getByRole("dialog", { name: "Новая запись" });
     await user.click(within(drawer).getByRole("button", { name: "Создать" }));
     expect(within(drawer).getByText("Поле «Наименование» обязательно.")).toBeInTheDocument();
 
@@ -167,7 +167,7 @@ describe("master data workspace", () => {
     expect(screen.getByText(/pack × 10.000000/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Изменить Desk lamp" }));
-    const drawer = screen.getByRole("complementary", { name: "Изменение записи" });
+    const drawer = screen.getByRole("dialog", { name: "Изменение записи" });
     expect(within(drawer).getByLabelText("Альтернативные названия")).toHaveValue("Lamp");
     expect(within(drawer).getByLabelText("Цена закупки")).toHaveValue("18.00");
     const salePrice = within(drawer).getByLabelText("Цена продажи");
@@ -196,7 +196,7 @@ describe("master data workspace", () => {
     await screen.findByText(/PRD-001/);
 
     await user.click(screen.getByRole("button", { name: "Изменить Desk lamp" }));
-    const drawer = screen.getByRole("complementary", { name: "Изменение записи" });
+    const drawer = screen.getByRole("dialog", { name: "Изменение записи" });
     const nameInput = within(drawer).getByLabelText("Наименование *");
     await user.clear(nameInput);
     await user.type(nameInput, "Updated lamp");

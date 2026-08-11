@@ -162,7 +162,7 @@ describe("documents workspace", () => {
     await screen.findByText("SO-001");
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
-    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const drawer = screen.getByRole("dialog", { name: "Новый документ" });
     const number = within(drawer).getByLabelText("Номер");
     expect(number).toHaveValue("SALE-202606-0001");
     await user.selectOptions(within(drawer).getByLabelText("Тип"), "PURCHASE");
@@ -203,7 +203,7 @@ describe("documents workspace", () => {
     await screen.findByText("SO-001");
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
-    let drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    let drawer = screen.getByRole("dialog", { name: "Новый документ" });
     await user.selectOptions(within(drawer).getByLabelText("Тип"), "PURCHASE");
     await user.selectOptions(within(drawer).getByLabelText("Склад"), "warehouse-1");
     const product = within(drawer).getByRole("combobox", { name: "Товар" });
@@ -213,7 +213,7 @@ describe("documents workspace", () => {
 
     expect(await screen.findByText("PUR-202606-0001")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
-    drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    drawer = screen.getByRole("dialog", { name: "Новый документ" });
     await user.selectOptions(within(drawer).getByLabelText("Тип"), "PURCHASE");
     expect(within(drawer).getByLabelText("Номер")).toHaveValue("PUR-202606-0002");
   });
@@ -224,7 +224,7 @@ describe("documents workspace", () => {
     await screen.findByText("SO-001");
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
-    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const drawer = screen.getByRole("dialog", { name: "Новый документ" });
     const product = within(drawer).getByRole("combobox", { name: "Товар" });
     await user.click(product);
     await user.click(within(drawer).getByRole("option", { name: "VEG-2 · Carrot" }));
@@ -263,7 +263,7 @@ describe("documents workspace", () => {
     expect(within(dialog).getByText("После объединения: 1")).toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "Перенести в закупку" }));
 
-    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const drawer = screen.getByRole("dialog", { name: "Новый документ" });
     expect(within(drawer).getByLabelText("Тип")).toHaveValue("PURCHASE");
     expect(within(drawer).getByRole("combobox", { name: "Товар" })).toHaveValue("SKU-1 · Widget");
     expect(within(drawer).getByLabelText("Количество")).toHaveValue("5");
@@ -282,7 +282,7 @@ describe("documents workspace", () => {
     await screen.findByText("SO-001");
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
-    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const drawer = screen.getByRole("dialog", { name: "Новый документ" });
     const number = within(drawer).getByLabelText("Номер");
     await user.clear(number);
     await user.type(number, "SO-003");
@@ -315,7 +315,7 @@ describe("documents workspace", () => {
     await screen.findByText("SO-001");
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
-    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const drawer = screen.getByRole("dialog", { name: "Новый документ" });
     const number = within(drawer).getByLabelText("Номер");
     await user.clear(number);
     await user.type(number, "TR-002");
@@ -337,7 +337,7 @@ describe("documents workspace", () => {
     await screen.findByText("PO-001");
 
     await user.click(screen.getByRole("button", { name: "Открыть" }));
-    const drawer = screen.getByRole("complementary", { name: "Документ" });
+    const drawer = screen.getByRole("dialog", { name: "Документ" });
     expect(within(drawer).queryByRole("button", { name: "Сохранить черновик" })).not.toBeInTheDocument();
     await user.click(within(drawer).getByRole("button", { name: "Закрыть документ" }));
 
@@ -352,7 +352,7 @@ describe("documents workspace", () => {
     renderWithAppProviders(<DocumentsPage />, "/documents");
     await screen.findByText("PO-001");
     await user.click(screen.getByRole("button", { name: "Открыть" }));
-    const drawer = screen.getByRole("complementary", { name: "Документ" });
+    const drawer = screen.getByRole("dialog", { name: "Документ" });
     const sortButton = within(drawer).getByRole("button", { name: "Сортировать по колонке Товар" });
     await user.click(sortButton);
     expect(sortButton.closest("[role=columnheader]")).toHaveAttribute("aria-sort", "ascending");
@@ -367,7 +367,7 @@ describe("documents workspace", () => {
     await screen.findByText("SO-001");
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
-    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const drawer = screen.getByRole("dialog", { name: "Новый документ" });
     const product = within(drawer).getByRole("combobox", { name: "Товар" });
     expect(product).toHaveAttribute("aria-expanded", "false");
     await user.click(product);
@@ -406,7 +406,7 @@ describe("documents workspace", () => {
     await screen.findByText("SO-001");
     await user.click(screen.getByRole("button", { name: "Новый документ" }));
 
-    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    const drawer = screen.getByRole("dialog", { name: "Новый документ" });
     const product = within(drawer).getByRole("combobox", { name: "Товар" });
     await user.type(product, "missing");
     expect(within(drawer).getByText("Товары не найдены")).toHaveAttribute("role", "status");

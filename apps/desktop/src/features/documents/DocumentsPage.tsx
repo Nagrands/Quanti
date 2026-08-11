@@ -56,8 +56,6 @@ export function DocumentsPage() {
 
         return current.map((item) => item.id === savedDocument.id ? savedDocument : item);
       });
-      setIsDrawerOpen(false);
-      setSelected(null);
     }
   });
   const createProductMutation = useMutation({

@@ -69,8 +69,6 @@ export function MasterDataPage() {
       if (resource === "product-categories") {
         await queryClient.invalidateQueries({ queryKey: ["master-data", "product-categories", "active"] });
       }
-      setIsFormOpen(false);
-      setEditingEntity(null);
     }
   });
 

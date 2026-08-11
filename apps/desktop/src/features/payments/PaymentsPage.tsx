@@ -22,7 +22,6 @@ export function PaymentsPage() {
       ? current.map((item) => item.id === savedPayment.id ? savedPayment : item)
       : [...current, savedPayment]);
     await client.invalidateQueries({ queryKey: ["payment-debts"] });
-    setDrawer(false); setSelected(null);
   } });
   const lifecycle = useMutation<void, Error, { action: Action; payment: PaymentDto }>({ mutationFn: async ({ action, payment }) => { if (action === "post") await postPayment(payment.id); else if (action === "unpost") await unpostPayment(payment.id); else if (action === "repost") await repostPayment(payment.id); else await deletePayment(payment.id); }, onSuccess: async () => { await refresh(); setPending(null); } });
   const filtered = useMemo(() => (payments.data ?? []).filter((payment) => (!direction || payment.direction === direction) && (!status || payment.status === status) && (!search.trim() || payment.number.toLowerCase().includes(search.trim().toLowerCase()))), [payments.data, direction, status, search]);

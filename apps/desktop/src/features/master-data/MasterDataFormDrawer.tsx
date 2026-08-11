@@ -1,6 +1,7 @@
 import { Plus, Trash2, X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 
+import { FormModal } from "../../components/forms/FormModal";
 import { useI18n } from "../../i18n";
 import type {
   FormValues,
@@ -41,7 +42,7 @@ export function MasterDataFormDrawer({
     setRequestError("");
   }, [definition, entity, initialValues]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>, requestClose: () => void) {
     event.preventDefault();
 
     const errors = Object.fromEntries(
@@ -91,25 +92,26 @@ export function MasterDataFormDrawer({
     setRequestError("");
     try {
       await onSave(values);
+      requestClose();
     } catch (error) {
       setRequestError(formatApiError(error));
     }
   }
 
   return (
-    <div className="drawer-backdrop">
-      <aside className="form-drawer" aria-label={t(entity ? "Изменение записи" : "Новая запись")}>
+    <FormModal ariaLabel={t(entity ? "Изменение записи" : "Новая запись")} onClose={onClose}>
+      {(requestClose) => <div className="form-drawer">
         <header className="form-drawer__header">
           <div>
             <p>{t(entity ? "Изменение записи" : "Создание записи")}</p>
             <h2>{entity ? t("Изменить: {name}", { name: entity.name }) : t("Новый {name}", { name: definition.singularLabel })}</h2>
           </div>
-          <button type="button" className="icon-button" aria-label={t("Закрыть форму")} onClick={onClose}>
+          <button type="button" className="icon-button" aria-label={t("Закрыть форму")} onClick={requestClose}>
             <X aria-hidden="true" />
           </button>
         </header>
 
-        <form className="entity-form" onSubmit={handleSubmit}>
+        <form className="entity-form" onSubmit={(event) => handleSubmit(event, requestClose)}>
           <div className="entity-form__fields">
             {requestError ? <div className="form-alert" role="alert">{requestError}</div> : null}
             {definition.fields.map((field) => {
@@ -228,7 +230,7 @@ export function MasterDataFormDrawer({
           </div>
 
           <footer className="form-drawer__footer">
-            <button type="button" className="button button--secondary" onClick={onClose}>
+            <button type="button" className="button button--secondary" onClick={requestClose}>
               {t("Отмена")}
             </button>
             <button type="submit" className="button button--primary" disabled={isSaving}>
@@ -236,7 +238,7 @@ export function MasterDataFormDrawer({
             </button>
           </footer>
         </form>
-      </aside>
-    </div>
+      </div>}
+    </FormModal>
   );
 }

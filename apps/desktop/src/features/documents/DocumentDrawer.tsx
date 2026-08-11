@@ -10,6 +10,7 @@ import { useQueries } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Trash2, X } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 
+import { FormModal } from "../../components/forms/FormModal";
 import { useI18n } from "../../i18n";
 import {
   addDocumentLine,
@@ -138,7 +139,7 @@ export function DocumentDrawer({
     </span>
   );
 
-  async function submit(event: FormEvent) {
+  async function submit(event: FormEvent, requestClose: () => void) {
     event.preventDefault();
     const invalidLine = values.items.some((item) =>
       !item.productId
@@ -171,6 +172,7 @@ export function DocumentDrawer({
     try {
       setError("");
       await onSave(values);
+      requestClose();
     } catch (saveError) {
       setError(formatApiError(saveError, { products, warehouses }));
     }
@@ -190,18 +192,19 @@ export function DocumentDrawer({
   };
 
   return (
-    <div className="drawer-backdrop">
-      <aside className="document-drawer" aria-label={t(document ? "Документ" : "Новый документ")}>
+    <FormModal ariaLabel={t(document ? "Документ" : "Новый документ")} onClose={onClose} size="large">
+      {(requestClose) => <>
+      <div className="document-drawer">
         <header className="document-drawer__header">
           <div>
             <h2>{t("Документ")}</h2>
             <p>{document ? `${t("Номер")}: ${document.number}` : t("Новый черновик")}</p>
           </div>
           {document ? <span className={`status-label status-label--${document.status.toLowerCase()}`}>{documentStatusLabels[document.status]}</span> : null}
-          <button type="button" className="icon-button" aria-label={t("Закрыть документ")} onClick={onClose}><X /></button>
+          <button type="button" className="icon-button" aria-label={t("Закрыть документ")} onClick={requestClose}><X /></button>
         </header>
 
-        <form className="document-form" onSubmit={submit}>
+        <form className="document-form" onSubmit={(event) => submit(event, requestClose)}>
           <div className="document-form__body">
             {error ? <div className="form-alert" role="alert">{error}</div> : null}
             {document?.type === "STOCK_ADJUSTMENT" ? (
@@ -303,11 +306,11 @@ export function DocumentDrawer({
 
           <footer className="document-drawer__footer">
             <div><span>{t("Итого")}</span><strong>{calculateTotal(values.items).toFixed(2)}</strong></div>
-            <button type="button" className="button button--secondary" onClick={onClose}>{t("Отмена")}</button>
+            <button type="button" className="button button--secondary" onClick={requestClose}>{t("Отмена")}</button>
             {!isReadOnly ? <button type="submit" className="button button--primary" disabled={isSaving}>{t(isSaving ? "Сохранение…" : "Сохранить черновик")}</button> : null}
           </footer>
         </form>
-      </aside>
+      </div>
       {quickProductLineKey ? (
         <QuickProductDialog
           products={products}
@@ -326,6 +329,7 @@ export function DocumentDrawer({
           }}
         />
       ) : null}
-    </div>
+      </>}
+    </FormModal>
   );
 }

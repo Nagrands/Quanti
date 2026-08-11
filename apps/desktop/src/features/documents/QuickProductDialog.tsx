@@ -1,6 +1,7 @@
 import type { CreateProductDto, ProductCategoryDto, ProductDto } from "@quanti/shared";
 import { type FormEvent, useState } from "react";
 
+import { FormModal } from "../../components/forms/FormModal";
 import { useI18n } from "../../i18n";
 import { createSequenceCode } from "../../utils/sequence-code";
 
@@ -57,8 +58,8 @@ export function QuickProductDialog({
   }
 
   return (
-    <div className="dialog-backdrop dialog-backdrop--nested">
-      <form className="quick-product-dialog" role="dialog" aria-modal="true" aria-labelledby="quick-product-title" onSubmit={submit}>
+    <FormModal ariaLabel={t("Новый товар")} onClose={onCancel} size="wide">
+      {(requestClose) => <form className="quick-product-dialog" onSubmit={submit}>
         <header>
           <div>
             <p>{t("Быстрое создание")}</p>
@@ -79,10 +80,10 @@ export function QuickProductDialog({
           <label className="quick-product-dialog__wide">{t("Описание")}<textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} /></label>
         </div>
         <footer>
-          <button type="button" className="button button--secondary" onClick={onCancel}>{t("Отмена")}</button>
+          <button type="button" className="button button--secondary" onClick={requestClose}>{t("Отмена")}</button>
           <button type="submit" className="button button--primary" disabled={isSaving}>{t(isSaving ? "Сохранение…" : "Создать и выбрать")}</button>
         </footer>
-      </form>
-    </div>
+      </form>}
+    </FormModal>
   );
 }

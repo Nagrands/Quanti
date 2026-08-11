@@ -184,15 +184,11 @@
 }
 
 .document-drawer {
-  position: absolute;
-  inset: 0 0 0 auto;
   display: flex;
-  width: min(680px, 100%);
+  width: 100%;
+  min-height: 0;
   overflow-x: hidden;
   flex-direction: column;
-  border-left: 1px solid vars.$color-border;
-  background: vars.$color-surface;
-  box-shadow: vars.$shadow-drawer;
 }
 
 @media (max-width: 640px) {
@@ -284,12 +280,30 @@
   outline: 0;
   color: vars.$color-text;
   background: vars.$color-control;
+  transition: border-color vars.$transition-fast, background-color vars.$transition-fast, box-shadow vars.$transition-fast;
 }
 
 .document-fields :disabled,
 .line-item :disabled {
   color: vars.$color-text-muted;
   background: vars.$color-background;
+}
+
+.document-fields input:focus,
+.document-fields select:focus,
+.document-fields textarea:focus,
+.line-item input:focus,
+.line-item select:focus,
+.allocation-row input:focus,
+.allocation-row select:focus {
+  border-color: vars.$color-accent-600;
+  box-shadow: 0 0 0 3px vars.$color-focus-ring;
+}
+
+.document-fields [aria-invalid="true"],
+.line-item [aria-invalid="true"],
+.allocation-row [aria-invalid="true"] {
+  border-color: vars.$color-danger;
 }
 
 .document-fields__wide {
@@ -725,7 +739,6 @@
 @media (max-width: 640px) {
   .document-drawer {
     width: 100%;
-    border-left: 0;
   }
 
   .document-fields {
