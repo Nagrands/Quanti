@@ -2,9 +2,17 @@
 
 .document-toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 160px 180px auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(140px, 160px) minmax(150px, 180px);
   gap: 12px;
   margin: 28px 0 20px;
+}
+
+.document-toolbar__actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
 }
 
 .document-toolbar select {
@@ -16,7 +24,7 @@
   background: vars.$color-control;
 }
 
-.documents-table .table-link {
+.table-link {
   padding: 0;
   color: vars.$color-accent-600;
   background: transparent;
@@ -340,7 +348,7 @@
 
 .line-items__header {
   color: vars.$color-text-muted;
-  background: vars.$color-surface-muted;
+  background: transparent;
   font-size: 0.7rem;
   font-weight: 750;
   text-transform: uppercase;
@@ -353,6 +361,7 @@
   gap: 4px;
   padding: 2px 0;
   color: inherit;
+  background: transparent;
   font: inherit;
   letter-spacing: inherit;
   text-align: left;
@@ -730,9 +739,14 @@
   }
 
   .document-toolbar .search-field,
-  .document-toolbar .button {
+  .document-toolbar__actions {
     width: 100%;
     grid-column: 1 / -1;
+  }
+
+  .document-toolbar__actions .button,
+  .document-toolbar__actions .transfer-controls {
+    flex: 1 1 auto;
   }
 }
 

@@ -98,6 +98,7 @@ describe("master data workspace", () => {
     renderWithAppProviders(<MasterDataPage />, "/products");
 
     expect(await screen.findByText(/PRD-001/)).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Альтернативные названия" })).not.toBeInTheDocument();
     expect(getMasterData).toHaveBeenCalledWith("products", true);
     expect(screen.queryByText(/PRD-ARCH/)).not.toBeInTheDocument();
 

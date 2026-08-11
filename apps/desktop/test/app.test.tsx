@@ -64,6 +64,35 @@ describe("Quanti application shell", () => {
     expect(screen.getByRole("link", { name: "Главная" })).not.toHaveAttribute("aria-current");
   });
 
+  test("starts compact and persists the expanded sidebar preference", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderWithAppProviders(<App />);
+    const navigation = screen.getByRole("complementary", { name: "Основная навигация" });
+    const expandButton = screen.getByRole("button", { name: "Развернуть боковую панель" });
+
+    expect(navigation).not.toHaveClass("sidebar--expanded");
+    expect(expandButton).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("link", { name: "Документы" })).toBeInTheDocument();
+    expect(screen.getByText("Документы", { selector: ".sidebar__tooltip" })).toBeInTheDocument();
+
+    await user.click(expandButton);
+    expect(navigation).toHaveClass("sidebar--expanded");
+    expect(screen.getByRole("button", { name: "Свернуть боковую панель" })).toHaveAttribute("aria-expanded", "true");
+    expect(window.localStorage.getItem("quanti.sidebar.expanded")).toBe("true");
+
+    unmount();
+    renderWithAppProviders(<App />);
+    expect(screen.getByRole("complementary", { name: "Основная навигация" })).toHaveClass("sidebar--expanded");
+  });
+
+  test("falls back to compact mode when sidebar storage is unavailable", () => {
+    const getItem = vi.spyOn(window.localStorage, "getItem").mockImplementation(() => { throw new Error("blocked"); });
+    renderWithAppProviders(<App />);
+
+    expect(screen.getByRole("complementary", { name: "Основная навигация" })).not.toHaveClass("sidebar--expanded");
+    getItem.mockRestore();
+  });
+
   test("renders a fallback for unknown routes", () => {
     renderWithAppProviders(<App />, "/missing");
 

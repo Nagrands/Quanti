@@ -151,11 +151,6 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
           return `${t("Закупка")}: ${purchase}\n${t("Продажа")}: ${sale}`;
         }
       },
-      {
-        key: "aliases",
-        label: "Альтернативные названия",
-        render: (entity) => productAliases(entity).join(", ") || "—"
-      },
       updatedColumn
     ],
     fields: [

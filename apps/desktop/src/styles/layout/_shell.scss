@@ -7,6 +7,11 @@
 
 .app-shell__workspace {
   min-height: 100vh;
+  margin-left: vars.$sidebar-compact-width;
+  transition: margin-left vars.$transition-fast;
+}
+
+.app-shell--sidebar-expanded .app-shell__workspace {
   margin-left: vars.$sidebar-width;
 }
 
@@ -79,4 +84,8 @@
     visibility: visible;
     opacity: 1;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell__workspace { transition-duration: 0.01ms; }
 }

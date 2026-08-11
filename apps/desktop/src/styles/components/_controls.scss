@@ -1,0 +1,49 @@
+@use "../abstracts/variables" as vars;
+
+select {
+  appearance: none;
+  color: vars.$color-text;
+  font-size: 0.875rem !important;
+  font-weight: 650 !important;
+  line-height: 1.35;
+  accent-color: vars.$color-accent-600;
+  cursor: pointer;
+  background-image: none !important;
+  transition:
+    border-color vars.$transition-fast,
+    background-color vars.$transition-fast,
+    box-shadow vars.$transition-fast;
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+select option,
+select optgroup {
+  min-height: 36px;
+  padding: 8px 12px;
+  color: vars.$color-text;
+  font: inherit;
+  font-weight: 600;
+  background-color: vars.$color-control;
+}
+
+select option:checked {
+  color: vars.$color-white;
+  background-color: vars.$color-accent-600;
+  background-image: linear-gradient(vars.$color-accent-600), vars.$color-accent-600;
+}
+
+select option:disabled {
+  color: vars.$color-text-muted;
+}
+
+.filter-field select,
+.document-toolbar > select,
+.report-filters select,
+.settings-card select {
+  padding-right: 8px !important;
+  background-color: transparent !important;
+}
