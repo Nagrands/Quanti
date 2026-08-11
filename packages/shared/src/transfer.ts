@@ -26,6 +26,7 @@ export interface TransferProduct {
   unit: string;
   purchasePrice?: string | null;
   salePrice?: string | null;
+  aliases?: string[];
   units: Array<{ name: string; conversionFactor: string }>;
   categoryCode: string | null;
   isActive: boolean;

@@ -76,6 +76,7 @@ const dashboardData = {
     description: null,
     unit: "pcs",
     units: [],
+    aliases: [],
     salePrice: null,
     purchasePrice: null,
     categoryId: null,

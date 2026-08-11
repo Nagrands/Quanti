@@ -19,6 +19,7 @@ const lookups = {
     description: null,
     unit: "кг",
     units: [{ id: "unit-bunch", name: "пучок", conversionFactor: "0.100000" }],
+    aliases: [],
     salePrice: null,
     purchasePrice: null,
     categoryId: null,

@@ -225,6 +225,7 @@ const productView: ProductDto = {
   description: null,
   unit: "pcs",
   units: [{ id: "unit-1", name: "box", conversionFactor: "10.000000" }],
+  aliases: ["Goods"],
   salePrice: "15.00",
   purchasePrice: "10.00",
   categoryId: "category-1",

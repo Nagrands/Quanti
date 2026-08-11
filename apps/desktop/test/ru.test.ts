@@ -11,6 +11,7 @@ const context = {
     description: null,
     unit: "шт",
     units: [],
+    aliases: [],
     salePrice: null,
     purchasePrice: null,
     categoryId: null,

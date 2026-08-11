@@ -16,7 +16,8 @@ import {
   printDocument,
   repostDocument,
   unpostDocument,
-  updateDocument
+  updateDocument,
+  updateProductAliases
 } from "../src/features/documents/documents-api";
 import { calculateAmount, toDocumentPayload } from "../src/features/documents/document-model";
 import { renderWithAppProviders } from "./render-app";
@@ -28,6 +29,7 @@ vi.mock("../src/features/documents/documents-api", () => ({
   createDocument: vi.fn(),
   createProduct: vi.fn(),
   updateDocument: vi.fn(),
+  updateProductAliases: vi.fn(),
   deleteDocument: vi.fn(),
   printDocument: vi.fn(),
   downloadDocumentPdf: vi.fn(),
@@ -80,6 +82,7 @@ const lookups = {
       description: null,
       unit: "pcs",
       units: [],
+      aliases: [],
       salePrice: "10.00",
       purchasePrice: "7.50",
       categoryId: null,
@@ -95,6 +98,7 @@ const lookups = {
       description: null,
       unit: "kg",
       units: [{ id: "unit-bunch", name: "bunch", conversionFactor: "0.100000" }],
+      aliases: [],
       salePrice: "4.50",
       purchasePrice: "30.00",
       categoryId: "category-1",
@@ -122,6 +126,9 @@ describe("documents workspace", () => {
     vi.mocked(getDocumentLookups).mockResolvedValue(lookups);
     vi.mocked(createDocument).mockResolvedValue(draft);
     vi.mocked(createProduct).mockResolvedValue(lookups.products[0]);
+    vi.mocked(updateProductAliases).mockImplementation(async (id, aliases) => ({
+      ...lookups.products.find((product) => product.id === id)!, aliases
+    }));
     vi.mocked(updateDocument).mockResolvedValue(draft);
     vi.mocked(deleteDocument).mockResolvedValue(undefined);
     vi.mocked(printDocument).mockResolvedValue({
@@ -235,6 +242,28 @@ describe("documents workspace", () => {
     expect(within(drawer).getByLabelText("Цена")).toHaveValue("0.45");
   });
 
+  test("imports a pasted list into an unsaved purchase draft", async () => {
+    const user = userEvent.setup();
+    const createCallsBeforeImport = vi.mocked(createDocument).mock.calls.length;
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("SO-001");
+
+    await user.click(screen.getByRole("button", { name: "Импортировать список закупки" }));
+    const dialog = screen.getByRole("dialog", { name: "Импорт списка закупки" });
+    await user.type(within(dialog).getByLabelText("Текст списка закупки"), "Widget 2\nWidget 3");
+    await user.click(within(dialog).getByRole("button", { name: "Разобрать список" }));
+    expect(within(dialog).getAllByText("Готово")).toHaveLength(2);
+    expect(within(dialog).getByText("После объединения: 1")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Перенести в закупку" }));
+
+    const drawer = screen.getByRole("complementary", { name: "Новый документ" });
+    expect(within(drawer).getByLabelText("Тип")).toHaveValue("PURCHASE");
+    expect(within(drawer).getByRole("combobox", { name: "Товар" })).toHaveValue("SKU-1 · Widget");
+    expect(within(drawer).getByLabelText("Количество")).toHaveValue("5");
+    expect(within(drawer).getByLabelText("Цена")).toHaveValue("7.50");
+    expect(createDocument).toHaveBeenCalledTimes(createCallsBeforeImport);
+  });
+
   test("warns about insufficient stock while editing a sale draft", async () => {
     const user = userEvent.setup();
     vi.mocked(getStockBalance).mockResolvedValue({
@@ -341,6 +370,7 @@ describe("documents workspace", () => {
       description: null,
       unit: "kg",
       units: [],
+      aliases: [],
       salePrice: "12.00",
       purchasePrice: "8.00",
       categoryId: "category-1",

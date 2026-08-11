@@ -68,6 +68,7 @@ test("master-data import applies update or skip choices in one transaction", asy
 
 test("master-data import preserves product reference prices", async () => {
   let productData: Record<string, unknown> | undefined;
+  let aliasData: Array<Record<string, unknown>> = [];
   const tx = {
     productCategory: { findUnique: async () => null, upsert: async () => undefined },
     warehouse: { findUnique: async () => null, upsert: async () => undefined },
@@ -80,7 +81,8 @@ test("master-data import preserves product reference prices", async () => {
         return { id: "product-1" };
       }
     },
-    productUnit: { deleteMany: async () => undefined, createMany: async () => undefined }
+    productUnit: { deleteMany: async () => undefined, createMany: async () => undefined },
+    productAlias: { deleteMany: async () => undefined, createMany: async ({ data }: { data: Array<Record<string, unknown>> }) => { aliasData = data; } }
   };
   const prisma = {
     ...prismaForPreview(),
@@ -91,13 +93,14 @@ test("master-data import preserves product reference prices", async () => {
     ...emptyMasterData,
     products: [{
       sku: "SKU-1", name: "Widget", description: null, unit: "pcs", units: [],
-      purchasePrice: "8.50", salePrice: "12.00", categoryCode: null, isActive: true
+      purchasePrice: "8.50", salePrice: "12.00", aliases: ["Goods"], categoryCode: null, isActive: true
     }]
   });
 
   await service.apply(transferPackage, {});
   assert.equal(String(productData?.purchasePrice), "8.5");
   assert.equal(String(productData?.salePrice), "12");
+  assert.deepEqual(aliasData, [{ productId: "product-1", name: "Goods", normalizedName: "goods" }]);
 });
 
 test("invalid transfer package is rejected before opening a transaction", async () => {

@@ -68,6 +68,30 @@ export function createEmptyDocument(number = ""): DocumentFormValues {
   };
 }
 
+export function createImportedPurchase(
+  rows: Array<{ productId: string; quantity: string; unit: string }>,
+  products: ProductDto[],
+  documents: readonly Pick<DocumentDto, "number">[]
+): DocumentFormValues {
+  return {
+    ...createEmptyDocument(createDocumentNumber("PURCHASE", documents)),
+    type: "PURCHASE",
+    items: rows.map((row) => {
+      const product = products.find((candidate) => candidate.id === row.productId);
+      const alternative = product?.units.find((unit) => unit.name === row.unit);
+      return {
+        key: crypto.randomUUID(),
+        productId: row.productId,
+        unit: row.unit,
+        unitFactor: row.unit === product?.unit ? "1" : alternative?.conversionFactor ?? "1",
+        quantity: row.quantity,
+        price: product ? productUnitPrice(product, "PURCHASE", row.unit) : "0",
+        warehouseId: ""
+      };
+    })
+  };
+}
+
 function nextSequence(existingValues: readonly string[], prefix: string) {
   const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = new RegExp(`^${escapedPrefix}-(\\d{4})$`);

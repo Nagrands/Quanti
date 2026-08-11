@@ -34,6 +34,7 @@ interface DocumentDrawerProps {
   warehouses: WarehouseDto[];
   counterparties: CounterpartyDto[];
   documents: DocumentDto[];
+  initialValues?: DocumentFormValues | null;
   isSaving: boolean;
   onClose: () => void;
   onSave: (values: DocumentFormValues) => Promise<void>;
@@ -47,6 +48,7 @@ export function DocumentDrawer({
   warehouses,
   counterparties,
   documents,
+  initialValues = null,
   isSaving,
   onClose,
   onSave,
@@ -74,10 +76,10 @@ export function DocumentDrawer({
   ), [products, stockBalanceQueries, values, warehouses]);
 
   useEffect(() => {
-    setValues(document ? documentToForm(document) : createEmptyDocument(createDocumentNumber("SALE", documents)));
+    setValues(document ? documentToForm(document) : initialValues ?? createEmptyDocument(createDocumentNumber("SALE", documents)));
     setError("");
     setQuickProductLineKey(null);
-  }, [document, documents]);
+  }, [document, documents, initialValues]);
 
   function updateLine(key: string, field: string, value: string) {
     setValues((current) => ({

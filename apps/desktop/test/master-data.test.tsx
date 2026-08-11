@@ -26,6 +26,7 @@ const product = {
   name: "Desk lamp",
   unit: "pcs",
   units: [{ id: "unit-pack", name: "pack", conversionFactor: "10.000000" }],
+  aliases: ["Lamp"],
   salePrice: "25.00",
   purchasePrice: "18.00",
   description: "Adjustable lamp",
@@ -152,6 +153,7 @@ describe("master data workspace", () => {
       purchasePrice: null,
       salePrice: null,
       units: [{ name: "pack", conversionFactor: "10" }],
+      aliases: [],
       description: null
     });
   });
@@ -166,6 +168,7 @@ describe("master data workspace", () => {
 
     await user.click(screen.getByRole("button", { name: "Изменить Desk lamp" }));
     const drawer = screen.getByRole("complementary", { name: "Изменение записи" });
+    expect(within(drawer).getByLabelText("Альтернативные названия")).toHaveValue("Lamp");
     expect(within(drawer).getByLabelText("Цена закупки")).toHaveValue("18.00");
     const salePrice = within(drawer).getByLabelText("Цена продажи");
     await user.clear(salePrice);
@@ -181,7 +184,8 @@ describe("master data workspace", () => {
       "product-1",
       expect.objectContaining({
         salePrice: "27.50",
-        units: [{ name: "pack", conversionFactor: "12" }]
+        units: [{ name: "pack", conversionFactor: "12" }],
+        aliases: ["Lamp"]
       })
     );
   });

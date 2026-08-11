@@ -39,6 +39,13 @@ export const createProduct = (payload: CreateProductDto) =>
     body: JSON.stringify(payload)
   });
 
+export const updateProductAliases = (id: string, aliases: string[]) =>
+  apiClient.request<ProductDto>(`/products/${id}`, {
+    method: "PATCH",
+    headers: jsonHeaders,
+    body: JSON.stringify({ aliases })
+  });
+
 export const createDocument = (payload: CreateDraftDocumentDto) =>
   apiClient.request<DocumentDto>("/documents", {
     method: "POST",

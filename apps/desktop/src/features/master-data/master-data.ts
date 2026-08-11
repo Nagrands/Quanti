@@ -68,6 +68,10 @@ function productUnits(entity: MasterDataEntity) {
   return productEntity(entity)?.units ?? [];
 }
 
+function productAliases(entity: MasterDataEntity) {
+  return productEntity(entity)?.aliases ?? [];
+}
+
 export function createMasterDataDefaults(
   definition: MasterDataDefinition,
   entities: readonly MasterDataEntity[]
@@ -147,6 +151,11 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
           return `${t("Закупка")}: ${purchase}\n${t("Продажа")}: ${sale}`;
         }
       },
+      {
+        key: "aliases",
+        label: "Альтернативные названия",
+        render: (entity) => productAliases(entity).join(", ") || "—"
+      },
       updatedColumn
     ],
     fields: [
@@ -156,12 +165,14 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
       { key: "unit", label: "Базовая единица", required: true, placeholder: "шт, кг, л" },
       { key: "purchasePrice", label: "Цена закупки", type: "price" },
       { key: "salePrice", label: "Цена продажи", type: "price" },
+      { key: "aliases", label: "Альтернативные названия", placeholder: "Росса, Лола Росса" },
       { key: "units", label: "Дополнительные единицы", type: "product-units" },
       { key: "description", label: "Описание", type: "textarea" }
     ],
-    createDefaults: { sku: "", name: "", categoryId: "", unit: "", purchasePrice: "", salePrice: "", units: [], description: "" },
+    createDefaults: { sku: "", name: "", categoryId: "", unit: "", purchasePrice: "", salePrice: "", aliases: "", units: [], description: "" },
     toFormValues: (entity) => ({
       ...commonFormValues(entity, ["sku", "name", "categoryId", "unit", "purchasePrice", "salePrice", "description"]),
+      aliases: productAliases(entity).join(", "),
       units: productUnits(entity).map((unit) => ({
         key: unit.id,
         name: unit.name,
@@ -170,6 +181,7 @@ export const masterDataDefinitions: readonly MasterDataDefinition[] = [
     }),
     toPayload: (values) => ({
       ...trimPayload(values, ["categoryId", "purchasePrice", "salePrice", "description"]),
+      aliases: String(values.aliases ?? "").split(/[,\n]+/).map((alias) => alias.trim()).filter(Boolean),
       units: Array.isArray(values.units)
         ? values.units.map((unit) => ({
             name: unit.name.trim(),

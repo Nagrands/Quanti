@@ -39,6 +39,11 @@ export class CreateProductRequest implements CreateProductDto {
 
   @IsOptional()
   @IsArray()
+  @IsString({ each: true })
+  aliases?: string[];
+
+  @IsOptional()
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductUnitRequest)
   units?: ProductUnitRequest[];

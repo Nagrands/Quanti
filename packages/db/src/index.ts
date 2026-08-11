@@ -10,6 +10,7 @@ export type {
   Payment,
   PaymentAllocation,
   Product,
+  ProductAlias,
   ProductCategory,
   ProductUnit,
   StockBalance,

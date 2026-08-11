@@ -38,7 +38,7 @@ export function ProductCombobox({
     }
 
     return products.filter((product) =>
-      `${product.sku} ${product.name} ${product.categoryName ?? ""} ${product.unit} ${(product.units ?? []).map((unit) => unit.name).join(" ")}`
+      `${product.sku} ${product.name} ${(product.aliases ?? []).join(" ")} ${product.categoryName ?? ""} ${product.unit} ${(product.units ?? []).map((unit) => unit.name).join(" ")}`
         .toLocaleLowerCase()
         .includes(normalized)
     );

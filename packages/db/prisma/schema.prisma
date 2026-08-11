@@ -89,12 +89,25 @@ model Product {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   category       ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  aliases        ProductAlias[]
   units          ProductUnit[]
   documentItems  DocumentItem[]
   stockMovements StockMovement[]
   stockBalances  StockBalance[]
 
   @@index([categoryId])
+}
+
+model ProductAlias {
+  id             String   @id @default(cuid())
+  productId      String
+  name           String
+  normalizedName String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
 }
 
 model ProductUnit {

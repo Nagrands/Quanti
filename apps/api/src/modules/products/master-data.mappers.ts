@@ -1,10 +1,11 @@
-import type { Account, Counterparty, Product, ProductCategory, ProductUnit, Warehouse } from "@quanti/db";
+import type { Account, Counterparty, Product, ProductAlias, ProductCategory, ProductUnit, Warehouse } from "@quanti/db";
 import type { AccountDto, CounterpartyDto, ProductCategoryDto, ProductDto, WarehouseDto } from "@quanti/shared";
 
 const toIso = (value: Date) => value.toISOString();
 
 type ProductRecord = Product & {
   category?: ProductCategory | null;
+  aliases?: ProductAlias[];
   units?: ProductUnit[];
 };
 
@@ -20,6 +21,7 @@ export function toProductDto(record: ProductRecord): ProductDto {
       name: unit.name,
       conversionFactor: unit.conversionFactor.toString()
     })),
+    aliases: (record.aliases ?? []).map((alias) => alias.name),
     purchasePrice: record.purchasePrice?.toString() ?? null,
     salePrice: record.salePrice?.toString() ?? null,
     categoryId: record.categoryId,

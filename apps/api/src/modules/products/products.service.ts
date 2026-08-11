@@ -12,7 +12,7 @@ export class ProductsService {
   async findAll(includeInactive = false): Promise<ProductDto[]> {
     const products = await this.prisma.product.findMany({
       ...(includeInactive ? {} : { where: { isActive: true } }),
-      include: { category: true, units: { orderBy: { createdAt: "asc" } } },
+      include: { category: true, aliases: { orderBy: { createdAt: "asc" } }, units: { orderBy: { createdAt: "asc" } } },
       orderBy: { createdAt: "asc" }
     });
 
@@ -25,7 +25,7 @@ export class ProductsService {
         id,
         isActive: true
       },
-      include: { category: true, units: { orderBy: { createdAt: "asc" } } }
+      include: { category: true, aliases: { orderBy: { createdAt: "asc" } }, units: { orderBy: { createdAt: "asc" } } }
     });
 
     if (!product) {
@@ -45,11 +45,14 @@ export class ProductsService {
         purchasePrice: this.optionalPrice(payload.purchasePrice),
         salePrice: this.optionalPrice(payload.salePrice),
         categoryId: payload.categoryId ?? null,
+        aliases: {
+          create: this.aliasData(payload.aliases ?? [])
+        },
         units: {
           create: this.unitData(payload.unit, payload.units ?? [])
         }
       },
-      include: { category: true, units: { orderBy: { createdAt: "asc" } } }
+      include: { category: true, aliases: { orderBy: { createdAt: "asc" } }, units: { orderBy: { createdAt: "asc" } } }
     });
 
     return toProductDto(product);
@@ -81,6 +84,17 @@ export class ProductsService {
           });
         }
       }
+
+
+      if (payload.aliases) {
+        await tx.productAlias.deleteMany({ where: { productId: id } });
+        const aliases = this.aliasData(payload.aliases);
+        if (aliases.length > 0) {
+          await tx.productAlias.createMany({
+            data: aliases.map((alias) => ({ ...alias, productId: id }))
+          });
+        }
+      }
     });
 
     return this.findOne(id);
@@ -104,7 +118,7 @@ export class ProductsService {
     const restoredProduct = await this.prisma.product.update({
       where: { id },
       data: { isActive: true },
-      include: { category: true, units: { orderBy: { createdAt: "asc" } } }
+      include: { category: true, aliases: { orderBy: { createdAt: "asc" } }, units: { orderBy: { createdAt: "asc" } } }
     });
     return toProductDto(restoredProduct);
   }
@@ -132,6 +146,25 @@ export class ProductsService {
     }
 
     return mapped;
+  }
+
+  private aliasData(aliases: string[]) {
+    const seen = new Set<string>();
+    return aliases.map((name) => ({
+      name: name.trim(),
+      normalizedName: this.normalizeAlias(name)
+    })).filter((alias) => {
+      if (!alias.name || seen.has(alias.normalizedName)) return false;
+      seen.add(alias.normalizedName);
+      return true;
+    });
+  }
+
+  private normalizeAlias(value: string) {
+    return value.trim().toLocaleLowerCase("ru-RU")
+      .replace(/ё/g, "е")
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
   }
 
   private optionalPrice(value: string | null | undefined) {

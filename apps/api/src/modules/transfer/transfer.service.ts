@@ -135,7 +135,7 @@ export class TransferService {
   private async exportMasterData(): Promise<MasterDataTransferPayload> {
     const [categories, products, warehouses, counterparties, accounts] = await Promise.all([
       this.prisma.productCategory.findMany({ orderBy: { code: "asc" } }),
-      this.prisma.product.findMany({ include: { category: true, units: true }, orderBy: { sku: "asc" } }),
+      this.prisma.product.findMany({ include: { category: true, aliases: true, units: true }, orderBy: { sku: "asc" } }),
       this.prisma.warehouse.findMany({ orderBy: { code: "asc" } }),
       this.prisma.counterparty.findMany({ orderBy: { code: "asc" } }),
       this.prisma.account.findMany({ orderBy: { code: "asc" } })
@@ -149,6 +149,7 @@ export class TransferService {
         unit: product.unit,
         purchasePrice: product.purchasePrice?.toString() ?? null,
         salePrice: product.salePrice?.toString() ?? null,
+        aliases: product.aliases.map((alias) => alias.name),
         units: product.units.map((unit) => ({ name: unit.name, conversionFactor: unit.conversionFactor.toString() })),
         categoryCode: product.category?.code ?? null,
         isActive: product.isActive
@@ -321,6 +322,19 @@ export class TransferService {
       if (item.units.length) {
         await tx.productUnit.createMany({
           data: item.units.map((unit) => ({ productId: product.id, name: unit.name, conversionFactor: this.decimal(unit.conversionFactor) }))
+        });
+      }
+      if (existing && item.aliases !== undefined) await tx.productAlias.deleteMany({ where: { productId: product.id } });
+      if (item.aliases?.length) {
+        await tx.productAlias.createMany({
+          data: item.aliases.map((name) => ({
+            productId: product.id,
+            name: name.trim(),
+            normalizedName: name.trim().toLocaleLowerCase("ru-RU")
+              .replace(/ё/g, "е")
+              .replace(/[^\p{L}\p{N}]+/gu, " ")
+              .trim()
+          }))
         });
       }
       this.count(existing, result);

@@ -73,6 +73,13 @@ test("product reference prices accept null or two decimals and reject invalid va
   }
 });
 
+test("product aliases accept a list of strings", async () => {
+  const pipe = new ApiValidationPipe();
+  const metadata = { type: "body" as const, metatype: CreateProductRequest };
+  await assert.doesNotReject(() => pipe.transform({ sku: "SKU-1", name: "Widget", unit: "pcs", aliases: ["Goods"] }, metadata));
+  await assert.rejects(() => pipe.transform({ sku: "SKU-1", name: "Widget", unit: "pcs", aliases: [10] }, metadata), BadRequestException);
+});
+
 test("api exception filter maps validation errors into stable response shape", () => {
   const filter = new ApiExceptionFilter();
   const { response, responseState } = createResponseMock();
