@@ -35,6 +35,9 @@ export interface DocumentFormValues {
   items: DocumentLineForm[];
 }
 
+export type DocumentLineSortKey = "product" | "unit" | "quantity" | "price" | "amount";
+export type SortDirection = "ascending" | "descending";
+
 const documentNumberPrefixes: Record<DocumentType, string> = {
   SALE: "SALE",
   PURCHASE: "PUR",
@@ -145,6 +148,42 @@ export function calculateAmount(quantity: string, price: string) {
 
 export function calculateTotal(items: DocumentLineForm[]) {
   return items.reduce((total, item) => total + Number(calculateAmount(item.quantity, item.price)), 0);
+}
+
+export function sortDocumentLines(
+  items: DocumentLineForm[],
+  products: ProductDto[],
+  key: DocumentLineSortKey,
+  direction: SortDirection
+) {
+  const collator = new Intl.Collator("ru-RU", { numeric: true, sensitivity: "base" });
+  const productById = new Map(products.map((product) => [product.id, product]));
+  const numericValue = (item: DocumentLineForm) => {
+    const raw = key === "quantity" ? item.quantity
+      : key === "price" ? item.price
+        : calculateAmount(item.quantity, item.price);
+    if (raw.trim() === "") return null;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  };
+  const stringValue = (item: DocumentLineForm) => {
+    if (key === "unit") return item.unit.trim() || null;
+    const product = productById.get(item.productId);
+    return product ? [product.name, product.sku] as const : null;
+  };
+
+  return items.map((item, index) => ({ item, index })).sort((left, right) => {
+    const leftValue = ["quantity", "price", "amount"].includes(key) ? numericValue(left.item) : stringValue(left.item);
+    const rightValue = ["quantity", "price", "amount"].includes(key) ? numericValue(right.item) : stringValue(right.item);
+    if (leftValue === null) return rightValue === null ? left.index - right.index : 1;
+    if (rightValue === null) return -1;
+    let compared: number;
+    if (typeof leftValue === "number" && typeof rightValue === "number") compared = leftValue - rightValue;
+    else if (Array.isArray(leftValue) && Array.isArray(rightValue)) {
+      compared = collator.compare(leftValue[0], rightValue[0]) || collator.compare(leftValue[1], rightValue[1]);
+    } else compared = collator.compare(String(leftValue), String(rightValue));
+    return compared === 0 ? left.index - right.index : direction === "ascending" ? compared : -compared;
+  }).map(({ item }) => item);
 }
 
 export function toDocumentPayload(values: DocumentFormValues): CreateDraftDocumentDto {

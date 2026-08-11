@@ -110,6 +110,7 @@ const english: Record<string, string> = {
   "Тип": "Type",
   "Дата": "Date",
   "Сумма": "Amount",
+  "Сортировать по колонке {column}": "Sort by {column}",
   "Статус": "Status",
   "Комментарий": "Notes",
   "Товар": "Product",

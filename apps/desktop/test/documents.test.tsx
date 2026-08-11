@@ -19,7 +19,7 @@ import {
   updateDocument,
   updateProductAliases
 } from "../src/features/documents/documents-api";
-import { calculateAmount, toDocumentPayload } from "../src/features/documents/document-model";
+import { calculateAmount, sortDocumentLines, toDocumentPayload } from "../src/features/documents/document-model";
 import { renderWithAppProviders } from "./render-app";
 
 vi.mock("../src/features/documents/documents-api", () => ({
@@ -240,6 +240,13 @@ describe("documents workspace", () => {
     await user.type(within(drawer).getByLabelText("Цена"), "99");
     await user.selectOptions(within(drawer).getByLabelText("Тип"), "RETURN_IN");
     expect(within(drawer).getByLabelText("Цена")).toHaveValue("0.45");
+
+    const priceSort = within(drawer).getByRole("button", { name: "Сортировать по колонке Цена" });
+    await user.click(priceSort);
+    expect(priceSort.closest("[role=columnheader]")).toHaveAttribute("aria-sort", "ascending");
+    await user.clear(within(drawer).getByLabelText("Цена"));
+    await user.type(within(drawer).getByLabelText("Цена"), "1");
+    expect(priceSort.closest("[role=columnheader]")).toHaveAttribute("aria-sort", "none");
   });
 
   test("imports a pasted list into an unsaved purchase draft", async () => {
@@ -337,6 +344,21 @@ describe("documents workspace", () => {
     await user.click(screen.getByRole("button", { name: "Отменить проведение" }));
     await user.click(within(screen.getByRole("dialog", { name: "Отменить проведение?" })).getByRole("button", { name: "Отменить проведение" }));
     expect(unpostDocument).toHaveBeenCalledWith("document-2");
+  });
+
+  test("sorts a posted document locally without updating it", async () => {
+    const user = userEvent.setup();
+    const updatesBeforeSort = vi.mocked(updateDocument).mock.calls.length;
+    renderWithAppProviders(<DocumentsPage />, "/documents");
+    await screen.findByText("PO-001");
+    await user.click(screen.getByRole("button", { name: "Открыть" }));
+    const drawer = screen.getByRole("complementary", { name: "Документ" });
+    const sortButton = within(drawer).getByRole("button", { name: "Сортировать по колонке Товар" });
+    await user.click(sortButton);
+    expect(sortButton.closest("[role=columnheader]")).toHaveAttribute("aria-sort", "ascending");
+    await user.click(sortButton);
+    expect(sortButton.closest("[role=columnheader]")).toHaveAttribute("aria-sort", "descending");
+    expect(updateDocument).toHaveBeenCalledTimes(updatesBeforeSort);
   });
 
   test("searches products by SKU and name and supports keyboard selection", async () => {
@@ -455,6 +477,25 @@ describe("documents workspace", () => {
       notes: null,
       items: [expect.objectContaining({ unit: "pcs", quantity: "1.500", price: "10.00", amount: "15.00" })]
     }));
+  });
+
+  test("sorts document lines stably and keeps invalid values at the end", () => {
+    const items = [
+      { key: "empty", productId: "", unit: "", unitFactor: "1", quantity: "", price: "", warehouseId: "" },
+      { key: "carrot-1", productId: "product-2", unit: "kg", unitFactor: "1", quantity: "2", price: "4", warehouseId: "" },
+      { key: "widget", productId: "product-1", unit: "pcs", unitFactor: "1", quantity: "10", price: "3", warehouseId: "" },
+      { key: "carrot-2", productId: "product-2", unit: "kg", unitFactor: "1", quantity: "2", price: "5", warehouseId: "" }
+    ];
+
+    expect(sortDocumentLines(items, lookups.products, "product", "ascending").map((item) => item.key))
+      .toEqual(["carrot-1", "carrot-2", "widget", "empty"]);
+    expect(sortDocumentLines(items, lookups.products, "quantity", "descending").map((item) => item.key))
+      .toEqual(["widget", "carrot-1", "carrot-2", "empty"]);
+    expect(toDocumentPayload({
+      number: "PUR-1", type: "PURCHASE", documentDate: "2026-06-06", notes: "", warehouseId: "warehouse-1",
+      sourceWarehouseId: "", destinationWarehouseId: "", counterpartyId: "",
+      items: sortDocumentLines(items.slice(1), lookups.products, "product", "ascending")
+    }).items.map((item) => item.productId)).toEqual(["product-2", "product-2", "product-1"]);
   });
 
   test("generates and downloads a document PDF", async () => {

@@ -7,7 +7,7 @@ import type {
   WarehouseDto
 } from "@quanti/shared";
 import { useQueries } from "@tanstack/react-query";
-import { Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Trash2, X } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "../../i18n";
@@ -18,8 +18,11 @@ import {
   createDocumentNumber,
   createEmptyDocument,
   documentToForm,
+  type DocumentLineSortKey,
   type DocumentFormValues,
   productUnitPrice,
+  type SortDirection,
+  sortDocumentLines,
   supportedDocumentTypes
 } from "./document-model";
 import { getRequiredStockChecks, getStockWarnings } from "./document-preview";
@@ -59,6 +62,7 @@ export function DocumentDrawer({
   const [error, setError] = useState("");
   const [quickProductLineKey, setQuickProductLineKey] = useState<string | null>(null);
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
+  const [sort, setSort] = useState<{ key: DocumentLineSortKey; direction: SortDirection } | null>(null);
   const isReadOnly = document?.status === "POSTED" || document?.type === "STOCK_ADJUSTMENT";
   const requiredStockChecks = useMemo(() => getRequiredStockChecks(values), [values]);
   const stockBalanceQueries = useQueries({
@@ -79,9 +83,11 @@ export function DocumentDrawer({
     setValues(document ? documentToForm(document) : initialValues ?? createEmptyDocument(createDocumentNumber("SALE", documents)));
     setError("");
     setQuickProductLineKey(null);
+    setSort(null);
   }, [document, documents, initialValues]);
 
   function updateLine(key: string, field: string, value: string) {
+    setSort(null);
     setValues((current) => ({
       ...current,
       items: current.items.map((item) => item.key === key ? { ...item, [field]: value } : item)
@@ -89,6 +95,7 @@ export function DocumentDrawer({
   }
 
   function selectProduct(key: string, productId: string, productOverride?: ProductDto) {
+    setSort(null);
     const product = productOverride ?? products.find((item) => item.id === productId);
     setValues((current) => ({
       ...current,
@@ -103,6 +110,7 @@ export function DocumentDrawer({
   }
 
   function selectUnit(key: string, product: ProductDto | undefined, unit: string) {
+    setSort(null);
     const alternative = product?.units?.find((item) => item.name === unit);
     setValues((current) => ({
       ...current,
@@ -114,6 +122,21 @@ export function DocumentDrawer({
       } : item)
     }));
   }
+
+  function sortLines(key: DocumentLineSortKey) {
+    const direction: SortDirection = sort?.key === key && sort.direction === "ascending" ? "descending" : "ascending";
+    setValues((current) => ({ ...current, items: sortDocumentLines(current.items, products, key, direction) }));
+    setSort({ key, direction });
+  }
+
+  const sortHeader = (key: DocumentLineSortKey, label: string) => (
+    <span role="columnheader" aria-sort={sort?.key === key ? sort.direction : "none"}>
+      <button type="button" className="line-items__sort" onClick={() => sortLines(key)} aria-label={t("Сортировать по колонке {column}", { column: label })}>
+        {label}
+        {sort?.key !== key ? <ArrowUpDown aria-hidden="true" /> : sort.direction === "ascending" ? <ArrowUp aria-hidden="true" /> : <ArrowDown aria-hidden="true" />}
+      </button>
+    </span>
+  );
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -218,6 +241,7 @@ export function DocumentDrawer({
                     ? createDocumentNumber(nextType, documents)
                     : values.number
                 });
+                setSort(null);
               }}>
                 {supportedDocumentTypes.map((type) => <option key={type} value={type}>{documentTypeLabels[type]}</option>)}
                 {values.type === "STOCK_ADJUSTMENT" ? <option value="STOCK_ADJUSTMENT">{t("Корректировка остатков")}</option> : null}
@@ -241,7 +265,7 @@ export function DocumentDrawer({
             <section className="line-items">
               <h3>{t("Товары")}</h3>
               <div className="line-items__table">
-                <div className="line-items__header"><span>{t("Товар")}</span><span>{t("Единица")}</span><span>{t("Количество")}</span><span>{t("Цена")}</span><span>{t("Сумма")}</span><span /></div>
+                <div className="line-items__header" role="row">{sortHeader("product", t("Товар"))}{sortHeader("unit", t("Единица"))}{sortHeader("quantity", t("Количество"))}{sortHeader("price", t("Цена"))}{sortHeader("amount", t("Сумма"))}<span role="columnheader" /></div>
                 {values.items.map((item) => {
                   const product = products.find((candidate) => candidate.id === item.productId);
                   return (
@@ -269,11 +293,11 @@ export function DocumentDrawer({
                     <input aria-label={t("Количество")} inputMode="decimal" value={item.quantity} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "quantity", event.target.value)} />
                     <input aria-label={t("Цена")} inputMode="decimal" value={item.price} disabled={isReadOnly} onChange={(event) => updateLine(item.key, "price", event.target.value)} />
                     <output>{calculateAmount(item.quantity, item.price)}</output>
-                    <button type="button" className="icon-button icon-button--danger" aria-label={t("Удалить строку")} disabled={isReadOnly || values.items.length === 1} onClick={() => setValues({ ...values, items: values.items.filter((line) => line.key !== item.key) })}><Trash2 /></button>
+                    <button type="button" className="icon-button icon-button--danger" aria-label={t("Удалить строку")} disabled={isReadOnly || values.items.length === 1} onClick={() => { setSort(null); setValues({ ...values, items: values.items.filter((line) => line.key !== item.key) }); }}><Trash2 /></button>
                   </div>
                 )})}
               </div>
-              {!isReadOnly ? <button type="button" className="button button--secondary" onClick={() => setValues({ ...values, items: addDocumentLine(values.items) })}><Plus /> {t("Добавить товар")}</button> : null}
+              {!isReadOnly ? <button type="button" className="button button--secondary" onClick={() => { setSort(null); setValues({ ...values, items: addDocumentLine(values.items) }); }}><Plus /> {t("Добавить товар")}</button> : null}
             </section>
           </div>
 

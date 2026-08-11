@@ -332,6 +332,36 @@
   text-transform: uppercase;
 }
 
+.line-items__sort {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: inherit;
+}
+
+.line-items__sort:hover,
+.line-items__sort:focus-visible {
+  color: vars.$color-text;
+}
+
+.line-items__sort:focus-visible {
+  outline: 2px solid vars.$color-accent-500;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.line-items__sort svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
 .line-item {
   border-top: 1px solid vars.$color-border;
 }
