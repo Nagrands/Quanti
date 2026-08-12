@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const repoRoot = "/Users/nagrand/Develop/Quanti";
+const repoRoot = fileURLToPath(new URL("../", import.meta.url));
 const indexPath = path.join(repoRoot, "packages/shared/src/index.ts");
 const enumsPath = path.join(repoRoot, "packages/shared/src/enums.ts");
 const documentsPath = path.join(repoRoot, "packages/shared/src/documents.ts");

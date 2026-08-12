@@ -71,6 +71,7 @@ jobs:
           cache: pnpm
       - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # stable
         with:
+          toolchain: stable
           targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
         with:
@@ -101,9 +102,9 @@ jobs:
       - name: Verify packaged runtime boundary
         shell: bash
         run: |
-          if rg -n 'postgresql://|localhost:5432' .env.example apps/desktop/src/api apps/desktop/src-tauri/tauri*.json; then
+          if git grep -nE 'postgresql://|localhost:5432' -- .env.example apps/desktop/src/api 'apps/desktop/src-tauri/tauri*.json'; then
             echo 'Production-facing configuration must not depend on PostgreSQL.' >&2
             exit 1
           fi
-          rg '127\.0\.0\.1' apps/desktop/src-tauri/src/runtime.rs
-          rg 'QUANTI_SESSION_TOKEN' apps/desktop/src-tauri/src/runtime.rs apps/api/src/bootstrap.ts
+          git grep -n '127\.0\.0\.1' -- apps/desktop/src-tauri/src/runtime.rs
+          git grep -n 'QUANTI_SESSION_TOKEN' -- apps/desktop/src-tauri/src/runtime.rs apps/api/src/bootstrap.ts
