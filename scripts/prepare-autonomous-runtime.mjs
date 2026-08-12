@@ -90,7 +90,7 @@ async function prepareSidecar(triple) {
 
   await rm(prismaResources, { recursive: true, force: true });
   await mkdir(prismaResources, { recursive: true });
-  const engine = (await readdir(prismaDirectory)).find((entry) => entry.startsWith("libquery_engine-") && entry.endsWith(".node"));
+  const engine = (await readdir(prismaDirectory)).find((entry) => /^(?:lib)?query_engine-.+\.node$/.test(entry));
   if (!engine) throw new Error("Native Prisma query engine was not generated.");
   await copyFile(path.join(prismaDirectory, engine), path.join(prismaResources, engine));
   await writeFile(path.join(prismaResources, ".gitkeep"), "");
