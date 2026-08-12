@@ -156,6 +156,7 @@ test("GitHub workflows pin actions and keep stable releases as drafts", async ()
   assert.match(release, /darwin-x86_64/);
   assert.match(release, /windows-x86_64/);
   assert.match(release, /Authority=Developer ID Application/);
+  assert.match(release, /hdiutil attach -nobrowse -readonly/);
   assert.match(release, /Get-AuthenticodeSignature/);
   assert.match(release, /NotSigned/);
   assert.doesNotMatch(release, /secrets\.QUANTI_UPDATE_ENDPOINT/);

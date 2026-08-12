@@ -115,14 +115,23 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          app_path="$(find apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos -maxdepth 1 -name '*.app' -print -quit)"
+          dmg_path="$(find apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg -maxdepth 1 -name '*.dmg' -print -quit)"
+          test -n "$dmg_path"
+          mount_path="$(mktemp -d "$RUNNER_TEMP/quanti-dmg.XXXXXX")"
+          cleanup() {
+            hdiutil detach "$mount_path" >/dev/null 2>&1 || true
+            rmdir "$mount_path" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          hdiutil attach -nobrowse -readonly -mountpoint "$mount_path" "$dmg_path" >/dev/null
+          app_path="$(find "$mount_path" -maxdepth 1 -name '*.app' -print -quit)"
           test -n "$app_path"
           signature="$(codesign -dv --verbose=4 "$app_path" 2>&1 || true)"
           if grep -q 'Authority=Developer ID Application' <<<"$signature"; then
             echo "Developer ID signing must be disabled for this release." >&2
             exit 1
           fi
-          if xcrun stapler validate "$app_path"; then
+          if xcrun stapler validate "$app_path" || xcrun stapler validate "$dmg_path"; then
             echo "A notarization ticket is present even though notarization must be disabled." >&2
             exit 1
           fi
