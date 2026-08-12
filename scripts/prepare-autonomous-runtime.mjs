@@ -16,6 +16,10 @@ const chromiumResources = path.join(resourcesDirectory, "chromium");
 const buildDirectory = path.join(repoRoot, ".quanti-build");
 const apiRequire = createRequire(path.join(repoRoot, "apps/api/package.json"));
 
+function workspaceBinary(name) {
+  return path.join(repoRoot, "node_modules/.bin", process.platform === "win32" ? `${name}.cmd` : name);
+}
+
 async function run(command, args, options = {}) {
   await new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd: repoRoot, stdio: "inherit", ...options });
@@ -45,7 +49,7 @@ async function generatedPrismaDirectory() {
 
 async function prepareSidecar(triple) {
   process.env.DATABASE_URL ??= `file:${path.join(buildDirectory, "build.sqlite3")}`;
-  await run(path.join(repoRoot, "node_modules/.bin/prisma"), [
+  await run(workspaceBinary("prisma"), [
     "generate", "--schema", "packages/db/prisma/schema.prisma"
   ]);
 
@@ -72,7 +76,7 @@ async function prepareSidecar(triple) {
   await mkdir(binariesDirectory, { recursive: true });
   const extension = triple.includes("windows") ? ".exe" : "";
   const sidecarPath = path.join(binariesDirectory, `quanti-api-${triple}${extension}`);
-  await run(path.join(repoRoot, "node_modules/.bin/pkg"), [
+  await run(workspaceBinary("pkg"), [
     bundlePath,
     "--targets", pkgTarget(triple),
     "--output", sidecarPath,
