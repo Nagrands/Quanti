@@ -178,12 +178,14 @@ jobs:
           test "$(find . -maxdepth 1 -name '*.msi' | wc -l | tr -d ' ')" = 1
           test "$(find . -maxdepth 1 -name '*.tar.gz' | wc -l | tr -d ' ')" = 2
           test "$(find . -maxdepth 1 -name '*.sig' | wc -l | tr -d ' ')" = 3
-          jq -e '
-            .version == "0.1.0" and
-            (.platforms | has("darwin-aarch64")) and
-            (.platforms | has("darwin-x86_64")) and
-            (.platforms | has("windows-x86_64")) and
-            ([.platforms[] | select((.url | startswith("https://github.com/")) and (.signature | length > 0))] | length == 3)
+          jq -e --arg repository "$GITHUB_REPOSITORY" '
+            . as $manifest |
+            $manifest.version == "0.1.0" and
+            (["darwin-aarch64", "darwin-x86_64", "windows-x86_64"] | all(
+              . as $platform |
+              ($manifest.platforms[$platform].url | startswith("https://api.github.com/repos/" + $repository + "/releases/assets/")) and
+              ($manifest.platforms[$platform].signature | length > 0)
+            ))
           ' latest.json >/dev/null
       - name: Create and upload SHA256SUMS
         shell: bash
