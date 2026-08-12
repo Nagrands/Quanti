@@ -110,6 +110,7 @@ jobs:
           uploadUpdaterJson: true
           uploadUpdaterSignatures: true
           uploadWorkflowArtifacts: true
+          retryAttempts: 2
           args: --config ../../.quanti-build/tauri.release.conf.json --target ${{ matrix.target }} --ci
       - name: Verify macOS bundle has no Developer ID or notarization ticket
         if: runner.os == 'macOS'

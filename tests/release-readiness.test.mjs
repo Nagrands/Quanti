@@ -151,6 +151,7 @@ test("GitHub workflows pin actions and keep stable releases as drafts", async ()
   assert.match(release, /releaseDraft: true/);
   assert.match(release, /uploadUpdaterJson: true/);
   assert.match(release, /uploadUpdaterSignatures: true/);
+  assert.match(release, /retryAttempts: 2/);
   assert.match(release, /releases\/latest\/download\/latest\.json/);
   assert.match(release, /SHA256SUMS/);
   assert.match(release, /max-parallel: 1/);
