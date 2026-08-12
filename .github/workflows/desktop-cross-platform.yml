@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      DATABASE_URL: file:${{ runner.temp }}/quanti-ci.sqlite3
+      DATABASE_URL: file:/tmp/quanti-ci.sqlite3
       HOST: 127.0.0.1
       PORT: 3100
 
