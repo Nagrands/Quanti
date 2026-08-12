@@ -3,6 +3,7 @@ import type { DocumentPrintDataDto } from "@quanti/shared";
 import Handlebars from "handlebars";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
+import { formatScaled, MONEY_SCALE, QUANTITY_SCALE } from "../../common/fixed-point";
 import { defaultDocumentTemplateV2 } from "./default-document-template";
 import { PdfRenderException } from "./pdf-render.exception";
 import { PDF_RENDERER, type PdfRenderer } from "./pdf-renderer";
@@ -82,15 +83,15 @@ export class DocumentPrintService {
       sourceWarehouseName: document.sourceWarehouse?.name ?? null,
       destinationWarehouseName: document.destinationWarehouse?.name ?? null,
       notes: document.notes,
-      totalAmount: document.totalAmount.toString(),
+      totalAmount: formatScaled(document.totalAmount, MONEY_SCALE),
       items: document.items.map((item) => ({
         lineNo: item.lineNo,
         sku: item.product.sku,
         productName: item.product.name,
         unit: item.unit,
-        quantity: item.quantity.toString(),
-        price: item.price.toString(),
-        amount: item.amount.toString()
+        quantity: formatScaled(item.quantity, QUANTITY_SCALE),
+        price: formatScaled(item.price, MONEY_SCALE),
+        amount: formatScaled(item.amount, MONEY_SCALE)
       })),
       branding: {
         companyName: process.env.QUANTI_COMPANY_NAME?.trim() || "Quanti ERP",

@@ -5,38 +5,29 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  release:
-    name: API and ERP workflow
+  verification:
+    name: SQLite ERP release checks
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: quanti
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d quanti"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
+    timeout-minutes: 30
     env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/quanti
-      DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/quanti
+      DATABASE_URL: file:${{ runner.temp }}/quanti-ci.sqlite3
       HOST: 127.0.0.1
       PORT: 3100
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: 10.0.0
-
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
@@ -44,48 +35,44 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:generate
       - run: pnpm db:migrate
-      - run: pnpm --filter @quanti/api test
-      - run: pnpm --filter @quanti/api build
-      - run: pnpm --filter @quanti/desktop test
-      - run: pnpm --filter @quanti/desktop build
-      - name: Start API and verify ERP workflow
-        shell: bash
-        run: |
-          pnpm --filter @quanti/api start > api.log 2>&1 &
-          api_pid=$!
-          trap 'kill "$api_pid" || true; cat api.log' EXIT
-          for attempt in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:3100/health > /dev/null; then
-              break
-            fi
-            sleep 1
-          done
-          curl --fail http://127.0.0.1:3100/health
-          pnpm demo:seed
+      - run: pnpm release:check
 
   desktop:
-    name: Desktop (${{ matrix.os }})
+    name: Desktop ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        include:
+          - name: macOS arm64
+            os: macos-15
+            target: aarch64-apple-darwin
+            artifact: macos-arm64
+          - name: macOS x64
+            os: macos-15-intel
+            target: x86_64-apple-darwin
+            artifact: macos-x64
+          - name: Windows x64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: windows-x64
+    env:
+      TAURI_ENV_TARGET_TRIPLE: ${{ matrix.target }}
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: 10.0.0
-
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
         with:
           workspaces: apps/desktop/src-tauri -> target
 
@@ -95,9 +82,28 @@ jobs:
       - run: cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml -- --check
       - run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
       - run: pnpm --filter @quanti/desktop tauri:test
-      - run: pnpm --filter @quanti/desktop tauri:build
+      - run: node scripts/prepare-autonomous-runtime.mjs
+      - run: pnpm --filter @quanti/desktop exec tauri build --config src-tauri/tauri.autonomous.conf.json --target ${{ matrix.target }} --ci
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: quanti-${{ matrix.os }}
-          path: apps/desktop/src-tauri/target/release/bundle
+          name: quanti-${{ matrix.artifact }}
+          path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle
+          if-no-files-found: error
+          retention-days: 14
+
+  dependency-boundary:
+    name: No external production services
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Verify packaged runtime boundary
+        shell: bash
+        run: |
+          if rg -n 'postgresql://|localhost:5432' .env.example apps/desktop/src/api apps/desktop/src-tauri/tauri*.json; then
+            echo 'Production-facing configuration must not depend on PostgreSQL.' >&2
+            exit 1
+          fi
+          rg '127\.0\.0\.1' apps/desktop/src-tauri/src/runtime.rs
+          rg 'QUANTI_SESSION_TOKEN' apps/desktop/src-tauri/src/runtime.rs apps/api/src/bootstrap.ts

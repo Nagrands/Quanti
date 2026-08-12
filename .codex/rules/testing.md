@@ -17,5 +17,11 @@ Critical invariants that must be tested:
 - consistent derived balances and debts after writes
 - reposting does not leave orphaned or duplicated movements
 
-When the repo gains concrete scripts:
-- Map required checks to actual commands and keep this file updated.
+Release validation:
+- Run `pnpm check` and `pnpm release:check` in clean CI with Node.js 22 and pnpm 10.
+- When local pnpm verification is blocked, use installed direct binaries for
+  focused tests/typechecks and state that the aggregate command remains a CI gate.
+- Validate macOS arm64, macOS x64, and Windows x64 bundles separately; unit and
+  host-platform tests do not prove packaged behavior on another platform.
+- A stable release also requires installed-app, signature, notarization, backup,
+  PDF, and updater smoke tests.

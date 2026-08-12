@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import { App } from "./app/App";
 import { AppProviders } from "./app/AppProviders";
+import { RuntimeGate } from "./app/RuntimeGate";
 import "./styles/main.scss";
 
 const rootElement = document.getElementById("root");
@@ -14,7 +15,7 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <AppProviders>
-      <App />
+      <RuntimeGate><App /></RuntimeGate>
     </AppProviders>
   </StrictMode>
 );

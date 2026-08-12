@@ -64,6 +64,15 @@ describe("Russian API error formatting", () => {
       .toBe("Не удалось выполнить операцию. Повторите попытку.");
   });
 
+  test("describes local database recovery without a PostgreSQL dependency", () => {
+    const error = new ApiError(503, "DATABASE_UNAVAILABLE", "Database unavailable");
+
+    expect(formatApiErrorForLocale("ru", error))
+      .toBe("Локальная база данных недоступна. Перезапустите Quanti или восстановите резервную копию в разделе диагностики.");
+    expect(formatApiErrorForLocale("en", error))
+      .toBe("The local database is unavailable. Restart Quanti or restore a backup from Diagnostics.");
+  });
+
   test("formats the same stock error in English", () => {
     const message = formatApiErrorForLocale("en", new ApiError(400, "INSUFFICIENT_STOCK", "Insufficient stock.", {
       productId: "product-1",

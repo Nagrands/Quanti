@@ -1,0 +1,10 @@
+{
+  "bundle": {
+    "externalBin": ["binaries/quanti-api"],
+    "resources": {
+      "../../../packages/db/prisma/sqlite-migrations/": "migrations/",
+      "resources/chromium/": "chromium/",
+      "resources/prisma/": "prisma/"
+    }
+  }
+}

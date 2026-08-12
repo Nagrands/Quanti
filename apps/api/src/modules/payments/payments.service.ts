@@ -10,15 +10,17 @@ import type {
 } from "@quanti/shared";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
+import { serializedTransaction } from "../../common/prisma/serialized-transaction";
+import { formatScaled, MONEY_SCALE, sumScaled, toScaled } from "../../common/fixed-point";
 import { toCounterpartyDebtDto, toPaymentDto } from "./payment.mappers";
 
 type DbClient = PrismaService | Prisma.TransactionClient;
 type PaymentRecord = Payment & { allocations: PaymentAllocation[] };
 type DebtRow = {
   counterpartyId: string;
-  documentTotal: Prisma.Decimal | string | number;
-  paidTotal: Prisma.Decimal | string | number;
-  debtTotal: Prisma.Decimal | string | number;
+  documentTotal: bigint;
+  paidTotal: bigint;
+  debtTotal: bigint;
 };
 
 @Injectable()
@@ -42,21 +44,21 @@ export class PaymentsService {
   async createDraft(payload: CreatePaymentDto): Promise<PaymentDto> {
     this.validateAllocationTotal(payload.allocations ?? [], payload.amount);
 
-    const payment = await this.prisma.$transaction(async (tx) => {
+    const payment = await serializedTransaction(this.prisma, async (tx) => {
       return tx.payment.create({
         data: {
           number: payload.number,
           direction: payload.direction,
           status: "DRAFT",
           paymentDate: new Date(payload.paymentDate),
-          amount: this.decimal(payload.amount),
+          amount: toScaled(payload.amount, MONEY_SCALE, "payment amount"),
           notes: payload.notes ?? null,
           accountId: payload.accountId,
           counterpartyId: payload.counterpartyId ?? null,
           allocations: {
             create: (payload.allocations ?? []).map((allocation) => ({
               documentId: allocation.documentId,
-              amount: this.decimal(allocation.amount)
+              amount: toScaled(allocation.amount, MONEY_SCALE, "payment allocation")
             }))
           }
         },
@@ -68,14 +70,14 @@ export class PaymentsService {
   }
 
   async updateDraft(id: string, payload: UpdateDraftPaymentPatchDto): Promise<PaymentDto> {
-    return this.prisma.$transaction(async (tx) => {
+    return serializedTransaction(this.prisma, async (tx) => {
       const existing = await this.getPaymentRecord(id, tx);
       this.ensureDraft(existing);
 
-      const nextAmount = payload.amount ?? existing.amount.toString();
+      const nextAmount = payload.amount ?? formatScaled(existing.amount, MONEY_SCALE);
       const nextAllocations = payload.allocations ?? existing.allocations.map((allocation) => ({
         documentId: allocation.documentId,
-        amount: allocation.amount.toString()
+        amount: formatScaled(allocation.amount, MONEY_SCALE)
       }));
 
       this.validateAllocationTotal(nextAllocations, nextAmount);
@@ -86,7 +88,7 @@ export class PaymentsService {
           number: payload.number ?? existing.number,
           direction: payload.direction ?? existing.direction,
           paymentDate: payload.paymentDate ? new Date(payload.paymentDate) : existing.paymentDate,
-          amount: payload.amount ? this.decimal(payload.amount) : existing.amount,
+          amount: payload.amount ? toScaled(payload.amount, MONEY_SCALE, "payment amount") : existing.amount,
           notes: payload.notes === undefined ? existing.notes : payload.notes,
           accountId: payload.accountId ?? existing.accountId,
           counterpartyId: payload.counterpartyId === undefined
@@ -102,7 +104,7 @@ export class PaymentsService {
             data: payload.allocations.map((allocation) => ({
               paymentId: id,
               documentId: allocation.documentId,
-              amount: this.decimal(allocation.amount)
+              amount: toScaled(allocation.amount, MONEY_SCALE, "payment allocation")
             }))
           });
         }
@@ -113,7 +115,7 @@ export class PaymentsService {
   }
 
   async removeDraft(id: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+    await serializedTransaction(this.prisma, async (tx) => {
       const existing = await this.getPaymentRecord(id, tx);
       this.ensureDraft(existing);
       await tx.payment.delete({ where: { id } });
@@ -121,15 +123,15 @@ export class PaymentsService {
   }
 
   async post(id: string, postedAt?: string): Promise<PaymentDto> {
-    return this.prisma.$transaction(async (tx) => {
+    return serializedTransaction(this.prisma, async (tx) => {
       const payment = await this.getPaymentRecord(id, tx);
       this.ensureDraft(payment);
       this.validateAllocationTotal(
         payment.allocations.map((allocation) => ({
           documentId: allocation.documentId,
-          amount: allocation.amount.toString()
+          amount: formatScaled(allocation.amount, MONEY_SCALE)
         })),
-        payment.amount.toString()
+        formatScaled(payment.amount, MONEY_SCALE)
       );
 
       await tx.moneyMovement.create({
@@ -155,7 +157,7 @@ export class PaymentsService {
   }
 
   async unpost(id: string): Promise<PaymentDto> {
-    return this.prisma.$transaction(async (tx) => {
+    return serializedTransaction(this.prisma, async (tx) => {
       const payment = await this.getPaymentRecord(id, tx);
 
       if (payment.status !== "POSTED") {
@@ -173,7 +175,7 @@ export class PaymentsService {
   }
 
   async repost(command: RepostPaymentCommand): Promise<PaymentDto> {
-    return this.prisma.$transaction(async (tx) => {
+    return serializedTransaction(this.prisma, async (tx) => {
       const payment = await this.getPaymentRecord(command.id, tx);
 
       if (payment.status === "POSTED") {
@@ -265,18 +267,13 @@ export class PaymentsService {
   }
 
   private validateAllocationTotal(allocations: PaymentAllocationDto[], amount: string) {
-    const allocated = allocations.reduce(
-      (sum, allocation) => sum.add(this.decimal(allocation.amount)),
-      new Prisma.Decimal(0)
-    );
-    const paymentAmount = this.decimal(amount);
+    const allocated = sumScaled(allocations.map((allocation) =>
+      toScaled(allocation.amount, MONEY_SCALE, "payment allocation")));
+    const paymentAmount = toScaled(amount, MONEY_SCALE, "payment amount");
 
-    if (allocated.greaterThan(paymentAmount)) {
+    if (allocated > paymentAmount) {
       throw new BadRequestException("Payment allocations cannot exceed payment amount.");
     }
   }
 
-  private decimal(value: string) {
-    return new Prisma.Decimal(value);
-  }
 }

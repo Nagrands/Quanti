@@ -6,7 +6,7 @@
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "dev": "vite",
     "tauri": "tauri",
-    "tauri:build": "tauri build",
+    "tauri:build": "node ../../scripts/prepare-autonomous-runtime.mjs && tauri build --config src-tauri/tauri.autonomous.conf.json",
     "tauri:build:debug": "tauri build --debug",
     "tauri:check": "cargo check --manifest-path src-tauri/Cargo.toml",
     "tauri:test": "cargo test --manifest-path src-tauri/Cargo.toml",

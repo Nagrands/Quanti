@@ -21,7 +21,7 @@ function createPaymentsPrismaMock() {
     direction: "INCOMING",
     status: "DRAFT",
     paymentDate: new Date("2026-04-16T00:00:00.000Z"),
-    amount: { toString: () => "150.00" },
+    amount: 15_000n,
     notes: null,
     accountId: "account-1",
     counterpartyId: "counterparty-1",
@@ -29,7 +29,7 @@ function createPaymentsPrismaMock() {
       id: "allocation-1",
       paymentId: "payment-1",
       documentId: "document-1",
-      amount: { toString: () => "100.00" },
+      amount: 10_000n,
       allocatedAt: new Date("2026-04-16T00:00:00.000Z")
     }],
     createdAt: new Date("2026-04-16T00:00:00.000Z"),
@@ -85,9 +85,9 @@ function createPaymentsPrismaMock() {
     moneyMovement: tx.moneyMovement,
     $queryRaw: async () => [{
       counterpartyId: "counterparty-1",
-      documentTotal: { toString: () => "150.00" },
-      paidTotal: { toString: () => "100.00" },
-      debtTotal: { toString: () => "50.00" }
+      documentTotal: 15_000n,
+      paidTotal: 10_000n,
+      debtTotal: 5_000n
     }],
     $transaction: async <T>(callback: (inner: typeof tx) => Promise<T>) => callback(tx),
     setPaymentStatus(status: "DRAFT" | "POSTED") {

@@ -6,13 +6,10 @@ import type {
   StockTurnoverReportRowDto,
   TopProductsReportRowDto
 } from "@quanti/shared";
+import { formatScaledFixed, MONEY_SCALE, QUANTITY_SCALE } from "../../common/fixed-point";
 
-type Decimalish = { toString(): string } | string | number;
+type Scaled = bigint;
 type Dateish = Date | string;
-
-function decimal(value: Decimalish) {
-  return value.toString();
-}
 
 function iso(value: Dateish) {
   return value instanceof Date ? value.toISOString() : value;
@@ -21,26 +18,26 @@ function iso(value: Dateish) {
 export function toStockBalanceRowDto(row: {
   productId: string;
   warehouseId: string;
-  quantity: Decimalish;
+  quantity: Scaled;
 }): StockBalanceReportRowDto {
   return {
     productId: row.productId,
     warehouseId: row.warehouseId,
-    quantity: decimal(row.quantity)
+    quantity: formatScaledFixed(row.quantity, QUANTITY_SCALE)
   };
 }
 
 export function toStockTurnoverRowDto(row: {
   productId: string;
   warehouseId: string;
-  incoming: Decimalish;
-  outgoing: Decimalish;
+  incoming: Scaled;
+  outgoing: Scaled;
 }): StockTurnoverReportRowDto {
   return {
     productId: row.productId,
     warehouseId: row.warehouseId,
-    incoming: decimal(row.incoming),
-    outgoing: decimal(row.outgoing)
+    incoming: formatScaledFixed(row.incoming, QUANTITY_SCALE),
+    outgoing: formatScaledFixed(row.outgoing, QUANTITY_SCALE)
   };
 }
 
@@ -48,15 +45,15 @@ export function toCashflowRowDto(row: {
   movementDate: Dateish;
   accountId: string;
   counterpartyId: string | null;
-  incoming: Decimalish;
-  outgoing: Decimalish;
+  incoming: Scaled;
+  outgoing: Scaled;
 }): CashflowReportRowDto {
   return {
     movementDate: iso(row.movementDate),
     accountId: row.accountId,
     counterpartyId: row.counterpartyId,
-    incoming: decimal(row.incoming),
-    outgoing: decimal(row.outgoing)
+    incoming: formatScaledFixed(row.incoming, MONEY_SCALE),
+    outgoing: formatScaledFixed(row.outgoing, MONEY_SCALE)
   };
 }
 
@@ -65,41 +62,41 @@ export function toSalesReportRowDto(row: {
   documentDate: Dateish;
   counterpartyId: string | null;
   productId: string;
-  quantity: Decimalish;
-  amount: Decimalish;
+  quantity: Scaled;
+  amount: Scaled;
 }): SalesReportRowDto {
   return {
     documentId: row.documentId,
     documentDate: iso(row.documentDate),
     counterpartyId: row.counterpartyId,
     productId: row.productId,
-    quantity: decimal(row.quantity),
-    amount: decimal(row.amount)
+    quantity: formatScaledFixed(row.quantity, QUANTITY_SCALE),
+    amount: formatScaledFixed(row.amount, MONEY_SCALE)
   };
 }
 
 export function toTopProductsReportRowDto(row: {
   productId: string;
-  quantity: Decimalish;
-  amount: Decimalish;
+  quantity: Scaled;
+  amount: Scaled;
 }): TopProductsReportRowDto {
   return {
     productId: row.productId,
-    quantity: decimal(row.quantity),
-    amount: decimal(row.amount)
+    quantity: formatScaledFixed(row.quantity, QUANTITY_SCALE),
+    amount: formatScaledFixed(row.amount, MONEY_SCALE)
   };
 }
 
 export function toCounterpartyDebtReportRowDto(row: {
   counterpartyId: string;
-  documentTotal: Decimalish;
-  paidTotal: Decimalish;
-  debtTotal: Decimalish;
+  documentTotal: Scaled;
+  paidTotal: Scaled;
+  debtTotal: Scaled;
 }): CounterpartyDebtReportRowDto {
   return {
     counterpartyId: row.counterpartyId,
-    documentTotal: decimal(row.documentTotal),
-    paidTotal: decimal(row.paidTotal),
-    debtTotal: decimal(row.debtTotal)
+    documentTotal: formatScaledFixed(row.documentTotal, MONEY_SCALE),
+    paidTotal: formatScaledFixed(row.paidTotal, MONEY_SCALE),
+    debtTotal: formatScaledFixed(row.debtTotal, MONEY_SCALE)
   };
 }

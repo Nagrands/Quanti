@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Logger, ServiceUnavailableException } from "@nestjs/common";
+import { Controller, Get, Inject, Logger, Post, ServiceUnavailableException } from "@nestjs/common";
 import { Prisma } from "@quanti/db";
 
 import { PrismaService } from "./common/prisma/prisma.service";
@@ -29,10 +29,10 @@ export class AppController {
     try {
       await this.prisma.$queryRaw(Prisma.sql`SELECT 1`);
     } catch (error) {
-      this.logger.error("PostgreSQL health check failed.", error);
+      this.logger.error("SQLite health check failed.", error);
       throw new ServiceUnavailableException({
         code: "DATABASE_UNAVAILABLE",
-        message: "PostgreSQL is unavailable."
+        message: "SQLite is unavailable."
       });
     }
 
@@ -42,5 +42,11 @@ export class AppController {
       database: "ok",
       modules: DOMAIN_MODULE_NAMES
     };
+  }
+
+  @Post("runtime/checkpoint")
+  async checkpoint() {
+    await this.prisma.$queryRawUnsafe("PRAGMA wal_checkpoint(TRUNCATE)");
+    return { status: "ok" as const };
   }
 }

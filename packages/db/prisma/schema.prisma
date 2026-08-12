@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 enum CounterpartyType {
@@ -82,8 +81,8 @@ model Product {
   name           String
   description    String?
   unit           String
-  purchasePrice  Decimal?        @db.Decimal(18, 2)
-  salePrice      Decimal?        @db.Decimal(18, 2)
+  purchasePrice  BigInt?
+  salePrice      BigInt?
   categoryId     String?
   isActive       Boolean         @default(true)
   createdAt      DateTime        @default(now())
@@ -114,7 +113,7 @@ model ProductUnit {
   id               String   @id @default(cuid())
   productId        String
   name             String
-  conversionFactor Decimal  @db.Decimal(18, 6)
+  conversionFactor BigInt
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -170,7 +169,7 @@ model Document {
   documentDate           DateTime
   postedAt               DateTime?
   notes                  String?
-  totalAmount            Decimal             @db.Decimal(18, 2)
+  totalAmount            BigInt
   warehouseId            String?
   sourceWarehouseId      String?
   destinationWarehouseId String?
@@ -194,11 +193,11 @@ model DocumentItem {
   documentId     String
   productId      String
   unit           String
-  unitFactor     Decimal         @default(1) @db.Decimal(18, 6)
+  unitFactor     BigInt
   lineNo         Int
-  quantity       Decimal         @db.Decimal(18, 3)
-  price          Decimal         @db.Decimal(18, 2)
-  amount         Decimal         @db.Decimal(18, 2)
+  quantity       BigInt
+  price          BigInt
+  amount         BigInt
   warehouseId    String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -214,7 +213,7 @@ model StockMovement {
   id             String                 @id @default(cuid())
   movementDate   DateTime
   direction      StockMovementDirection
-  quantity       Decimal                @db.Decimal(18, 3)
+  quantity       BigInt
   productId      String
   warehouseId    String
   documentId     String
@@ -234,7 +233,7 @@ model StockBalance {
   productId   String
   warehouseId String
   balanceDate DateTime
-  quantity    Decimal   @db.Decimal(18, 3)
+  quantity    BigInt
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   product     Product   @relation(fields: [productId], references: [id])
@@ -262,7 +261,7 @@ model Payment {
   direction      PaymentDirection
   status         PaymentStatus       @default(DRAFT)
   paymentDate    DateTime
-  amount         Decimal             @db.Decimal(18, 2)
+  amount         BigInt
   notes          String?
   accountId      String
   counterpartyId String?
@@ -281,7 +280,7 @@ model PaymentAllocation {
   id          String   @id @default(cuid())
   paymentId   String
   documentId  String
-  amount      Decimal  @db.Decimal(18, 2)
+  amount      BigInt
   allocatedAt DateTime @default(now())
   payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
   document    Document @relation(fields: [documentId], references: [id])
@@ -294,7 +293,7 @@ model MoneyMovement {
   id             String                 @id @default(cuid())
   movementDate   DateTime
   direction      MoneyMovementDirection
-  amount         Decimal                @db.Decimal(18, 2)
+  amount         BigInt
   accountId      String
   paymentId      String
   counterpartyId String?
@@ -325,8 +324,8 @@ model PrintTemplate {
   name      String
   version   Int
   isActive  Boolean            @default(true)
-  html      String             @db.Text
-  styles    String?            @db.Text
+  html      String
+  styles    String?
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 

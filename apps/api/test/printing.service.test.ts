@@ -189,20 +189,22 @@ test("document print service maps renderer failures to a stable PDF error", asyn
 test("print template repository ensures both defaults and returns current v2", async () => {
   const calls: string[] = [];
   const prisma = {
-    async $queryRaw() {
-      calls.push("query");
-      return [{
+    printTemplate: {
+      async findFirst() {
+        calls.push("query");
+        return {
         id: "default-document-template-v2",
         scope: "DOCUMENT",
         name: "Стандартная форма документа",
         version: 2,
         html: "<main></main>",
         styles: null
-      }];
-    },
-    async $executeRaw() {
-      calls.push("insert");
-      return 1;
+        };
+      },
+      async upsert() {
+        calls.push("insert");
+        return {};
+      }
     }
   };
   const repository = new PrintTemplateRepository(prisma as never);
@@ -216,20 +218,22 @@ test("print template repository ensures both defaults and returns current v2", a
 test("print template repository can return explicit legacy v1", async () => {
   const calls: string[] = [];
   const prisma = {
-    async $queryRaw() {
-      calls.push("query");
-      return [{
+    printTemplate: {
+      async findFirst() {
+        calls.push("query");
+        return {
         id: "default-document-template-v1",
         scope: "DOCUMENT",
         name: "Default document",
         version: 1,
         html: "<main></main>",
         styles: null
-      }];
-    },
-    async $executeRaw() {
-      calls.push("insert");
-      return 1;
+        };
+      },
+      async upsert() {
+        calls.push("insert");
+        return {};
+      }
     }
   };
   const repository = new PrintTemplateRepository(prisma as never);

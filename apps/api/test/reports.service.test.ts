@@ -13,30 +13,30 @@ type QueryCapture = {
 function createReportsPrismaMock() {
   const captures: QueryCapture[] = [];
   const queue = [
-    [{ productId: "product-1", warehouseId: "warehouse-1", quantity: { toString: () => "8.000" } }],
-    [{ productId: "product-1", warehouseId: "warehouse-1", incoming: { toString: () => "10.000" }, outgoing: { toString: () => "2.000" } }],
-    [{ productId: "product-1", warehouseId: "warehouse-1", quantity: { toString: () => "8.000" } }],
+    [{ productId: "product-1", warehouseId: "warehouse-1", quantity: 8_000n }],
+    [{ productId: "product-1", warehouseId: "warehouse-1", incoming: 10_000n, outgoing: 2_000n }],
+    [{ productId: "product-1", warehouseId: "warehouse-1", quantity: 8_000n }],
     [{
       documentId: "document-1",
       documentDate: new Date("2026-04-16T00:00:00.000Z"),
       counterpartyId: "counterparty-1",
       productId: "product-1",
-      quantity: { toString: () => "5.000" },
-      amount: { toString: () => "150.00" }
+      quantity: 5_000n,
+      amount: 15_000n
     }],
-    [{ productId: "product-1", quantity: { toString: () => "12.000" }, amount: { toString: () => "320.00" } }],
+    [{ productId: "product-1", quantity: 12_000n, amount: 32_000n }],
     [{
       movementDate: new Date("2026-04-16T10:00:00.000Z"),
       accountId: "account-1",
       counterpartyId: "counterparty-1",
-      incoming: { toString: () => "150.00" },
-      outgoing: { toString: () => "0.00" }
+      incoming: 15_000n,
+      outgoing: 0n
     }],
     [{
       counterpartyId: "counterparty-1",
-      documentTotal: { toString: () => "150.00" },
-      paidTotal: { toString: () => "100.00" },
-      debtTotal: { toString: () => "50.00" }
+      documentTotal: 15_000n,
+      paidTotal: 10_000n,
+      debtTotal: 5_000n
     }]
   ];
 

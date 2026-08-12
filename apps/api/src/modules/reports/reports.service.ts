@@ -28,22 +28,22 @@ import {
 type StockBalanceRow = {
   productId: string;
   warehouseId: string;
-  quantity: Prisma.Decimal | string | number;
+  quantity: bigint;
 };
 
 type StockTurnoverRow = {
   productId: string;
   warehouseId: string;
-  incoming: Prisma.Decimal | string | number;
-  outgoing: Prisma.Decimal | string | number;
+  incoming: bigint;
+  outgoing: bigint;
 };
 
 type CashflowRow = {
   movementDate: Date | string;
   accountId: string;
   counterpartyId: string | null;
-  incoming: Prisma.Decimal | string | number;
-  outgoing: Prisma.Decimal | string | number;
+  incoming: bigint;
+  outgoing: bigint;
 };
 
 type SalesRow = {
@@ -51,21 +51,21 @@ type SalesRow = {
   documentDate: Date | string;
   counterpartyId: string | null;
   productId: string;
-  quantity: Prisma.Decimal | string | number;
-  amount: Prisma.Decimal | string | number;
+  quantity: bigint;
+  amount: bigint;
 };
 
 type TopProductsRow = {
   productId: string;
-  quantity: Prisma.Decimal | string | number;
-  amount: Prisma.Decimal | string | number;
+  quantity: bigint;
+  amount: bigint;
 };
 
 type CounterpartyDebtRow = {
   counterpartyId: string;
-  documentTotal: Prisma.Decimal | string | number;
-  paidTotal: Prisma.Decimal | string | number;
-  debtTotal: Prisma.Decimal | string | number;
+  documentTotal: bigint;
+  paidTotal: bigint;
+  debtTotal: bigint;
 };
 
 @Injectable()

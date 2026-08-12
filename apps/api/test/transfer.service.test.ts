@@ -98,8 +98,8 @@ test("master-data import preserves product reference prices", async () => {
   });
 
   await service.apply(transferPackage, {});
-  assert.equal(String(productData?.purchasePrice), "8.5");
-  assert.equal(String(productData?.salePrice), "12");
+  assert.equal(productData?.purchasePrice, 850n);
+  assert.equal(productData?.salePrice, 1_200n);
   assert.deepEqual(aliasData, [{ productId: "product-1", name: "Goods", normalizedName: "goods" }]);
 });
 
@@ -136,7 +136,7 @@ test("posted document import rebuilds stock movements inside the import transact
     productUnit: { deleteMany: async () => undefined, createMany: async () => undefined },
     document: {
       findUnique: async () => null,
-      create: async ({ data }: any) => ({ id: "document-1", ...data, warehouseId: "warehouse-1", sourceWarehouseId: null, destinationWarehouseId: null, items: [{ id: "item-1", productId: "product-1", warehouseId: null, quantity: { mul: () => ({ toString: () => "2", valueOf: () => 2 }) }, unitFactor: 1 }] }),
+      create: async ({ data }: any) => ({ id: "document-1", ...data, warehouseId: "warehouse-1", sourceWarehouseId: null, destinationWarehouseId: null, items: [{ id: "item-1", productId: "product-1", warehouseId: null, quantity: 2_000n, unitFactor: 1_000_000n }] }),
       update: async () => undefined
     },
     documentItem: { deleteMany: async () => undefined },

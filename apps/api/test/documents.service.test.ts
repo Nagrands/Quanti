@@ -2,8 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { BadRequestException } from "@nestjs/common";
-import { Prisma } from "@quanti/db";
-
 import { DocumentsService } from "../src/modules/documents/documents.service";
 
 function createDocumentsPrismaMock() {
@@ -23,7 +21,7 @@ function createDocumentsPrismaMock() {
     documentDate: new Date("2026-04-16T00:00:00.000Z"),
     postedAt: null,
     notes: null,
-    totalAmount: { toString: () => "150.00" },
+    totalAmount: 15_000n,
     warehouseId: "warehouse-1",
     sourceWarehouseId: null,
     destinationWarehouseId: null,
@@ -33,11 +31,11 @@ function createDocumentsPrismaMock() {
       documentId: "document-1",
       productId: "product-1",
       unit: "box",
-      unitFactor: new Prisma.Decimal("2.000000"),
+      unitFactor: 2_000_000n,
       lineNo: 1,
-      quantity: new Prisma.Decimal("5.000"),
-      price: new Prisma.Decimal("30.00"),
-      amount: new Prisma.Decimal("150.00"),
+      quantity: 5_000n,
+      price: 3_000n,
+      amount: 15_000n,
       warehouseId: null,
       createdAt: new Date("2026-04-16T00:00:00.000Z"),
       updatedAt: new Date("2026-04-16T00:00:00.000Z")
@@ -119,8 +117,8 @@ test("documents service posts a draft document and creates stock movements", asy
   assert.equal(result.status, "POSTED");
   assert.equal(prisma.operations.stockMovementCreateMany.length, 1);
   assert.deepEqual(
-    (prisma.operations.stockMovementCreateMany[0].data as Array<{ quantity: Prisma.Decimal }>)[0].quantity.toString(),
-    "10"
+    (prisma.operations.stockMovementCreateMany[0].data as Array<{ quantity: bigint }>)[0].quantity,
+    10_000n
   );
   assert.deepEqual(prisma.operations.documentStatusUpdates.at(-1), {
     status: "POSTED",

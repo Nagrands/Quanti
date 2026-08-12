@@ -22,6 +22,16 @@ import {
 } from "@quanti/shared";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
+import { serializedTransaction } from "../../common/prisma/serialized-transaction";
+import {
+  FACTOR_SCALE,
+  formatScaled,
+  MONEY_SCALE,
+  multiplyQuantity,
+  QUANTITY_SCALE,
+  sumScaled,
+  toScaled
+} from "../../common/fixed-point";
 
 type ImportableSection = "master-data" | "documents" | "payments";
 type Tx = Prisma.TransactionClient;
@@ -119,7 +129,7 @@ export class TransferService {
     if (invalid) throw new BadRequestException(`${invalid.entityType} ${invalid.key}: ${invalid.message}`);
 
     const result: ApplyImportResult = { created: 0, updated: 0, skipped: 0 };
-    await this.prisma.$transaction(async (tx) => {
+    await serializedTransaction(this.prisma, async (tx) => {
       const payload = this.getMasterDataPayload(transferPackage);
       await this.applyMasterData(tx, payload, resolutions, result);
       if (transferPackage.section === "documents" || transferPackage.section === "payments") {
@@ -147,10 +157,13 @@ export class TransferService {
         name: product.name,
         description: product.description,
         unit: product.unit,
-        purchasePrice: product.purchasePrice?.toString() ?? null,
-        salePrice: product.salePrice?.toString() ?? null,
+        purchasePrice: product.purchasePrice == null ? null : formatScaled(product.purchasePrice, MONEY_SCALE),
+        salePrice: product.salePrice == null ? null : formatScaled(product.salePrice, MONEY_SCALE),
         aliases: product.aliases.map((alias) => alias.name),
-        units: product.units.map((unit) => ({ name: unit.name, conversionFactor: unit.conversionFactor.toString() })),
+        units: product.units.map((unit) => ({
+          name: unit.name,
+          conversionFactor: formatScaled(unit.conversionFactor, FACTOR_SCALE)
+        })),
         categoryCode: product.category?.code ?? null,
         isActive: product.isActive
       })),
@@ -186,9 +199,9 @@ export class TransferService {
       items: record.items.map((item) => ({
         productSku: item.product.sku,
         unit: item.unit,
-        quantity: item.quantity.toString(),
-        price: item.price.toString(),
-        amount: item.amount.toString(),
+        quantity: formatScaled(item.quantity, QUANTITY_SCALE),
+        price: formatScaled(item.price, MONEY_SCALE),
+        amount: formatScaled(item.amount, MONEY_SCALE),
         warehouseCode: item.warehouseId ? warehouseCodes.get(item.warehouseId) ?? null : null
       }))
     }));
@@ -210,13 +223,13 @@ export class TransferService {
       status: record.status,
       paymentDate: record.paymentDate.toISOString(),
       postedAt: record.moneyMovements[0]?.movementDate.toISOString() ?? null,
-      amount: record.amount.toString(),
+      amount: formatScaled(record.amount, MONEY_SCALE),
       notes: record.notes,
       accountCode: record.account.code,
       counterpartyCode: record.counterparty?.code ?? null,
       allocations: record.allocations.map((allocation) => ({
         documentNumber: allocation.document.number,
-        amount: allocation.amount.toString()
+        amount: formatScaled(allocation.amount, MONEY_SCALE)
       }))
     }));
   }
@@ -321,7 +334,11 @@ export class TransferService {
       if (existing) await tx.productUnit.deleteMany({ where: { productId: product.id } });
       if (item.units.length) {
         await tx.productUnit.createMany({
-          data: item.units.map((unit) => ({ productId: product.id, name: unit.name, conversionFactor: this.decimal(unit.conversionFactor) }))
+          data: item.units.map((unit) => ({
+            productId: product.id,
+            name: unit.name,
+            conversionFactor: toScaled(unit.conversionFactor, FACTOR_SCALE, "unit conversion factor")
+          }))
         });
       }
       if (existing && item.aliases !== undefined) await tx.productAlias.deleteMany({ where: { productId: product.id } });
@@ -366,13 +383,19 @@ export class TransferService {
         if (line.unit !== product.unit && !alternative) {
           throw new BadRequestException(`Document ${item.number} uses unavailable unit ${line.unit} for ${line.productSku}.`);
         }
-        resolvedItems.push({ ...line, productId: product.id, warehouseId: lineWarehouse?.id ?? null, unitFactor: alternative?.conversionFactor ?? new Prisma.Decimal(1) });
+        resolvedItems.push({
+          ...line,
+          productId: product.id,
+          warehouseId: lineWarehouse?.id ?? null,
+          unitFactor: alternative?.conversionFactor ?? FACTOR_SCALE
+        });
       }
       if (existing) {
         await tx.stockMovement.deleteMany({ where: { documentId: existing.id } });
         await tx.documentItem.deleteMany({ where: { documentId: existing.id } });
       }
-      const totalAmount = resolvedItems.reduce((sum, line) => sum.add(this.decimal(line.amount)), new Prisma.Decimal(0));
+      const totalAmount = sumScaled(resolvedItems.map((line) =>
+        toScaled(line.amount, MONEY_SCALE, "document amount")));
       const data = {
         number: item.number, type: item.type, status: "DRAFT" as const,
         documentDate: this.date(item.documentDate, `document ${item.number}`), postedAt: null,
@@ -381,7 +404,10 @@ export class TransferService {
         counterpartyId: counterparty?.id ?? null,
         items: { create: resolvedItems.map((line, index) => ({
           lineNo: index + 1, productId: line.productId, unit: line.unit, unitFactor: line.unitFactor,
-          quantity: this.decimal(line.quantity), price: this.decimal(line.price), amount: this.decimal(line.amount), warehouseId: line.warehouseId
+          quantity: toScaled(line.quantity, QUANTITY_SCALE, "document quantity"),
+          price: toScaled(line.price, MONEY_SCALE, "document price"),
+          amount: toScaled(line.amount, MONEY_SCALE, "document amount"),
+          warehouseId: line.warehouseId
         })) }
       };
       const document = existing
@@ -406,15 +432,15 @@ export class TransferService {
       const counterparty = await this.resolveByCode(tx.counterparty, item.counterpartyCode, "counterparty", item.number);
       if (!account) throw new BadRequestException(`Payment ${item.number} requires account ${item.accountCode}.`);
       const allocations = [];
-      let allocated = new Prisma.Decimal(0);
+      let allocated = 0n;
       for (const allocation of item.allocations) {
         const document = await tx.document.findUnique({ where: { number: allocation.documentNumber } });
         if (!document) throw new BadRequestException(`Payment ${item.number} references missing document ${allocation.documentNumber}.`);
-        const amount = this.decimal(allocation.amount); allocated = allocated.add(amount);
+        const amount = toScaled(allocation.amount, MONEY_SCALE, "payment allocation"); allocated += amount;
         allocations.push({ documentId: document.id, amount });
       }
-      const amount = this.decimal(item.amount);
-      if (allocated.greaterThan(amount)) throw new BadRequestException(`Payment ${item.number} allocations exceed its amount.`);
+      const amount = toScaled(item.amount, MONEY_SCALE, "payment amount");
+      if (allocated > amount) throw new BadRequestException(`Payment ${item.number} allocations exceed its amount.`);
       if (existing) {
         await tx.moneyMovement.deleteMany({ where: { paymentId: existing.id } });
         await tx.paymentAllocation.deleteMany({ where: { paymentId: existing.id } });
@@ -451,13 +477,13 @@ export class TransferService {
       } else if (document.type === "SALE" || document.type === "RETURN_OUT") {
         const warehouseId = itemWarehouseId ?? document.sourceWarehouseId;
         if (!warehouseId) throw new BadRequestException(`Document ${document.number} requires a source warehouse.`);
-        await this.assertStock(tx, item.productId, warehouseId, item.quantity.mul(item.unitFactor));
+        await this.assertStock(tx, item.productId, warehouseId, multiplyQuantity(item.quantity, item.unitFactor));
         movements.push({ direction: "OUT", warehouseId, item });
       } else if (document.type === "TRANSFER") {
         const source = document.sourceWarehouseId ?? itemWarehouseId;
         const destination = document.destinationWarehouseId;
         if (!source || !destination) throw new BadRequestException(`Transfer ${document.number} requires both warehouses.`);
-        await this.assertStock(tx, item.productId, source, item.quantity.mul(item.unitFactor));
+        await this.assertStock(tx, item.productId, source, multiplyQuantity(item.quantity, item.unitFactor));
         movements.push({ direction: "OUT", warehouseId: source, item }, { direction: "IN", warehouseId: destination, item });
       } else {
         throw new BadRequestException(`Posted stock adjustment ${document.number} cannot be imported.`);
@@ -465,16 +491,16 @@ export class TransferService {
     }
     if (movements.length) await tx.stockMovement.createMany({ data: movements.map(({ direction, warehouseId, item }) => ({
       movementDate: this.date(movementDate, `document ${document.number}`), direction,
-      quantity: item.quantity.mul(item.unitFactor), productId: item.productId, warehouseId,
+      quantity: multiplyQuantity(item.quantity, item.unitFactor), productId: item.productId, warehouseId,
       documentId: document.id, documentItemId: item.id
     })) });
     await tx.document.update({ where: { id: document.id }, data: { status: "POSTED", postedAt: this.date(movementDate, `document ${document.number}`) } });
   }
 
-  private async assertStock(tx: Tx, productId: string, warehouseId: string, required: Prisma.Decimal) {
+  private async assertStock(tx: Tx, productId: string, warehouseId: string, required: bigint) {
     const rows = await tx.stockMovement.findMany({ where: { productId, warehouseId }, select: { direction: true, quantity: true } });
-    const available = rows.reduce((sum, row) => row.direction === "IN" ? sum.add(row.quantity) : sum.sub(row.quantity), new Prisma.Decimal(0));
-    if (available.lessThan(required)) throw new BadRequestException(`Insufficient stock for imported posted document.`);
+    const available = rows.reduce((sum, row) => row.direction === "IN" ? sum + row.quantity : sum - row.quantity, 0n);
+    if (available < required) throw new BadRequestException(`Insufficient stock for imported posted document.`);
   }
 
   private async resolveByCode(model: any, code: string | null, label: string, owner: string): Promise<{ id: string } | null> {
@@ -566,7 +592,7 @@ export class TransferService {
     if (!/^\d+(\.\d{1,2})?$/.test(value)) {
       throw new BadRequestException(`Invalid product reference price: ${value}.`);
     }
-    return this.decimal(value);
+    return toScaled(value, MONEY_SCALE, "product reference price");
   }
 
   private isImportableSection(section: string): section is ImportableSection {

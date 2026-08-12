@@ -175,7 +175,7 @@ export function DocumentDrawer({
     </span>
   );
 
-  async function submit(event: FormEvent, requestClose: () => void) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
     const invalidLine = values.items.some((item) =>
       !item.productId
@@ -208,7 +208,7 @@ export function DocumentDrawer({
     try {
       setError("");
       await onSave(values);
-      requestClose();
+      onClose();
     } catch (saveError) {
       setError(formatApiError(saveError, { products, warehouses }));
     }
@@ -240,7 +240,7 @@ export function DocumentDrawer({
           <button type="button" className="icon-button" aria-label={t("Закрыть документ")} onClick={requestClose}><X /></button>
         </header>
 
-        <form className="document-form" onSubmit={(event) => submit(event, requestClose)}>
+        <form className="document-form" onSubmit={submit}>
           <div className="document-form__body">
             {error ? <div className="form-alert" role="alert">{error}</div> : null}
             {document?.type === "STOCK_ADJUSTMENT" ? (

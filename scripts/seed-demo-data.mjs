@@ -1,11 +1,14 @@
 const apiBaseUrl = (process.env.QUANTI_API_BASE_URL ?? "http://localhost:3100").replace(/\/+$/, "");
+const sessionToken = process.env.QUANTI_SESSION_TOKEN?.trim();
 
 async function request(path, init) {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
-    headers: init?.body
-      ? { "Content-Type": "application/json", ...init.headers }
-      : init?.headers
+    headers: {
+      ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+      ...init?.headers
+    }
   });
 
   if (!response.ok) {

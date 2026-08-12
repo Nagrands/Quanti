@@ -1,20 +1,41 @@
 # Quanti
 
-Quanti is a cross-platform ERP desktop application built with Tauri, React, NestJS,
-Prisma, and PostgreSQL.
+Quanti is an autonomous, cross-platform ERP desktop application built with Tauri,
+React, NestJS, Prisma, and SQLite. The installed application contains its API,
+database engine, and pinned headless Chromium: users do not need Docker,
+PostgreSQL, Node.js, Chrome, or a separately started service.
 
-The upcoming `0.1.0` milestone supports master data, stock documents, payments, ledger-based
-reports, and PDF document printing. The desktop application currently connects to
-a separately running Quanti API and PostgreSQL database.
+Quanti 0.1.0 supports master data, stock documents, payments,
+ledger-based reports, transfer packages, local backups, recovery, updates, and
+PDF document printing.
 
-## Requirements
+## Download and install
 
-- Node.js 22 or newer
-- pnpm 10
-- Docker Desktop or another PostgreSQL 16 instance
-- Rust toolchain and Tauri prerequisites for native desktop development
+Stable installers are published on the repository's **Releases** page:
 
-## Quick Start
+- signed and notarized DMG for macOS 12+ on Apple Silicon;
+- signed and notarized DMG for macOS 12+ on Intel;
+- signed MSI for 64-bit Windows, including the WebView2 bootstrapper.
+
+Only install assets attached to a published stable release. Workflow artifacts
+and draft releases are test outputs and are not user distributions.
+
+## Data and migration
+
+Open Quanti normally after installation. On first launch, import the full
+`quanti-transfer` v1 JSON exported from the former PostgreSQL version, review
+the preview, and confirm the atomic import. The original JSON is never modified.
+
+Quanti stores `quanti.sqlite3`, backups, and runtime logs in the operating
+system's per-user application data directory. Application updates never replace
+that directory. Quanti checkpoints SQLite and creates a backup before installing
+an update. Manual backup, restore, and log export are available in Diagnostics.
+
+## Development
+
+Requirements for contributors are Node.js 22+, pnpm 10, Rust, and the Tauri
+platform prerequisites. Docker and PostgreSQL are optional legacy-export tools,
+not application runtime dependencies.
 
 ```bash
 pnpm install
@@ -22,42 +43,23 @@ pnpm db:setup
 pnpm dev
 ```
 
-`db:setup` creates a local `.env` from `.env.example` when it does not exist and
-waits until PostgreSQL is ready before applying migrations.
-Open `http://localhost:1420`. The API health endpoint is available at
-`http://localhost:3100/health`.
-
-To populate a repeatable demo workflow, keep the API running and execute:
+Build the autonomous installer for the current platform:
 
 ```bash
-pnpm demo:seed
+pnpm --filter @quanti/desktop tauri:build
 ```
 
-Local database maintenance commands:
+This prepares the target-specific Node sidecar, Prisma SQLite engine, and pinned
+Chromium before Tauri creates the bundle. See
+[Development](docs/DEVELOPMENT.md), [Release](docs/RELEASE.md), and
+[Contributing](CONTRIBUTING.md).
 
-```bash
-pnpm db:backup
-pnpm db:restore -- backups/quanti.dump
-pnpm db:reset -- --force
-pnpm db:studio
-```
+## Project layout
 
-For the native desktop window, run the API and Tauri in separate terminals:
-
-```bash
-pnpm dev:api
-pnpm dev:tauri
-```
-
-See [Development](docs/DEVELOPMENT.md) for setup and troubleshooting and
-[Release](docs/RELEASE.md) for verification and packaging.
-
-## Project Layout
-
-- `apps/api` - NestJS ERP backend
-- `apps/desktop` - React frontend and Tauri shell
-- `packages/db` - Prisma schema and migrations
-- `packages/shared` - shared API contracts
+- `apps/api` — embedded NestJS ERP API
+- `apps/desktop` — React frontend and Tauri lifecycle owner
+- `packages/db` — Prisma SQLite schema and migrations
+- `packages/shared` — stable REST and transfer contracts
 
 ## Verification
 
@@ -67,3 +69,9 @@ pnpm release:check
 ```
 
 Release history is tracked in [CHANGELOG.md](CHANGELOG.md).
+
+## Security and license
+
+Report vulnerabilities through GitHub private vulnerability reporting as
+described in [SECURITY.md](SECURITY.md). Quanti is available under the
+[MIT License](LICENSE).

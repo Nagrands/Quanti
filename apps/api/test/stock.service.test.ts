@@ -12,17 +12,13 @@ function createStockPrismaMock() {
   };
 
   const movements = [
-    { direction: "IN", quantity: "10.000" },
-    { direction: "OUT", quantity: "4.000" }
+    { direction: "IN", quantity: 10_000n },
+    { direction: "OUT", quantity: 4_000n }
   ];
 
   const tx = {
     stockMovement: {
       findMany: async () => movements
-    },
-    $queryRaw: async (query: unknown) => {
-      operations.lockCalls.push(query);
-      return [];
     }
   };
 
@@ -50,7 +46,7 @@ test("stock service computes balance only from stock movements", async () => {
   });
 });
 
-test("stock service validates reservation inside a transaction with locking", async () => {
+test("stock service validates reservation inside a SQLite transaction", async () => {
   const prisma = createStockPrismaMock();
   const service = new StockService(prisma as never);
 
@@ -65,7 +61,7 @@ test("stock service validates reservation inside a transaction with locking", as
   assert.equal(result.quantity, "6.000");
   assert.equal(result.requiredQuantity, "5.000");
   assert.equal(prisma.operations.transactionCalls, 1);
-  assert.equal(prisma.operations.lockCalls.length, 2);
+  assert.equal(prisma.operations.lockCalls.length, 0);
 });
 
 test("stock service rejects reservation when stock is insufficient", async () => {

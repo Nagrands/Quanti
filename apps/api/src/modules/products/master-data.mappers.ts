@@ -1,5 +1,6 @@
 import type { Account, Counterparty, Product, ProductAlias, ProductCategory, ProductUnit, Warehouse } from "@quanti/db";
 import type { AccountDto, CounterpartyDto, ProductCategoryDto, ProductDto, WarehouseDto } from "@quanti/shared";
+import { FACTOR_SCALE, formatScaled, MONEY_SCALE } from "../../common/fixed-point";
 
 const toIso = (value: Date) => value.toISOString();
 
@@ -19,11 +20,11 @@ export function toProductDto(record: ProductRecord): ProductDto {
     units: (record.units ?? []).map((unit) => ({
       id: unit.id,
       name: unit.name,
-      conversionFactor: unit.conversionFactor.toString()
+      conversionFactor: formatScaled(unit.conversionFactor, FACTOR_SCALE)
     })),
     aliases: (record.aliases ?? []).map((alias) => alias.name),
-    purchasePrice: record.purchasePrice?.toString() ?? null,
-    salePrice: record.salePrice?.toString() ?? null,
+    purchasePrice: record.purchasePrice == null ? null : formatScaled(record.purchasePrice, MONEY_SCALE),
+    salePrice: record.salePrice == null ? null : formatScaled(record.salePrice, MONEY_SCALE),
     categoryId: record.categoryId,
     categoryName: record.category?.name ?? null,
     isActive: record.isActive,

@@ -1,6 +1,6 @@
-import { access } from "node:fs/promises";
+import { access, copyFile } from "node:fs/promises";
 import path from "node:path";
-import { pgRestoreFromFile, repoRoot } from "./db-maintenance.mjs";
+import { databasePath, removeDatabaseSidecars, repoRoot } from "./sqlite-maintenance.mjs";
 
 const inputArg = process.argv[2];
 
@@ -12,6 +12,8 @@ if (!inputArg) {
 const inputPath = path.isAbsolute(inputArg) ? inputArg : path.join(repoRoot, inputArg);
 
 await access(inputPath);
-await pgRestoreFromFile(inputPath);
+const target = databasePath();
+await removeDatabaseSidecars(target);
+await copyFile(inputPath, target);
 
-console.log(`Database restored from: ${inputPath}`);
+console.log(`SQLite database restored from: ${inputPath}`);

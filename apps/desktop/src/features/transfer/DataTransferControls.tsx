@@ -11,9 +11,10 @@ import { applyImport, exportSection, previewImport, type DataTransferSection } f
 interface DataTransferControlsProps {
   section: DataTransferSection;
   onImported: () => Promise<unknown> | void;
+  importOnly?: boolean;
 }
 
-export function DataTransferControls({ section, onImported }: DataTransferControlsProps) {
+export function DataTransferControls({ section, onImported, importOnly = false }: DataTransferControlsProps) {
   const { formatApiError, t } = useI18n();
   const [transferPackage, setTransferPackage] = useState<QuantiTransferPackage | null>(null);
   const [fileName, setFileName] = useState("");
@@ -78,9 +79,9 @@ export function DataTransferControls({ section, onImported }: DataTransferContro
   return (
     <>
       <div className="transfer-controls">
-        <button type="button" className="button button--secondary" disabled={exportMutation.isPending} onClick={() => exportMutation.mutate()}>
+        {!importOnly ? <button type="button" className="button button--secondary" disabled={exportMutation.isPending} onClick={() => exportMutation.mutate()}>
           <Download aria-hidden="true" />{t(exportMutation.isPending ? "Экспорт…" : "Экспорт")}
-        </button>
+        </button> : null}
         <button type="button" className="button button--secondary" disabled={previewMutation.isPending} onClick={() => void chooseImport()}>
           <Upload aria-hidden="true" />{t(previewMutation.isPending ? "Чтение…" : "Импорт")}
         </button>

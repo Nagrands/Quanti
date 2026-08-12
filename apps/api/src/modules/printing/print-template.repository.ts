@@ -1,5 +1,4 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { Prisma } from "@quanti/db";
 import type { PrintTemplateScope } from "@quanti/shared";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
@@ -33,43 +32,20 @@ export class PrintTemplateRepository {
   }
 
   private async query(scope: PrintTemplateScope, version?: number) {
-    const rows = await this.prisma.$queryRaw<PrintTemplateRecord[]>(version === undefined
-      ? Prisma.sql`
-          SELECT "id", "scope", "name", "version", "html", "styles"
-          FROM "PrintTemplate"
-          WHERE "scope" = ${scope}::"PrintTemplateScope" AND "isActive" = true
-          ORDER BY "version" DESC
-          LIMIT 1
-        `
-      : Prisma.sql`
-          SELECT "id", "scope", "name", "version", "html", "styles"
-          FROM "PrintTemplate"
-          WHERE "scope" = ${scope}::"PrintTemplateScope" AND "version" = ${version} AND "isActive" = true
-          LIMIT 1
-        `);
-
-    return rows[0];
+    return this.prisma.printTemplate.findFirst({
+      where: { scope, isActive: true, ...(version === undefined ? {} : { version }) },
+      orderBy: { version: "desc" },
+      select: { id: true, scope: true, name: true, version: true, html: true, styles: true }
+    });
   }
 
   private async ensureDefaultDocumentTemplate() {
     for (const template of defaultDocumentTemplates) {
-      await this.prisma.$executeRaw(Prisma.sql`
-        INSERT INTO "PrintTemplate" (
-          "id", "scope", "name", "version", "isActive", "html", "styles", "createdAt", "updatedAt"
-        )
-        VALUES (
-          ${template.id},
-          ${template.scope}::"PrintTemplateScope",
-          ${template.name},
-          ${template.version},
-          true,
-          ${template.html},
-          ${template.styles},
-          NOW(),
-          NOW()
-        )
-        ON CONFLICT ("scope", "version") DO NOTHING
-      `);
+      await this.prisma.printTemplate.upsert({
+        where: { scope_version: { scope: template.scope, version: template.version } },
+        create: { ...template, isActive: true },
+        update: {}
+      });
     }
   }
 }

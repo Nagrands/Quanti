@@ -1,5 +1,6 @@
 import type { ApiErrorEnvelope } from "./contracts";
 import { ApiError } from "./errors";
+import { getRuntimeInfo, type RuntimeInfo } from "../tauri-shell";
 
 const DEFAULT_API_BASE_URL = "http://localhost:3100";
 
@@ -47,7 +48,36 @@ function normalizeErrorMessage(message: string | string[]): string {
 }
 
 export class ApiClient {
-  constructor(private readonly baseUrl = getApiBaseUrl()) {}
+  private readonly configuredBaseUrl: string | undefined;
+  private runtimePromise: Promise<RuntimeInfo> | null = null;
+
+  constructor(baseUrl?: string) {
+    this.configuredBaseUrl = baseUrl ?? (typeof window !== "undefined" && window.__TAURI__ ? undefined : getApiBaseUrl());
+  }
+
+  private runtime(): Promise<RuntimeInfo> {
+    if (this.configuredBaseUrl) {
+      return Promise.resolve({
+        appVersion: "development",
+        baseUrl: this.configuredBaseUrl,
+        sessionToken: "",
+        databaseVersion: 1,
+        databasePath: "",
+        logPath: "",
+        firstRun: false
+      });
+    }
+    this.runtimePromise ??= getRuntimeInfo().catch(() => ({
+      appVersion: "development",
+      baseUrl: getApiBaseUrl(),
+      sessionToken: "",
+      databaseVersion: 1,
+      databasePath: "",
+      logPath: "",
+      firstRun: false
+    }));
+    return this.runtimePromise;
+  }
 
   async request<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await this.fetch(path, init);
@@ -75,7 +105,11 @@ export class ApiClient {
 
   private async fetch(path: string, init?: RequestInit) {
     try {
-      return await fetch(buildRequestUrl(this.baseUrl, path), init);
+      const runtime = await this.runtime();
+      if (!runtime.sessionToken) return await fetch(buildRequestUrl(runtime.baseUrl, path), init);
+      const headers = new Headers(init?.headers);
+      headers.set("Authorization", `Bearer ${runtime.sessionToken}`);
+      return await fetch(buildRequestUrl(runtime.baseUrl, path), { ...init, headers });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Network request failed.";
       throw new ApiError(0, "NETWORK_ERROR", message);

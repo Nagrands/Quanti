@@ -1,5 +1,6 @@
 import type { Payment, PaymentAllocation } from "@quanti/db";
 import type { CounterpartyDebtDto, PaymentDto } from "@quanti/shared";
+import { formatScaled, formatScaledFixed, MONEY_SCALE } from "../../common/fixed-point";
 
 type PaymentRecord = Payment & { allocations: PaymentAllocation[] };
 
@@ -10,27 +11,27 @@ export function toPaymentDto(payment: PaymentRecord): PaymentDto {
     direction: payment.direction,
     status: payment.status,
     paymentDate: payment.paymentDate.toISOString(),
-    amount: payment.amount.toString(),
+    amount: formatScaled(payment.amount, MONEY_SCALE),
     notes: payment.notes,
     accountId: payment.accountId,
     counterpartyId: payment.counterpartyId,
     allocations: payment.allocations.map((allocation) => ({
       documentId: allocation.documentId,
-      amount: allocation.amount.toString()
+      amount: formatScaled(allocation.amount, MONEY_SCALE)
     }))
   };
 }
 
 export function toCounterpartyDebtDto(row: {
   counterpartyId: string;
-  documentTotal: { toString(): string } | string | number;
-  paidTotal: { toString(): string } | string | number;
-  debtTotal: { toString(): string } | string | number;
+  documentTotal: bigint;
+  paidTotal: bigint;
+  debtTotal: bigint;
 }): CounterpartyDebtDto {
   return {
     counterpartyId: row.counterpartyId,
-    documentTotal: row.documentTotal.toString(),
-    paidTotal: row.paidTotal.toString(),
-    debtTotal: row.debtTotal.toString()
+    documentTotal: formatScaledFixed(row.documentTotal, MONEY_SCALE),
+    paidTotal: formatScaledFixed(row.paidTotal, MONEY_SCALE),
+    debtTotal: formatScaledFixed(row.debtTotal, MONEY_SCALE)
   };
 }

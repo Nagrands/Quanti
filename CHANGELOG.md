@@ -4,6 +4,8 @@ All notable changes to Quanti are documented in this file.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-12
+
 ### Added
 
 - Master data management for products, warehouses, counterparties, and accounts.
@@ -27,12 +29,23 @@ All notable changes to Quanti are documented in this file.
   summary counters for products, warehouses, counterparties, and accounts.
 - Database maintenance scripts for local backup, restore, reset, and Prisma Studio.
 - Tauri file dialogs, validated import/export boundaries, and macOS/Windows bundles.
-- Cross-platform CI packaging and PostgreSQL-backed release workflow checks.
+- Autonomous Tauri runtime with a protected loopback API, embedded SQLite,
+  target-specific Prisma and Chromium resources, recovery diagnostics, and
+  single-instance behavior.
+- Atomic PostgreSQL-to-SQLite transfer import with preview and per-record conflict
+  decisions, plus local backup and restore workflows.
+- Signed macOS arm64/x64 and Windows x64 draft-release automation with signed
+  updater artifacts and a GitHub Releases `latest.json` manifest.
+- Cross-platform CI for the SQLite ERP workflow and autonomous desktop bundles.
 
-### Known Limitations
+### Known limitations
 
-- The packaged desktop client requires a separately deployed Quanti API and PostgreSQL.
-- Installer signing and macOS notarization require release credentials and are not
-  performed by the public CI workflow.
-- Authentication, authorization, backup automation, and offline mode are outside
-  the `0.1.0` milestone.
+- The first autonomous release requires a full `quanti-transfer` v1 export to
+  migrate an existing PostgreSQL installation; it does not read PostgreSQL data
+  directly.
+- Stable installers require project-owned Apple, Windows, and Tauri signing
+  credentials that are not included in the repository.
+- Network multi-user deployment, accounts, and role-based access control are
+  outside the 0.1.0 desktop scope.
+- Publishing remains a manual release gate after clean-machine installation,
+  signing, recovery, PDF, and updater smoke tests.

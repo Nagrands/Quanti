@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Prisma } from "@quanti/db";
 
 import { AccountsService } from "../src/modules/products/accounts.service";
 import { CounterpartiesService } from "../src/modules/products/counterparties.service";
@@ -37,9 +36,9 @@ function createPrismaMock() {
     name: "Widget",
     description: null,
     unit: "pcs",
-    purchasePrice: new Prisma.Decimal("18.00"),
-    salePrice: new Prisma.Decimal("25.00"),
-    units: [{ id: "unit-1", productId: "product-1", name: "box", conversionFactor: new Prisma.Decimal(10), createdAt: new Date("2026-04-14T00:00:00.000Z"), updatedAt: new Date("2026-04-14T00:00:00.000Z") }],
+    purchasePrice: 1_800n,
+    salePrice: 2_500n,
+    units: [{ id: "unit-1", productId: "product-1", name: "box", conversionFactor: 10_000_000n, createdAt: new Date("2026-04-14T00:00:00.000Z"), updatedAt: new Date("2026-04-14T00:00:00.000Z") }],
     aliases: [{ id: "alias-1", productId: "product-1", name: "Goods", normalizedName: "goods", createdAt: new Date("2026-04-14T00:00:00.000Z"), updatedAt: new Date("2026-04-14T00:00:00.000Z") }],
     categoryId: "category-1",
     isActive: true,
@@ -110,8 +109,8 @@ function createPrismaMock() {
     documentItem: {
       findFirst: async ({ where }: { where: { document: { type: { in: string[] } } } }) =>
         where.document.type.in.includes("SALE")
-          ? { price: new Prisma.Decimal("25.00"), unit: "box" }
-          : { price: new Prisma.Decimal("18.00"), unit: "pcs" }
+          ? { price: 2_500n, unit: "box" }
+          : { price: 1_800n, unit: "pcs" }
     },
     productCategory: {
       findMany: async (args: Record<string, unknown>) => {
@@ -375,7 +374,7 @@ test("products service replaces additional units transactionally", async () => {
 
   assert.equal(operations.deleted, true);
   assert.equal(operations.created[0]?.name, "bunch");
-  assert.equal((operations.created[0]?.conversionFactor as Prisma.Decimal).toString(), "0.1");
+  assert.equal(operations.created[0]?.conversionFactor, 100_000n);
   assert.equal(operations.aliasesDeleted, true);
   assert.deepEqual(operations.aliasesCreated, [{ productId: "product-1", name: "Dill", normalizedName: "dill" }]);
 });

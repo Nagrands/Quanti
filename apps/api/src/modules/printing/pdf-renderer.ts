@@ -9,7 +9,10 @@ export interface PdfRenderer {
 }
 
 function browserCandidates() {
+  const bundled = process.env.QUANTI_CHROMIUM_PATH?.trim();
+  if (process.env.NODE_ENV === "production") return bundled ? [bundled] : [];
   return [
+    bundled,
     process.env.PUPPETEER_EXECUTABLE_PATH,
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
@@ -27,7 +30,9 @@ export class PuppeteerPdfRenderer implements PdfRenderer {
     const executablePath = browserCandidates().find(existsSync);
 
     if (!executablePath) {
-      throw new Error("No supported Chromium executable was found. Configure PUPPETEER_EXECUTABLE_PATH.");
+      throw new Error(process.env.NODE_ENV === "production"
+        ? "Bundled Quanti Chromium executable was not found."
+        : "No supported Chromium executable was found. Configure QUANTI_CHROMIUM_PATH.");
     }
 
     const browser = await puppeteer.launch({

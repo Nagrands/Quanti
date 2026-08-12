@@ -10,6 +10,16 @@ import type {
 } from "@quanti/shared";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
+import { serializedTransaction } from "../../common/prisma/serialized-transaction";
+import {
+  FACTOR_SCALE,
+  formatScaled,
+  MONEY_SCALE,
+  multiplyQuantity,
+  QUANTITY_SCALE,
+  sumScaled,
+  toScaled
+} from "../../common/fixed-point";
 import { StockService } from "../stock/stock.service";
 import { toDocumentDto } from "./document.mappers";
 
@@ -38,7 +48,7 @@ export class DocumentsService {
   }
 
   async createDraft(payload: CreateDraftDocumentDto): Promise<DocumentDto> {
-    const document = await this.prisma.$transaction(async (tx) => {
+    const document = await serializedTransaction(this.prisma, async (tx) => {
       const items = await this.resolveItems(payload.items, tx);
       return tx.document.create({
         data: {
@@ -58,9 +68,9 @@ export class DocumentsService {
               productId: item.productId,
               unit: item.unit,
               unitFactor: item.unitFactor,
-              quantity: this.decimal(item.quantity),
-              price: this.decimal(item.price),
-              amount: this.decimal(item.amount),
+              quantity: toScaled(item.quantity, QUANTITY_SCALE, "document quantity"),
+              price: toScaled(item.price, MONEY_SCALE, "document price"),
+              amount: toScaled(item.amount, MONEY_SCALE, "document amount"),
               warehouseId: item.warehouseId ?? null
             }))
           }
@@ -73,7 +83,7 @@ export class DocumentsService {
   }
 
   async updateDraft(id: string, payload: UpdateDraftDocumentPatchDto): Promise<DocumentDto> {
-    return this.prisma.$transaction(async (tx) => {
+    return serializedTransaction(this.prisma, async (tx) => {
       const existing = await this.getDocumentRecord(id, tx);
       this.ensureDraft(existing);
       const items = payload.items ? await this.resolveItems(payload.items, tx) : undefined;
@@ -113,9 +123,9 @@ export class DocumentsService {
             productId: item.productId,
             unit: item.unit,
             unitFactor: item.unitFactor,
-            quantity: this.decimal(item.quantity),
-            price: this.decimal(item.price),
-            amount: this.decimal(item.amount),
+            quantity: toScaled(item.quantity, QUANTITY_SCALE, "document quantity"),
+            price: toScaled(item.price, MONEY_SCALE, "document price"),
+            amount: toScaled(item.amount, MONEY_SCALE, "document amount"),
             warehouseId: item.warehouseId ?? null
           }))
         });
@@ -126,7 +136,7 @@ export class DocumentsService {
   }
 
   async removeDraft(id: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+    await serializedTransaction(this.prisma, async (tx) => {
       const existing = await this.getDocumentRecord(id, tx);
       this.ensureDraft(existing);
       await tx.document.delete({ where: { id } });
@@ -134,7 +144,7 @@ export class DocumentsService {
   }
 
   async post(id: string, postedAt?: string): Promise<DocumentDto> {
-    return this.prisma.$transaction(async (tx) => {
+    return serializedTransaction(this.prisma, async (tx) => {
       const document = await this.getDocumentRecord(id, tx);
       this.ensureDraft(document);
 
@@ -145,7 +155,7 @@ export class DocumentsService {
           data: movements.map((movement) => ({
             movementDate: new Date(movement.movementDate),
             direction: movement.direction,
-            quantity: this.decimal(movement.quantity),
+            quantity: toScaled(movement.quantity, QUANTITY_SCALE, "stock quantity"),
             productId: movement.productId,
             warehouseId: movement.warehouseId,
             documentId: movement.documentId,
@@ -167,7 +177,7 @@ export class DocumentsService {
   }
 
   async unpost(id: string): Promise<DocumentDto> {
-    return this.prisma.$transaction(async (tx) => {
+    return serializedTransaction(this.prisma, async (tx) => {
       const document = await this.getDocumentRecord(id, tx);
 
       if (document.status !== "POSTED") {
@@ -188,7 +198,7 @@ export class DocumentsService {
   }
 
   async repost(command: RepostDocumentCommand): Promise<DocumentDto> {
-    return this.prisma.$transaction(async (tx) => {
+    return serializedTransaction(this.prisma, async (tx) => {
       const document = await this.getDocumentRecord(command.id, tx);
 
       if (document.status === "POSTED") {
@@ -211,7 +221,7 @@ export class DocumentsService {
           data: movements.map((movement) => ({
             movementDate: new Date(movement.movementDate),
             direction: movement.direction,
-            quantity: this.decimal(movement.quantity),
+            quantity: toScaled(movement.quantity, QUANTITY_SCALE, "stock quantity"),
             productId: movement.productId,
             warehouseId: movement.warehouseId,
             documentId: movement.documentId,
@@ -264,7 +274,7 @@ export class DocumentsService {
           await this.stockService.assertAvailableStock({
             productId: item.productId,
             warehouseId,
-            requiredQuantity: this.baseQuantity(item).toString()
+            requiredQuantity: formatScaled(this.baseQuantity(item), QUANTITY_SCALE)
           }, tx);
 
           movements.push(this.createMovement(item, document.id, warehouseId, movementDate, "OUT"));
@@ -283,7 +293,7 @@ export class DocumentsService {
           await this.stockService.assertAvailableStock({
             productId: item.productId,
             warehouseId: sourceWarehouseId,
-            requiredQuantity: this.baseQuantity(item).toString()
+            requiredQuantity: formatScaled(this.baseQuantity(item), QUANTITY_SCALE)
           }, tx);
 
           movements.push(
@@ -316,7 +326,7 @@ export class DocumentsService {
       documentItemId: item.id,
       movementDate,
       direction,
-      quantity: this.baseQuantity(item).toString()
+      quantity: formatScaled(this.baseQuantity(item), QUANTITY_SCALE)
     };
   }
 
@@ -342,18 +352,11 @@ export class DocumentsService {
   }
 
   private sumAmounts(items: Array<{ amount: string }>) {
-    return items.reduce(
-      (sum, item) => sum.add(this.decimal(item.amount)),
-      new Prisma.Decimal(0)
-    );
-  }
-
-  private decimal(value: string) {
-    return new Prisma.Decimal(value);
+    return sumScaled(items.map((item) => toScaled(item.amount, MONEY_SCALE, "document amount")));
   }
 
   private baseQuantity(item: DocumentItem) {
-    return item.quantity.mul(item.unitFactor);
+    return multiplyQuantity(item.quantity, item.unitFactor);
   }
 
   private async resolveItems(
@@ -384,7 +387,7 @@ export class DocumentsService {
       return {
         ...item,
         unit: requestedUnit,
-        unitFactor: alternative?.conversionFactor ?? new Prisma.Decimal(1)
+        unitFactor: alternative?.conversionFactor ?? FACTOR_SCALE
       };
     });
   }

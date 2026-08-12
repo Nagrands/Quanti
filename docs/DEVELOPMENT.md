@@ -1,132 +1,93 @@
 # Development
 
-## First Run
+## Requirements
 
-Install dependencies and prepare PostgreSQL:
+- Node.js 22 or newer and pnpm 10
+- stable Rust with `rustfmt` and `clippy`
+- Tauri prerequisites for the host platform
+
+Docker and PostgreSQL are needed only when exporting a legacy installation.
+
+## First run
 
 ```bash
 pnpm install
 pnpm db:setup
 ```
 
-`db:setup` starts the `postgres` Compose service, generates Prisma Client, and
-applies committed migrations. It also creates `.env` from `.env.example` without
-overwriting an existing file. The default connection is:
+`db:setup` generates Prisma Client and applies the dedicated SQLite migration
+chain. The default development database is `.quanti-data/quanti.sqlite3`.
+Existing `.env` files are not overwritten; replace an old PostgreSQL
+`DATABASE_URL` only after exporting the legacy database to a full
+`quanti-transfer` v1 package.
 
-```text
-postgresql://postgres:postgres@localhost:5432/quanti
-```
+## Run modes
 
-Override `DATABASE_URL` and `DIRECT_URL` when using another PostgreSQL instance.
-
-## Run Modes
-
-Start API and browser frontend together:
+Browser development keeps the established fallback API URL:
 
 ```bash
 pnpm dev
 ```
 
-Start components independently:
+Components can also be started separately with `pnpm dev:api` and
+`pnpm dev:desktop`. The native production-equivalent lifecycle is exercised by:
 
 ```bash
-pnpm dev:api
-pnpm dev:desktop
-```
-
-The development API restarts automatically when backend source files change.
-After applying Prisma schema changes, run `pnpm db:generate && pnpm db:migrate`
-and restart any API process that was already running before the migration.
-
-Start the native Tauri application while the API is running:
-
-```bash
+pnpm autonomous:prepare
 pnpm dev:tauri
 ```
 
-## Demo Data
+The installed build does not use port 3100. Tauri selects a free loopback port,
+creates a random bearer token, starts the sidecar, waits for its protected
+health check, and then shows the window.
 
-With the API available on port `3100`, run:
+Autonomous preparation resolves all bundled resources from
+`TAURI_ENV_TARGET_TRIPLE`. This is required when producing an artifact for a
+different CPU architecture than the current host.
 
-```bash
-pnpm demo:seed
-```
-
-The idempotent seed creates:
-
-- one product, warehouse, customer, and bank account;
-- a posted purchase that adds opening stock;
-- a posted sale;
-- a posted partial incoming payment allocated to the sale.
-
-Set `QUANTI_API_BASE_URL` if the API is not at `http://localhost:3100`.
-The packaged desktop configuration currently supports the local API at
-`http://localhost:3100`.
-
-## Troubleshooting
-
-`API unavailable` means the frontend cannot reach `/health`. Check:
-
-```bash
-curl http://localhost:3100/health
-```
-
-If the API returns `Unexpected server error`, verify Docker and migrations:
-
-```bash
-docker compose ps
-pnpm db:generate
-pnpm db:migrate
-```
-
-If the frontend already shows new fields but the API response does not contain
-them, stop the existing API process and start `pnpm dev:api` again. This means
-the frontend and backend were started from different source revisions.
-
-Useful database commands:
-
-```bash
-pnpm db:up
-pnpm db:down
-pnpm db:generate
-pnpm db:migrate
-pnpm db:studio
-```
-
-`docker compose down` preserves the named PostgreSQL volume. Add `--volumes`
-manually only when intentionally deleting local data.
-
-## Database Maintenance
-
-Create a timestamped local backup:
+## Database maintenance
 
 ```bash
 pnpm db:backup
-```
-
-The backup is written to `backups/quanti_<timestamp>.dump`. To choose a file
-name explicitly:
-
-```bash
-pnpm db:backup -- backups/manual.dump
-```
-
-Restore a backup while PostgreSQL is running:
-
-```bash
-pnpm db:restore -- backups/manual.dump
-```
-
-The restore command uses `pg_restore --clean --if-exists` and should be run
-while the API is stopped, so no writes happen during the restore.
-
-Reset the local Docker database volume and reapply migrations:
-
-```bash
+pnpm db:restore -- backups/manual.sqlite3
 pnpm db:reset -- --force
+pnpm db:studio
 ```
 
-This deletes local PostgreSQL data. Create a backup first when the data matters.
+SQLite runs in WAL mode with foreign keys, a busy timeout, and serialized write
+transactions. Migrations create a timestamped copy before changing an existing
+database. Manual backup and log export are also available under Settings →
+About and diagnostics.
 
-PDF printing requires Chrome or Chromium. If it is not installed in a standard
-location, set `PUPPETEER_EXECUTABLE_PATH` in `.env`.
+`pnpm legacy:db:up` and `pnpm legacy:db:down` exist only for exporting a former
+PostgreSQL installation. Docker is not part of the current application runtime.
+
+## PDF
+
+Autonomous preparation downloads the Puppeteer-pinned `chrome-headless-shell`
+for the current platform and includes it as a private bundle resource. In
+production the API accepts only `QUANTI_CHROMIUM_PATH` supplied by Tauri and
+blocks external requests from print pages. Development can use an explicitly
+configured or system Chromium.
+
+## Troubleshooting
+
+If startup fails, the recovery screen can retry, save the runtime log, or
+restore the latest backup. The data path, schema version, application version,
+manual backup, log export, and updater are available in diagnostics.
+
+For a stale development API, stop the process and restart `pnpm dev:api`. After
+schema changes run `pnpm db:generate && pnpm db:migrate`.
+
+## Verification
+
+```bash
+pnpm check
+pnpm release:check
+```
+
+The release check verifies version metadata, tests the workspace, builds all
+packages, and runs the protected SQLite API workflow. If a locally installed
+pnpm executable cannot verify its native binary, do not alter lockfiles or
+package-manager configuration: run the installed package-level binaries for
+focused validation and keep the clean GitHub Actions run as the aggregate gate.

@@ -3,6 +3,7 @@ import { Prisma } from "@quanti/db";
 import type { CreateProductDto, ProductDto, UpdateProductDto } from "@quanti/shared";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
+import { FACTOR_SCALE, MONEY_SCALE, toScaled } from "../../common/fixed-point";
 import { toProductDto } from "./master-data.mappers";
 
 @Injectable()
@@ -129,7 +130,7 @@ export class ProductsService {
 
     const mapped = units.map((unit) => ({
       name: unit.name.trim(),
-      conversionFactor: new Prisma.Decimal(unit.conversionFactor)
+      conversionFactor: toScaled(unit.conversionFactor, FACTOR_SCALE, "unit conversion factor")
     }));
 
     for (const unit of mapped) {
@@ -138,7 +139,7 @@ export class ProductsService {
         !unit.name
         || normalized === baseName
         || seen.has(normalized)
-        || !unit.conversionFactor.isPositive()
+        || unit.conversionFactor <= 0n
       ) {
         throw new BadRequestException("Product units must be unique, positive, and different from the base unit.");
       }
@@ -168,6 +169,6 @@ export class ProductsService {
   }
 
   private optionalPrice(value: string | null | undefined) {
-    return value == null ? null : new Prisma.Decimal(value);
+    return value == null ? null : toScaled(value, MONEY_SCALE, "product reference price");
   }
 }

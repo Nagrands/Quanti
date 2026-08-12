@@ -7,8 +7,7 @@ const repoRoot = join(__dirname, "..");
 const dbWorkspace = join(repoRoot, "packages/db");
 
 const defaultEnv = {
-  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/quanti",
-  DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/quanti"
+  DATABASE_URL: `file:${join(repoRoot, ".quanti-data", "quanti.sqlite3")}`
 };
 
 const child = spawn(
@@ -19,8 +18,7 @@ const child = spawn(
     stdio: "inherit",
     env: {
       ...process.env,
-      DATABASE_URL: process.env.DATABASE_URL ?? defaultEnv.DATABASE_URL,
-      DIRECT_URL: process.env.DIRECT_URL ?? defaultEnv.DIRECT_URL
+      DATABASE_URL: process.env.DATABASE_URL ?? defaultEnv.DATABASE_URL
     }
   }
 );

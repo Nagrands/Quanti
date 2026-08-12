@@ -3,5 +3,9 @@
   "identifier": "default",
   "description": "Default desktop capability for Quanti shell foundation.",
   "windows": ["main"],
-  "permissions": ["core:default", "core:window:default"]
+  "permissions": [
+    "core:default",
+    "core:window:default",
+    "updater:default"
+  ]
 }

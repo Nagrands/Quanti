@@ -7,6 +7,8 @@ import type {
 } from "@quanti/shared";
 
 import { PrismaService } from "../../common/prisma/prisma.service";
+import { serializedTransaction } from "../../common/prisma/serialized-transaction";
+import { formatScaledFixed, QUANTITY_SCALE, toScaled } from "../../common/fixed-point";
 
 type DbClient = PrismaService | Prisma.TransactionClient;
 
@@ -31,32 +33,32 @@ export class StockService {
       orderBy: { movementDate: "asc" }
     });
 
-    const quantity = movements.reduce((sum, movement) => {
-      const value = this.toNumber(movement.quantity);
-      return movement.direction === "IN" ? sum + value : sum - value;
-    }, 0);
+    const quantity = movements.reduce(
+      (sum, movement) => movement.direction === "IN" ? sum + movement.quantity : sum - movement.quantity,
+      0n
+    );
 
     return {
       productId,
       warehouseId,
-      quantity: this.formatQuantity(quantity)
+      quantity: formatScaledFixed(quantity, QUANTITY_SCALE)
     };
   }
 
   async reserveStock(payload: ReserveStockRequestDto): Promise<ReserveStockResultDto> {
-    const requiredQuantity = this.toNumber(payload.requiredQuantity);
+    const requiredQuantity = toScaled(payload.requiredQuantity, QUANTITY_SCALE, "required quantity");
 
-    if (requiredQuantity <= 0) {
+    if (requiredQuantity <= 0n) {
       throw new BadRequestException("Required quantity must be greater than zero.");
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    return serializedTransaction(this.prisma, async (tx) => {
       const balance = await this.assertAvailableStock(payload, tx);
 
       return {
         ...balance,
         availableQuantity: balance.quantity,
-        requiredQuantity: this.formatQuantity(requiredQuantity),
+        requiredQuantity: formatScaledFixed(requiredQuantity, QUANTITY_SCALE),
         allowed: true
       };
     });
@@ -66,16 +68,14 @@ export class StockService {
     payload: ReserveStockRequestDto,
     client: DbClient = this.prisma
   ): Promise<StockBalanceResultDto> {
-    const requiredQuantity = this.toNumber(payload.requiredQuantity);
+    const requiredQuantity = toScaled(payload.requiredQuantity, QUANTITY_SCALE, "required quantity");
 
-    if (requiredQuantity <= 0) {
+    if (requiredQuantity <= 0n) {
       throw new BadRequestException("Required quantity must be greater than zero.");
     }
 
-    await this.lockScope(client, payload.productId, payload.warehouseId);
-
     const balance = await this.getBalance(payload.productId, payload.warehouseId, client);
-    const availableQuantity = this.toNumber(balance.quantity);
+    const availableQuantity = toScaled(balance.quantity, QUANTITY_SCALE, "available quantity");
 
     if (availableQuantity < requiredQuantity) {
       throw new BadRequestException({
@@ -84,8 +84,8 @@ export class StockService {
         details: {
           productId: payload.productId,
           warehouseId: payload.warehouseId,
-          availableQuantity: this.formatQuantity(availableQuantity),
-          requiredQuantity: this.formatQuantity(requiredQuantity)
+          availableQuantity: formatScaledFixed(availableQuantity, QUANTITY_SCALE),
+          requiredQuantity: formatScaledFixed(requiredQuantity, QUANTITY_SCALE)
         }
       });
     }
@@ -93,16 +93,4 @@ export class StockService {
     return balance;
   }
 
-  private async lockScope(client: DbClient, productId: string, warehouseId: string) {
-    await client.$queryRaw(Prisma.sql`SELECT id FROM "Product" WHERE id = ${productId} FOR UPDATE`);
-    await client.$queryRaw(Prisma.sql`SELECT id FROM "Warehouse" WHERE id = ${warehouseId} FOR UPDATE`);
-  }
-
-  private toNumber(value: { toString(): string } | number | string) {
-    return Number(value.toString());
-  }
-
-  private formatQuantity(value: number) {
-    return value.toFixed(3);
-  }
 }
