@@ -55,7 +55,7 @@ installs and restarts. The database lives outside the application bundle.
 3. The release preflight validates metadata and secrets, then creates or updates
    a draft release using the changelog section as its notes.
 4. The matrix builds macOS arm64, macOS x64, and Windows x64. It uploads DMG/MSI,
-   updater archives, signatures, and `latest.json` to the draft.
+   macOS updater archives, updater signatures, and `latest.json` to the draft.
 5. A final job downloads installer and updater archives, creates `SHA256SUMS`,
    and attaches it to the draft.
 6. Never publish a draft merely because the workflow succeeded.
@@ -71,7 +71,7 @@ installs and restarts. The database lives outside the application bundle.
   exercise the Gatekeeper manual-open flow on clean Apple Silicon and Intel Macs.
 - Confirm the MSI reports `NotSigned`, exercise the SmartScreen manual-run flow,
   install/uninstall it on clean 64-bit Windows, and verify bundled WebView2.
-- Verify every installer and updater archive against `SHA256SUMS` downloaded
+- Verify every installer and macOS updater archive against `SHA256SUMS` downloaded
   from the same draft release.
 - Verify `latest.json` references every updater archive with the matching `.sig`.
 - Complete installed-app smoke while offline: first launch, restart, occupied

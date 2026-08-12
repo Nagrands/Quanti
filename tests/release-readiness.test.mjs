@@ -108,7 +108,8 @@ test("generated release config signs updater artifacts without OS identities", (
     env: {
       ...process.env,
       QUANTI_UPDATE_ENDPOINT: endpoint,
-      TAURI_UPDATER_PUBKEY: publicKey
+      TAURI_UPDATER_PUBKEY: publicKey,
+      TAURI_ENV_TARGET_TRIPLE: "aarch64-apple-darwin"
     }
   });
   assert.equal(generated.status, 0, generated.stderr);
@@ -121,6 +122,7 @@ test("generated release config signs updater artifacts without OS identities", (
     ).stdout
   );
   assert.equal(config.bundle.createUpdaterArtifacts, true);
+  assert.deepEqual(config.bundle.targets, ["app", "dmg"]);
   assert.equal(config.bundle.macOS.signingIdentity, null);
   assert.equal(config.bundle.windows.certificateThumbprint, null);
   assert.deepEqual(config.plugins.updater.endpoints, [endpoint]);

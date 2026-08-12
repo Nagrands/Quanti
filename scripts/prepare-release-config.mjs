@@ -5,13 +5,22 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.dirname(fileURLToPath(new URL("../package.json", import.meta.url)));
 const endpoint = process.env.QUANTI_UPDATE_ENDPOINT?.trim();
 const publicKey = process.env.TAURI_UPDATER_PUBKEY?.trim();
+const target = process.env.TAURI_ENV_TARGET_TRIPLE?.trim();
 
-if (!endpoint || !publicKey) {
-  throw new Error("QUANTI_UPDATE_ENDPOINT and TAURI_UPDATER_PUBKEY are required for a signed release build.");
+if (!endpoint || !publicKey || !target) {
+  throw new Error(
+    "QUANTI_UPDATE_ENDPOINT, TAURI_UPDATER_PUBKEY, and TAURI_ENV_TARGET_TRIPLE are required for a signed release build."
+  );
+}
+
+const bundleTargets = target.includes("apple-darwin") ? ["app", "dmg"] : target.includes("windows-msvc") ? ["msi"] : null;
+if (!bundleTargets) {
+  throw new Error(`Unsupported release target: ${target}.`);
 }
 
 const config = {
   bundle: {
+    targets: bundleTargets,
     externalBin: ["binaries/quanti-api"],
     resources: {
       "../../../packages/db/prisma/sqlite-migrations/": "migrations/",

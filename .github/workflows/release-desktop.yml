@@ -175,7 +175,7 @@ jobs:
           cd release-assets
           test "$(find . -maxdepth 1 -name '*.dmg' | wc -l | tr -d ' ')" = 2
           test "$(find . -maxdepth 1 -name '*.msi' | wc -l | tr -d ' ')" = 1
-          test "$(find . -maxdepth 1 \( -name '*.tar.gz' -o -name '*.zip' \) | wc -l | tr -d ' ')" = 3
+          test "$(find . -maxdepth 1 -name '*.tar.gz' | wc -l | tr -d ' ')" = 2
           test "$(find . -maxdepth 1 -name '*.sig' | wc -l | tr -d ' ')" = 3
           jq -e '
             .version == "0.1.0" and
