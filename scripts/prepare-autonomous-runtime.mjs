@@ -22,7 +22,12 @@ function workspaceBinary(name) {
 
 async function run(command, args, options = {}) {
   await new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd: repoRoot, stdio: "inherit", ...options });
+    const child = spawn(command, args, {
+      cwd: repoRoot,
+      stdio: "inherit",
+      shell: process.platform === "win32",
+      ...options
+    });
     child.on("error", reject);
     child.on("exit", (code) => code === 0 ? resolve() : reject(new Error(`${command} exited with ${code}.`)));
   });
