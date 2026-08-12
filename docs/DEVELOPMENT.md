@@ -70,6 +70,17 @@ production the API accepts only `QUANTI_CHROMIUM_PATH` supplied by Tauri and
 blocks external requests from print pages. Development can use an explicitly
 configured or system Chromium.
 
+## Application icons
+
+The editable masters are `apps/desktop/src-tauri/app-icon-macos.svg` and
+`apps/desktop/src-tauri/app-icon-windows.svg`; `app-icon.svg` keeps the common
+geometry for design review. Regenerate each platform into a temporary directory
+with `pnpm --filter @quanti/desktop exec tauri icon <master.svg> --output <dir>`.
+Copy only `icon.icns` from the macOS output and `icon.ico` plus the configured
+PNG files from the Windows output into `apps/desktop/src-tauri/icons/`. Keep the
+icon paths in `tauri.conf.json` unchanged and inspect the 16–256 px variants
+before committing generated binaries.
+
 ## Troubleshooting
 
 If startup fails, the recovery screen can retry, save the runtime log, or

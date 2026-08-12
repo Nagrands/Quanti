@@ -132,6 +132,30 @@
   margin-top: 20px;
 }
 
+.settings-diagnostics__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.settings-diagnostics__brand-mark {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+}
+
+.settings-diagnostics__brand span {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.settings-diagnostics__brand h2 {
+  margin: 2px 0 0;
+}
+
 .settings-diagnostics dl,
 .settings-diagnostics dl div {
   display: grid;
@@ -168,6 +192,12 @@
   color: var(--color-text);
   text-align: center;
   background: var(--color-background);
+}
+
+.runtime-screen__brand {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 4px;
 }
 
 .runtime-screen--error {

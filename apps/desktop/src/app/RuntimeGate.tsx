@@ -1,4 +1,5 @@
 import { type PropsWithChildren, useEffect, useState } from "react";
+import { BrandMark } from "../components/branding/BrandMark";
 import { DataTransferControls } from "../features/transfer/DataTransferControls";
 import { useI18n } from "../i18n";
 import { chooseAndRestoreBackup, getRuntimeInfo, readRuntimeLog, restoreLatestBackup, retryRuntime, type RuntimeInfo } from "../tauri-shell";
@@ -30,12 +31,13 @@ export function RuntimeGate({ children }: PropsWithChildren) {
   useEffect(() => load(), []);
 
   if (state === "loading") {
-    return <main className="runtime-screen" aria-live="polite"><h1>Quanti</h1><p>{t("Подготовка локальной базы…")}</p></main>;
+    return <main className="runtime-screen" aria-live="polite"><BrandMark className="runtime-screen__brand" /><h1>Quanti</h1><p>{t("Подготовка локальной базы…")}</p></main>;
   }
 
   if (state === "failed") {
     return (
       <main className="runtime-screen runtime-screen--error" role="alert">
+        <BrandMark className="runtime-screen__brand" />
         <h1>{t("Не удалось запустить Quanti")}</h1>
         <p>{error}</p>
         <div className="runtime-screen__actions">
@@ -67,6 +69,7 @@ export function RuntimeGate({ children }: PropsWithChildren) {
   if (onboarding && runtime?.firstRun) {
     return (
       <main className="runtime-screen runtime-screen--onboarding">
+        <BrandMark className="runtime-screen__brand" />
         <h1>{t("Перенос данных в локальную Quanti")}</h1>
         <p>{t("Выберите полный quanti-transfer v1 пакет из прежней PostgreSQL-версии. Quanti сначала покажет предпросмотр и импортирует данные одной транзакцией.")}</p>
         <DataTransferControls section="payments" importOnly onImported={() => setOnboarding(false)} />

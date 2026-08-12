@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="quanti-background" x1="140" y1="112" x2="900" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4b8cff"/>
+      <stop offset="0.48" stop-color="#2164d8"/>
+      <stop offset="1" stop-color="#0b315f"/>
+    </linearGradient>
+    <linearGradient id="quanti-depth" x1="512" y1="56" x2="512" y2="968" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#061c3b" stop-opacity="0.16"/>
+    </linearGradient>
+  </defs>
+  <rect x="56" y="56" width="912" height="912" rx="190" fill="url(#quanti-background)"/>
+  <rect x="56" y="56" width="912" height="912" rx="190" fill="url(#quanti-depth)"/>
+  <circle cx="470" cy="465" r="245" fill="none" stroke="#ffffff" stroke-width="120"/>
+  <path d="M630 625 802 797" fill="none" stroke="url(#quanti-background)" stroke-linecap="round" stroke-width="154"/>
+  <path d="M630 625 802 797" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-width="92"/>
+</svg>

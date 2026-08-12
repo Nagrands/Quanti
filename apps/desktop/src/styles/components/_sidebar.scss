@@ -22,6 +22,7 @@
   min-height: vars.$header-height;
   align-items: center;
   justify-content: center;
+  gap: 0;
   overflow: hidden;
   padding: 0 16px;
   border-bottom: 1px solid rgb(255 255 255 / 12%);
@@ -32,12 +33,14 @@
 
 .sidebar--expanded .sidebar__brand {
   justify-content: flex-start;
-  padding-inline: 28px;
+  gap: 12px;
+  padding-inline: 20px;
 }
 
 .sidebar__brand-mark {
+  width: 32px;
+  height: 32px;
   flex: 0 0 auto;
-  font-size: 1.45rem;
 }
 
 .sidebar__brand-name {
@@ -48,7 +51,6 @@
   transition: opacity vars.$transition-fast, width vars.$transition-fast;
 }
 
-.sidebar--expanded .sidebar__brand-mark { display: none; }
 .sidebar--expanded .sidebar__brand-name { width: auto; opacity: 1; }
 
 .sidebar__navigation {
@@ -197,10 +199,10 @@
   .sidebar__brand,
   .sidebar--expanded .sidebar__brand {
     justify-content: flex-start;
-    padding-inline: 28px;
+    gap: 12px;
+    padding-inline: 20px;
   }
 
-  .sidebar__brand-mark { display: none; }
   .sidebar__brand-name,
   .sidebar--expanded .sidebar__brand-name,
   .sidebar__link-label,

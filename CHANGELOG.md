@@ -37,6 +37,8 @@ All notable changes to Quanti are documented in this file.
 - Signed macOS arm64/x64 and Windows x64 draft-release automation with signed
   updater artifacts and a GitHub Releases `latest.json` manifest.
 - Cross-platform CI for the SQLite ERP workflow and autonomous desktop bundles.
+- Redesigned Quanti `Q` app icons for macOS and Windows, with matching branding
+  in the sidebar, startup and recovery screens, and About/Diagnostics.
 
 ### Known limitations
 

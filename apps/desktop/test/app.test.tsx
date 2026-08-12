@@ -66,17 +66,20 @@ describe("Quanti application shell", () => {
 
   test("starts compact and persists the expanded sidebar preference", async () => {
     const user = userEvent.setup();
-    const { unmount } = renderWithAppProviders(<App />);
+    const { container, unmount } = renderWithAppProviders(<App />);
     const navigation = screen.getByRole("complementary", { name: "Основная навигация" });
     const expandButton = screen.getByRole("button", { name: "Развернуть боковую панель" });
 
     expect(navigation).not.toHaveClass("sidebar--expanded");
+    expect(container.querySelector(".sidebar__brand-mark")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByText("Quanti", { selector: ".sidebar__brand-name" })).toBeInTheDocument();
     expect(expandButton).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByRole("link", { name: "Документы" })).toBeInTheDocument();
     expect(screen.getByText("Документы", { selector: ".sidebar__tooltip" })).toBeInTheDocument();
 
     await user.click(expandButton);
     expect(navigation).toHaveClass("sidebar--expanded");
+    expect(container.querySelector(".sidebar__brand-mark")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Свернуть боковую панель" })).toHaveAttribute("aria-expanded", "true");
     expect(window.localStorage.getItem("quanti.sidebar.expanded")).toBe("true");
 

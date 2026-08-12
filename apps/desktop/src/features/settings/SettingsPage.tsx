@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BrandMark } from "../../components/branding/BrandMark";
 import { useI18n, type Locale } from "../../i18n";
 import { useTheme, type ThemePreference } from "../../theme";
 import {
@@ -85,7 +86,13 @@ export function SettingsPage() {
         <p>{t("Тема применяется сразу и сохраняется для следующих запусков.")}</p>
       </div>
       <div className="workspace-card settings-card settings-diagnostics">
-        <h2>{t("О программе и диагностика")}</h2>
+        <div className="settings-diagnostics__brand">
+          <BrandMark className="settings-diagnostics__brand-mark" />
+          <div>
+            <span>Quanti ERP</span>
+            <h2>{t("О программе и диагностика")}</h2>
+          </div>
+        </div>
         <dl>
           <div><dt>{t("Версия приложения")}</dt><dd>{runtime?.appVersion ?? "—"}</dd></div>
           <div><dt>{t("Версия базы данных")}</dt><dd>{runtime?.databaseVersion ?? "—"}</dd></div>

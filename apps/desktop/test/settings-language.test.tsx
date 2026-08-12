@@ -61,6 +61,14 @@ describe("application settings", () => {
     expect(window.localStorage.getItem("quanti.theme")).toBe("dark");
   });
 
+  test("shows Quanti branding in About and diagnostics", () => {
+    const { container } = renderWithAppProviders(<App />, "/settings");
+
+    expect(container.querySelector(".settings-diagnostics__brand span")).toHaveTextContent("Quanti ERP");
+    expect(screen.getByRole("heading", { level: 2, name: "О программе и диагностика" })).toBeInTheDocument();
+    expect(container.querySelector(".settings-diagnostics__brand-mark")).toHaveAttribute("aria-hidden", "true");
+  });
+
   test("restores the saved dark theme on mount", () => {
     window.localStorage.setItem("quanti.theme", "dark");
     renderWithAppProviders(<App />, "/settings");

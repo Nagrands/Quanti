@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 
 import { primaryNavigation } from "../../app/navigation";
 import { useI18n } from "../../i18n";
+import { BrandMark } from "../branding/BrandMark";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -16,7 +17,7 @@ export function Sidebar({ isExpanded, isOpen, onNavigate, onToggleExpanded }: Si
   return (
     <aside className={`sidebar${isExpanded ? " sidebar--expanded" : ""}${isOpen ? " sidebar--open" : ""}`} aria-label={t("Основная навигация")}>
       <div className="sidebar__brand">
-        <span className="sidebar__brand-mark" aria-hidden="true">Q</span>
+        <BrandMark className="sidebar__brand-mark" />
         <span className="sidebar__brand-name">Quanti</span>
       </div>
       <nav className="sidebar__navigation">
