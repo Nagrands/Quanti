@@ -99,7 +99,7 @@ jobs:
       - name: Prepare updater configuration
         run: node scripts/prepare-release-config.mjs
       - name: Build and upload draft assets
-        uses: tauri-apps/tauri-action@944946e3e4cac6603d1fe8f514171e9ecd3c78aa # v1
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1
         with:
           projectPath: apps/desktop
           tauriScript: ./node_modules/.bin/tauri
