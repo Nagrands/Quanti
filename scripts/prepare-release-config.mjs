@@ -19,9 +19,12 @@ const config = {
       "resources/prisma/": "prisma/"
     },
     createUpdaterArtifacts: true,
-    ...(process.platform === "win32" && process.env.WINDOWS_CERTIFICATE_THUMBPRINT
-      ? { windows: { certificateThumbprint: process.env.WINDOWS_CERTIFICATE_THUMBPRINT } }
-      : {})
+    macOS: {
+      signingIdentity: null
+    },
+    windows: {
+      certificateThumbprint: null
+    }
   },
   plugins: {
     updater: {
@@ -34,4 +37,4 @@ const config = {
 const buildDirectory = path.join(repoRoot, ".quanti-build");
 await mkdir(buildDirectory, { recursive: true });
 await writeFile(path.join(buildDirectory, "tauri.release.conf.json"), JSON.stringify(config, null, 2));
-console.log("Signed release configuration prepared.");
+console.log("Updater release configuration prepared without OS code signing.");

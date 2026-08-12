@@ -13,12 +13,17 @@ PDF document printing.
 
 Stable installers are published on the repository's **Releases** page:
 
-- signed and notarized DMG for macOS 12+ on Apple Silicon;
-- signed and notarized DMG for macOS 12+ on Intel;
-- signed MSI for 64-bit Windows, including the WebView2 bootstrapper.
+- DMG for macOS 12+ on Apple Silicon;
+- DMG for macOS 12+ on Intel;
+- MSI for 64-bit Windows, including the WebView2 bootstrapper.
 
-Only install assets attached to a published stable release. Workflow artifacts
-and draft releases are test outputs and are not user distributions.
+The 0.1.0 installers are not signed by Apple or Microsoft, so macOS Gatekeeper
+and Windows SmartScreen show an unknown-developer warning. Download Quanti only
+from the official [Nagrands/Quanti releases](https://github.com/Nagrands/Quanti/releases),
+verify the file against `SHA256SUMS`, and then use the operating system's manual
+open flow. Workflow artifacts and draft releases are test outputs, not user
+distributions. In-app updater archives remain cryptographically signed by
+Quanti and are verified before installation.
 
 ## Data and migration
 

@@ -34,8 +34,8 @@ All notable changes to Quanti are documented in this file.
   single-instance behavior.
 - Atomic PostgreSQL-to-SQLite transfer import with preview and per-record conflict
   decisions, plus local backup and restore workflows.
-- Signed macOS arm64/x64 and Windows x64 draft-release automation with signed
-  updater artifacts and a GitHub Releases `latest.json` manifest.
+- macOS arm64/x64 and Windows x64 draft-release automation with signed updater
+  artifacts, release checksums, and a GitHub Releases `latest.json` manifest.
 - Cross-platform CI for the SQLite ERP workflow and autonomous desktop bundles.
 - Redesigned Quanti `Q` app icons for macOS and Windows, with matching branding
   in the sidebar, startup and recovery screens, and About/Diagnostics.
@@ -45,9 +45,9 @@ All notable changes to Quanti are documented in this file.
 - The first autonomous release requires a full `quanti-transfer` v1 export to
   migrate an existing PostgreSQL installation; it does not read PostgreSQL data
   directly.
-- Stable installers require project-owned Apple, Windows, and Tauri signing
-  credentials that are not included in the repository.
+- macOS and Windows installers are not signed by Apple or Microsoft and trigger
+  Gatekeeper or SmartScreen warnings; updater payloads remain signed by Quanti.
 - Network multi-user deployment, accounts, and role-based access control are
   outside the 0.1.0 desktop scope.
 - Publishing remains a manual release gate after clean-machine installation,
-  signing, recovery, PDF, and updater smoke tests.
+  warning-flow, recovery, PDF, checksum, and updater smoke tests.

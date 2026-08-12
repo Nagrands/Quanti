@@ -1,4 +1,4 @@
-name: Signed desktop release
+name: Desktop release
 
 on:
   push:
@@ -23,14 +23,6 @@ jobs:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       TAURI_UPDATER_PUBKEY: ${{ secrets.TAURI_UPDATER_PUBKEY }}
-      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      WINDOWS_CERTIFICATE_PFX: ${{ secrets.WINDOWS_CERTIFICATE_PFX }}
-      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -56,7 +48,7 @@ jobs:
           fi
 
   bundle:
-    name: Signed ${{ matrix.name }}
+    name: ${{ matrix.name }}
     needs: preflight
     runs-on: ${{ matrix.os }}
     timeout-minutes: 75
@@ -64,6 +56,7 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - name: macOS arm64
@@ -82,12 +75,6 @@ jobs:
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       TAURI_UPDATER_PUBKEY: ${{ secrets.TAURI_UPDATER_PUBKEY }}
       QUANTI_UPDATE_ENDPOINT: https://github.com/${{ github.repository }}/releases/latest/download/latest.json
-      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -107,23 +94,11 @@ jobs:
           workspaces: apps/desktop/src-tauri -> target
 
       - run: pnpm install --frozen-lockfile
-      - name: Import Windows signing certificate
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          WINDOWS_CERTIFICATE_PFX: ${{ secrets.WINDOWS_CERTIFICATE_PFX }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-        run: |
-          $certificatePath = Join-Path $env:RUNNER_TEMP 'quanti-signing.pfx'
-          [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_PFX))
-          $securePassword = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
-          $certificate = Import-PfxCertificate -FilePath $certificatePath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword
-          "WINDOWS_CERTIFICATE_THUMBPRINT=$($certificate.Thumbprint)" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Prepare target-specific autonomous runtime
         run: node scripts/prepare-autonomous-runtime.mjs
-      - name: Prepare signed updater configuration
+      - name: Prepare updater configuration
         run: node scripts/prepare-release-config.mjs
-      - name: Build and upload signed draft assets
+      - name: Build and upload draft assets
         uses: tauri-apps/tauri-action@944946e3e4cac6603d1fe8f514171e9ecd3c78aa # v1
         with:
           projectPath: apps/desktop
@@ -136,3 +111,74 @@ jobs:
           uploadUpdaterSignatures: true
           uploadWorkflowArtifacts: true
           args: --config ../../.quanti-build/tauri.release.conf.json --target ${{ matrix.target }} --ci
+      - name: Verify macOS bundle has no Developer ID or notarization ticket
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          app_path="$(find apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$app_path"
+          signature="$(codesign -dv --verbose=4 "$app_path" 2>&1 || true)"
+          if grep -q 'Authority=Developer ID Application' <<<"$signature"; then
+            echo "Developer ID signing must be disabled for this release." >&2
+            exit 1
+          fi
+          if xcrun stapler validate "$app_path"; then
+            echo "A notarization ticket is present even though notarization must be disabled." >&2
+            exit 1
+          fi
+      - name: Verify Windows MSI is not Authenticode-signed
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem "apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/msi" -Filter '*.msi' | Select-Object -First 1
+          if (-not $msi) {
+            throw 'Windows MSI was not produced.'
+          }
+          $signature = Get-AuthenticodeSignature $msi.FullName
+          if ($signature.Status -ne 'NotSigned') {
+            throw "Expected an unsigned MSI, received Authenticode status $($signature.Status)."
+          }
+
+  checksums:
+    name: Publish release checksums
+    needs: bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download installer and updater assets
+        shell: bash
+        run: |
+          mkdir release-assets
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --dir release-assets \
+            --pattern '*.dmg' \
+            --pattern '*.msi' \
+            --pattern '*.tar.gz' \
+            --pattern '*.zip' \
+            --pattern '*.sig' \
+            --pattern 'latest.json'
+      - name: Verify complete updater manifest and asset set
+        shell: bash
+        run: |
+          cd release-assets
+          test "$(find . -maxdepth 1 -name '*.dmg' | wc -l | tr -d ' ')" = 2
+          test "$(find . -maxdepth 1 -name '*.msi' | wc -l | tr -d ' ')" = 1
+          test "$(find . -maxdepth 1 \( -name '*.tar.gz' -o -name '*.zip' \) | wc -l | tr -d ' ')" = 3
+          test "$(find . -maxdepth 1 -name '*.sig' | wc -l | tr -d ' ')" = 3
+          jq -e '
+            .version == "0.1.0" and
+            (.platforms | has("darwin-aarch64")) and
+            (.platforms | has("darwin-x86_64")) and
+            (.platforms | has("windows-x86_64")) and
+            ([.platforms[] | select((.url | startswith("https://github.com/")) and (.signature | length > 0))] | length == 3)
+          ' latest.json >/dev/null
+      - name: Create and upload SHA256SUMS
+        shell: bash
+        run: |
+          cd release-assets
+          find . -maxdepth 1 -type f -printf '%f\0' | sort -z | xargs -0 sha256sum > SHA256SUMS
+          test -s SHA256SUMS
+          gh release upload "$GITHUB_REF_NAME" SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber

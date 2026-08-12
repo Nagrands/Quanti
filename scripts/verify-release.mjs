@@ -60,15 +60,7 @@ if (argumentsList.includes("--require-secrets")) {
   const requiredSecrets = [
     "TAURI_SIGNING_PRIVATE_KEY",
     "TAURI_SIGNING_PRIVATE_KEY_PASSWORD",
-    "TAURI_UPDATER_PUBKEY",
-    "APPLE_CERTIFICATE",
-    "APPLE_CERTIFICATE_PASSWORD",
-    "APPLE_SIGNING_IDENTITY",
-    "APPLE_ID",
-    "APPLE_PASSWORD",
-    "APPLE_TEAM_ID",
-    "WINDOWS_CERTIFICATE_PFX",
-    "WINDOWS_CERTIFICATE_PASSWORD"
+    "TAURI_UPDATER_PUBKEY"
   ];
   const missing = requiredSecrets.filter((name) => !process.env[name]?.trim());
   assert.deepEqual(missing, [], `Missing release secrets: ${missing.join(", ")}.`);

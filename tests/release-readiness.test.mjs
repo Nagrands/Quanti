@@ -75,6 +75,58 @@ test("release metadata is synchronized for v0.1.0", () => {
   assert.notEqual(invalid.status, 0);
 });
 
+test("release preflight requires updater signing secrets only", () => {
+  const environment = {
+    ...process.env,
+    TAURI_SIGNING_PRIVATE_KEY: "test-private-key",
+    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: "test-password",
+    TAURI_UPDATER_PUBKEY: "test-public-key"
+  };
+  const valid = spawnSync(
+    process.execPath,
+    ["scripts/verify-release.mjs", "--tag", "v0.1.0", "--require-secrets"],
+    { cwd: repoRoot, encoding: "utf8", env: environment }
+  );
+  assert.equal(valid.status, 0, valid.stderr);
+
+  delete environment.TAURI_UPDATER_PUBKEY;
+  const missing = spawnSync(
+    process.execPath,
+    ["scripts/verify-release.mjs", "--tag", "v0.1.0", "--require-secrets"],
+    { cwd: repoRoot, encoding: "utf8", env: environment }
+  );
+  assert.notEqual(missing.status, 0);
+  assert.match(missing.stderr, /TAURI_UPDATER_PUBKEY/);
+});
+
+test("generated release config signs updater artifacts without OS identities", () => {
+  const endpoint = "https://github.com/Nagrands/Quanti/releases/latest/download/latest.json";
+  const publicKey = "test-public-key";
+  const generated = spawnSync(process.execPath, ["scripts/prepare-release-config.mjs"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      QUANTI_UPDATE_ENDPOINT: endpoint,
+      TAURI_UPDATER_PUBKEY: publicKey
+    }
+  });
+  assert.equal(generated.status, 0, generated.stderr);
+
+  const config = JSON.parse(
+    spawnSync(
+      process.execPath,
+      ["-e", "process.stdout.write(require('node:fs').readFileSync('.quanti-build/tauri.release.conf.json', 'utf8'))"],
+      { cwd: repoRoot, encoding: "utf8" }
+    ).stdout
+  );
+  assert.equal(config.bundle.createUpdaterArtifacts, true);
+  assert.equal(config.bundle.macOS.signingIdentity, null);
+  assert.equal(config.bundle.windows.certificateThumbprint, null);
+  assert.deepEqual(config.plugins.updater.endpoints, [endpoint]);
+  assert.equal(config.plugins.updater.pubkey, publicKey);
+});
+
 test("autonomous resources match every release target", () => {
   assert.equal(pkgTarget("aarch64-apple-darwin"), "node22-macos-arm64");
   assert.equal(pkgTarget("x86_64-apple-darwin"), "node22-macos-x64");
@@ -96,8 +148,18 @@ test("GitHub workflows pin actions and keep stable releases as drafts", async ()
   }
   assert.match(release, /releaseDraft: true/);
   assert.match(release, /uploadUpdaterJson: true/);
+  assert.match(release, /uploadUpdaterSignatures: true/);
   assert.match(release, /releases\/latest\/download\/latest\.json/);
+  assert.match(release, /SHA256SUMS/);
+  assert.match(release, /max-parallel: 1/);
+  assert.match(release, /darwin-aarch64/);
+  assert.match(release, /darwin-x86_64/);
+  assert.match(release, /windows-x86_64/);
+  assert.match(release, /Authority=Developer ID Application/);
+  assert.match(release, /Get-AuthenticodeSignature/);
+  assert.match(release, /NotSigned/);
   assert.doesNotMatch(release, /secrets\.QUANTI_UPDATE_ENDPOINT/);
+  assert.doesNotMatch(release, /APPLE_|WINDOWS_CERTIFICATE|Import-PfxCertificate|Signed desktop release/);
   assert.match(ci, /macos-15-intel/);
   assert.match(ci, /prepare-autonomous-runtime\.mjs/);
   assert.match(ci, /exec tauri build .*--target \$\{\{ matrix\.target \}\}/);
