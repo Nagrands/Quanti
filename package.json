@@ -33,13 +33,13 @@
     "check": "node scripts/validate-workspace.mjs && pnpm --filter @quanti/db db:validate && node --test tests/workspace.test.mjs tests/db-foundation.test.mjs tests/shared-contracts.test.mjs tests/release-readiness.test.mjs && pnpm --filter @quanti/api test && pnpm --filter @quanti/desktop test && pnpm --filter @quanti/desktop tauri:test && pnpm --filter @quanti/desktop tauri:check"
   },
   "devDependencies": {
-    "@puppeteer/browsers": "^3.0.4",
+    "@puppeteer/browsers": "^3.2.0",
     "@yao-pkg/pkg": "^6.7.0",
-    "@types/node": "^24.5.2",
-    "esbuild": "^0.25.0",
-    "prisma": "^6.6.0",
+    "@types/node": "^26.2.0",
+    "esbuild": "^0.28.2",
+    "prisma": "^7.9.1",
     "tsx": "^4.20.6",
-    "turbo": "^2.5.0",
-    "typescript": "^5.8.3"
+    "turbo": "^2.10.10",
+    "typescript": "^7.0.2"
   }
 }
